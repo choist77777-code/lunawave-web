@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>로그인 - LunaWave</title>
+    <title>로그??- LunaWave</title>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -293,36 +293,36 @@
     <div class="auth-container">
         <div class="auth-card">
             <a href="/" class="logo">
-                <span>🌙</span>
+                <span>?��</span>
                 <span>LunaWave</span>
             </a>
 
-            <h1 class="auth-title">로그인</h1>
+            <h1 class="auth-title">로그??/h1>
 
             <div id="alert" class="alert" style="display:none;"></div>
 
             <form id="loginForm">
                 <div class="form-group">
-                    <label for="email">이메일</label>
+                    <label for="email">?�메??/label>
                     <input type="email" id="email" placeholder="your@email.com" required>
                 </div>
 
                 <div class="form-group">
-                    <label for="password">비밀번호</label>
-                    <input type="password" id="password" placeholder="••••••••" required>
+                    <label for="password">비�?번호</label>
+                    <input type="password" id="password" placeholder="?�••••••�? required>
                 </div>
 
                 <div class="forgot-link">
-                    <a href="/forgot-password.html">비밀번호를 잊으셨나요?</a>
+                    <a href="/forgot-password.html">비�?번호�??�으?�나??</a>
                 </div>
 
                 <button type="submit" class="btn btn-primary" id="submitBtn">
-                    <span id="btnText">로그인</span>
+                    <span id="btnText">로그??/span>
                     <div id="btnSpinner" class="spinner" style="display:none;"></div>
                 </button>
             </form>
 
-            <div class="divider">또는</div>
+            <div class="divider">?�는</div>
 
             <div class="social-buttons">
                 <button type="button" class="btn btn-social" id="googleLogin">
@@ -332,26 +332,26 @@
                         <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                         <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                     </svg>
-                    Google로 계속하기
+                    Google�?계속?�기
                 </button>
 
                 <button type="button" class="btn btn-social" id="kakaoLogin">
                     <svg width="20" height="20" viewBox="0 0 24 24">
                         <path fill="#000000" d="M12 3C6.48 3 2 6.58 2 11c0 2.83 1.89 5.31 4.72 6.71l-.97 3.59c-.09.33.25.6.54.43l4.09-2.58c.53.05 1.07.08 1.62.08 5.52 0 10-3.58 10-8s-4.48-8-10-8z"/>
                     </svg>
-                    카카오로 계속하기
+                    카카?�로 계속?�기
                 </button>
             </div>
 
             <div class="auth-footer">
-                계정이 없으신가요? <a href="/signup.html">회원가입</a>
+                계정???�으?��??? <a href="/signup.html">?�원가??/a>
             </div>
         </div>
 
         <div class="back-link">
             <a href="/">
                 <i data-lucide="arrow-left"></i>
-                홈으로 돌아가기
+                ?�으�??�아가�?
             </a>
         </div>
     </div>
@@ -359,8 +359,8 @@
     <script>
         lucide.createIcons();
 
-        // Supabase 초기화
-        const supabase = LW.supabase;
+        // Supabase 초기??
+        const sb = LW.supabase;
 
         const form = document.getElementById('loginForm');
         const submitBtn = document.getElementById('submitBtn');
@@ -392,23 +392,23 @@
             const password = document.getElementById('password').value;
 
             if (!email || !password) {
-                showAlert('이메일과 비밀번호를 입력해주세요.');
+                showAlert('?�메?�과 비�?번호�??�력?�주?�요.');
                 return;
             }
 
             setLoading(true);
 
             try {
-                const { data, error } = await supabase.auth.signInWithPassword({
+                const { data, error } = await sb.auth.signInWithPassword({
                     email,
                     password
                 });
 
                 if (error) {
                     if (error.message.includes('Invalid login')) {
-                        showAlert('이메일 또는 비밀번호가 올바르지 않습니다.');
+                        showAlert('?�메???�는 비�?번호가 ?�바르�? ?�습?�다.');
                     } else if (error.message.includes('Email not confirmed')) {
-                        showAlert('이메일 인증이 필요합니다. 이메일을 확인해주세요.');
+                        showAlert('?�메???�증???�요?�니?? ?�메?�을 ?�인?�주?�요.');
                     } else {
                         showAlert(error.message);
                     }
@@ -416,18 +416,18 @@
                     return;
                 }
 
-                // 로그인 성공 → 대시보드로
+                // 로그???�공 ???�?�보?�로
                 window.location.href = '/dashboard.html';
 
             } catch (err) {
-                showAlert('로그인 중 오류가 발생했습니다.');
+                showAlert('로그??�??�류가 발생?�습?�다.');
                 setLoading(false);
             }
         });
 
-        // Google 로그인
+        // Google 로그??
         document.getElementById('googleLogin').addEventListener('click', async () => {
-            const { data, error } = await supabase.auth.signInWithOAuth({
+            const { data, error } = await sb.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
                     redirectTo: window.location.origin + '/dashboard.html'
@@ -437,9 +437,9 @@
             if (error) showAlert(error.message);
         });
 
-        // 카카오 로그인
+        // 카카??로그??
         document.getElementById('kakaoLogin').addEventListener('click', async () => {
-            const { data, error } = await supabase.auth.signInWithOAuth({
+            const { data, error } = await sb.auth.signInWithOAuth({
                 provider: 'kakao',
                 options: {
                     redirectTo: window.location.origin + '/dashboard.html'
@@ -449,8 +449,8 @@
             if (error) showAlert(error.message);
         });
 
-        // 이미 로그인된 경우 대시보드로
-        supabase.auth.getSession().then(({ data: { session } }) => {
+        // ?��? 로그?�된 경우 ?�?�보?�로
+        sb.auth.getSession().then(({ data: { session } }) => {
             if (session) {
                 window.location.href = '/dashboard.html';
             }
