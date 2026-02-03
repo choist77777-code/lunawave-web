@@ -609,14 +609,14 @@
     <header>
         <div class="header-inner">
             <a href="/" class="logo">
-                <span>🌙</span>
+                <svg width="32" height="32" viewBox="0 0 42 42"><circle cx="21" cy="21" r="19.5" fill="none" stroke="#f5a623" stroke-width="2.5"/><ellipse cx="18" cy="16" rx="1.3" ry="4.2" fill="#f5a623"/><ellipse cx="24" cy="16" rx="1.3" ry="4.2" fill="#f5a623"/></svg>
                 <span>LunaWave</span>
             </a>
 
             <div class="header-right">
                 <div class="token-badge" id="headerTokens">
                     <i data-lucide="coins"></i>
-                    <span id="headerTokenCount">0</span> 토큰
+                    <span id="headerTokenCount">0</span> 루나
                 </div>
 
                 <div class="user-menu">
@@ -675,24 +675,24 @@
                 <div class="card-header">
                     <div class="card-title">
                         <i data-lucide="coins"></i>
-                        토큰 잔액
+                        루나 잔액
                     </div>
                     <a href="/payment.html?type=tokens" class="btn btn-primary btn-sm">
                         <i data-lucide="plus"></i>
-                        토큰 구매
+                        루나 구매
                     </a>
                 </div>
                 <div class="token-display">
                     <div class="token-amount" id="totalTokens">0</div>
-                    <div class="token-label">사용 가능한 토큰</div>
+                    <div class="token-label">사용 가능한 루나</div>
                     <div class="token-breakdown">
                         <div class="token-item">
                             <div class="token-item-value" id="monthlyTokens">0</div>
-                            <div class="token-item-label">월간 토큰</div>
+                            <div class="token-item-label">월간 루나</div>
                         </div>
                         <div class="token-item">
                             <div class="token-item-value" id="purchasedTokens">0</div>
-                            <div class="token-item-label">구매 토큰</div>
+                            <div class="token-item-label">구매 루나</div>
                         </div>
                     </div>
                 </div>
@@ -700,7 +700,7 @@
                     <div class="progress-fill" id="tokenProgress" style="width: 100%;"></div>
                 </div>
                 <p style="font-size:12px; color:var(--text-muted); margin-top:8px; text-align:center;">
-                    월간 토큰은 다음 달로 이월됩니다 (최대 3,000)
+                    월간 루나는 다음 달로 이월됩니다 (최대 3,000)
                 </p>
             </div>
 
@@ -799,7 +799,7 @@
                     </button>
                 </div>
                 <p style="font-size:13px; color:var(--text-secondary); margin-bottom:16px;">
-                    친구가 Pro 결제 시 양쪽 모두 200토큰 보너스!
+                    친구가 Pro 결제 시 양쪽 모두 200루나 보너스!
                 </p>
                 <div class="referral-stats">
                     <div class="referral-stat">
@@ -853,7 +853,7 @@
         lucide.createIcons();
 
         // Supabase 초기화
-        const supabase = LW.supabase;
+        const sb = LW.supabase;
 
         // User Menu Toggle
         const userMenuBtn = document.getElementById('userMenuBtn');
@@ -886,14 +886,14 @@
         // Load Dashboard Data
         async function loadDashboard() {
             try {
-                const { data: { user } } = await supabase.auth.getUser();
+                const { data: { user } } = await sb.auth.getUser();
                 if (!user) {
                     window.location.href = '/login.html';
                     return;
                 }
 
                 // Get user status
-                const { data: status } = await supabase.rpc('get_user_status', {
+                const { data: status } = await sb.rpc('get_user_status', {
                     p_user_id: user.id
                 });
 
@@ -987,7 +987,7 @@
                 planName.textContent = 'Pro 플랜';
                 planDesc.textContent = status.plan_expires_at
                     ? `만료일: ${new Date(status.plan_expires_at).toLocaleDateString()}`
-                    : '월 1,500토큰 + 모든 기능';
+                    : '월 1,500루나 + 모든 기능';
 
                 // Show token card, hide free songs card
                 document.getElementById('tokenCard').style.display = 'block';
@@ -1046,7 +1046,7 @@
             container.innerHTML = payments.map(p => `
                 <div class="payment-item">
                     <div class="payment-info">
-                        <div class="payment-type">${p.type === 'subscription' ? 'Pro 구독' : '토큰 구매'}</div>
+                        <div class="payment-type">${p.type === 'subscription' ? 'Pro 구독' : '루나 구매'}</div>
                         <div class="payment-date">${new Date(p.paid_at).toLocaleDateString()}</div>
                     </div>
                     <div class="payment-amount">₩${p.amount.toLocaleString()}</div>
@@ -1067,7 +1067,7 @@
         async function removeDevice(deviceId) {
             if (!confirm('이 기기를 해제하시겠습니까?')) return;
 
-            await supabase.from('devices').delete().eq('id', deviceId);
+            await sb.from('devices').delete().eq('id', deviceId);
             loadDashboard();
         }
 
