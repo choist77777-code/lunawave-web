@@ -53,10 +53,21 @@ nav {
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     text-align: center; padding: 140px 24px 100px;
     position: relative;
+    background: linear-gradient(180deg, #fffaf0 0%, #fff7e6 40%, #ffffff 100%);
+}
+.hero::before {
+    content: '';
+    position: absolute;
+    top: 80px; left: 50%; transform: translateX(-50%);
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(245,166,35,0.08) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
 }
 .hero-tag {
     font-size: 12px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase;
     color: var(--gold-dark); margin-bottom: 32px;
+    background: rgba(245,166,35,0.12); padding: 8px 20px; border-radius: 100px;
     animation: fadeUp .6s ease;
 }
 .hero h1 {
@@ -232,7 +243,7 @@ footer a:hover { color: var(--text); }
 <!-- HERO -->
 <section class="hero">
     <div class="hero-tag">유튜브 음원 영상 자동 생성</div>
-    <h1>강의 안 듣고, 편집 안 배우고,<br>영상 전문가 안 써도 됩니다</h1>
+    <h1>강의 안 듣고, 편집 안 배우고,<br><span style="color: var(--gold-dark);">영상 전문가</span> 안 써도 됩니다</h1>
     <p class="hero-sub">클릭 몇 번이면 유튜브에 올릴 영상이 나옵니다.</p>
     <p class="hero-hook">누군가는 시작하는 법을 배우느라 3개월을 씁니다.<br>그 시간에 영상 200개 만들 수 있었습니다.</p>
     <a href="/signup" class="hero-cta">무료로 시작하기</a>
@@ -380,7 +391,7 @@ footer a:hover { color: var(--text); }
         <div class="f-logo-text">Luna<span>Wave</span></div>
     </div>
     <div><a href="#">이용약관</a><a href="#">개인정보처리방침</a><a href="#">문의하기</a></div>
-    <p style="margin-top:12px;">© 2025 LunaWave. All rights reserved.</p>
+    <p style="margin-top:12px;">© 2026 LunaWave. All rights reserved.</p>
 </footer>
 
 <script>
