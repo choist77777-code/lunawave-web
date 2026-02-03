@@ -364,7 +364,7 @@
 
         <div class="tabs">
             <div class="tab active" data-tab="subscription">Pro 구독</div>
-            <div class="tab" data-tab="tokens">토큰 구매</div>
+            <div class="tab" data-tab="tokens">루나 구매</div>
         </div>
 
         <div id="alert" class="alert alert-error" style="display:none;"></div>
@@ -373,17 +373,17 @@
         <div class="tab-content active" id="subscription-content">
             <div class="card">
                 <div class="sub-header">
-                    <div class="sub-discount">첫 달 50% 할인</div>
+                    <div class="sub-discount">첫 달 30% 할인</div>
                     <div class="sub-original">₩17,900</div>
-                    <div class="sub-price">₩8,950<span>/첫 달</span></div>
+                    <div class="sub-price">₩12,530<span>/첫 달</span></div>
                     <p style="color:var(--text-muted); font-size:14px; margin-top:8px;">
                         이후 월 ₩17,900
                     </p>
                 </div>
 
                 <ul class="sub-features">
-                    <li><i data-lucide="check"></i> 월 1,500토큰 지급</li>
-                    <li><i data-lucide="check"></i> 미사용 토큰 이월 (최대 3,000)</li>
+                    <li><i data-lucide="check"></i> 월 1,500루나 지급</li>
+                    <li><i data-lucide="check"></i> 미사용 루나 이월 (최대 3,000)</li>
                     <li><i data-lucide="check"></i> 모든 기능 이용 가능</li>
                     <li><i data-lucide="check"></i> 워터마크 없음</li>
                     <li><i data-lucide="check"></i> 2이미지 합성 + 컷아웃</li>
@@ -408,8 +408,8 @@
                         <span>₩17,900</span>
                     </div>
                     <div class="summary-row summary-discount">
-                        <span>첫 달 할인 (50%)</span>
-                        <span>-₩8,950</span>
+                        <span>첫 달 할인 (30%)</span>
+                        <span>-₩5,370</span>
                     </div>
                     <div class="summary-row summary-discount" id="subPromoDiscount" style="display:none;">
                         <span>프로모션 할인</span>
@@ -417,7 +417,7 @@
                     </div>
                     <div class="summary-row total">
                         <span>결제 금액</span>
-                        <span id="subTotal">₩8,950</span>
+                        <span id="subTotal">₩12,530</span>
                     </div>
                 </div>
 
@@ -441,7 +441,7 @@
                 </div>
 
                 <button class="btn btn-primary" id="subPayBtn" onclick="paySubscription()">
-                    <span id="subBtnText">₩8,950 결제하기</span>
+                    <span id="subBtnText">₩12,530 결제하기</span>
                     <div id="subSpinner" class="spinner" style="display:none;"></div>
                 </button>
 
@@ -456,7 +456,7 @@
             <div class="card">
                 <div class="card-title">
                     <i data-lucide="coins"></i>
-                    추가 토큰 구매
+                    추가 루나 구매
                 </div>
 
                 <div class="token-options">
@@ -464,8 +464,8 @@
                         <input type="radio" name="tokenPackage" value="small">
                         <div class="token-radio"></div>
                         <div class="token-info">
-                            <div class="token-amount">500 토큰</div>
-                            <div class="token-unit">토큰당 ₩15.8</div>
+                            <div class="token-amount">500 루나</div>
+                            <div class="token-unit">루나당 ₩15.8</div>
                         </div>
                         <div class="token-price">₩7,900</div>
                     </label>
@@ -474,8 +474,8 @@
                         <input type="radio" name="tokenPackage" value="medium">
                         <div class="token-radio"></div>
                         <div class="token-info">
-                            <div class="token-amount">1,000 토큰</div>
-                            <div class="token-unit">토큰당 ₩12.9</div>
+                            <div class="token-amount">1,000 루나</div>
+                            <div class="token-unit">루나당 ₩12.9</div>
                         </div>
                         <div class="token-price">₩12,900</div>
                     </label>
@@ -484,8 +484,8 @@
                         <input type="radio" name="tokenPackage" value="large" checked>
                         <div class="token-radio"></div>
                         <div class="token-info">
-                            <div class="token-amount">3,000 토큰</div>
-                            <div class="token-unit">토큰당 ₩9.9</div>
+                            <div class="token-amount">3,000 루나</div>
+                            <div class="token-unit">루나당 ₩9.9</div>
                         </div>
                         <div class="token-price">₩29,900</div>
                     </label>
@@ -505,7 +505,7 @@
 
                 <div class="summary">
                     <div class="summary-row">
-                        <span id="tokenPackageName">대형 패키지 (3,000 토큰)</span>
+                        <span id="tokenPackageName">대형 패키지 (3,000 루나)</span>
                         <span id="tokenOriginalPrice">₩29,900</span>
                     </div>
                     <div class="summary-row summary-discount" id="tokenPromoDiscount" style="display:none;">
@@ -543,7 +543,7 @@
                 </button>
 
                 <p style="font-size:12px; color:var(--text-muted); text-align:center; margin-top:16px;">
-                    구매한 토큰은 소멸되지 않습니다.
+                    구매한 루나는 소멸되지 않습니다.
                 </p>
             </div>
         </div>
@@ -555,7 +555,7 @@
         // Config
         const PORTONE_IMP_KEY = 'imp_your_code'; // TODO: Replace with actual PortOne key
 
-        const supabase = LW.supabase;
+        const sb = LW.supabase;
         let user;
 
         // State
@@ -616,7 +616,7 @@
         function updateTokenSummary() {
             const names = { small: '소형', medium: '중형', large: '대형' };
             document.getElementById('tokenPackageName').textContent =
-                `${names[selectedPackage.name]} 패키지 (${selectedPackage.tokens.toLocaleString()} 토큰)`;
+                `${names[selectedPackage.name]} 패키지 (${selectedPackage.tokens.toLocaleString()} 루나)`;
             document.getElementById('tokenOriginalPrice').textContent = `₩${selectedPackage.price.toLocaleString()}`;
 
             let total = selectedPackage.price;
@@ -660,12 +660,12 @@
                 subPromo = data;
                 document.getElementById('subPromoApplied').style.display = 'flex';
                 document.getElementById('subPromoText').textContent =
-                    data.type === 'discount' ? `${data.value}% 할인 적용` : `${data.value} 토큰 보너스`;
+                    data.type === 'discount' ? `${data.value}% 할인 적용` : `${data.value} 루나 보너스`;
             } else {
                 tokenPromo = data;
                 document.getElementById('tokenPromoApplied').style.display = 'flex';
                 document.getElementById('tokenPromoText').textContent =
-                    data.type === 'discount' ? `${data.value}% 할인 적용` : `${data.value} 토큰 보너스`;
+                    data.type === 'discount' ? `${data.value}% 할인 적용` : `${data.value} 루나 보너스`;
                 updateTokenSummary();
             }
 
@@ -673,7 +673,7 @@
         }
 
         async function paySubscription() {
-            const { data: { user } } = await supabase.auth.getUser();
+            const { data: { user } } = await sb.auth.getUser();
             if (!user) {
                 window.location.href = '/login.html';
                 return;
@@ -688,7 +688,7 @@
             spinner.style.display = 'block';
 
             try {
-                let amount = 8950; // 첫 달 할인가
+                let amount = 12530; // 첫 달 할인가
                 if (subPromo && subPromo.type === 'discount') {
                     amount -= Math.floor(amount * subPromo.value / 100);
                 }
@@ -710,7 +710,7 @@
                 }, async (response) => {
                     if (response.success) {
                         // Verify payment on server
-                        const { error } = await supabase.functions.invoke('verify-payment', {
+                        const { error } = await sb.functions.invoke('verify-payment', {
                             body: {
                                 imp_uid: response.imp_uid,
                                 merchant_uid: merchantUid,
@@ -742,7 +742,7 @@
         }
 
         async function payTokens() {
-            const { data: { user } } = await supabase.auth.getUser();
+            const { data: { user } } = await sb.auth.getUser();
             if (!user) {
                 window.location.href = '/login.html';
                 return;
@@ -771,14 +771,14 @@
                     pg: 'html5_inicis',
                     pay_method: selectedTokenMethod,
                     merchant_uid: merchantUid,
-                    name: `LunaWave ${selectedPackage.tokens.toLocaleString()} 토큰`,
+                    name: `LunaWave ${selectedPackage.tokens.toLocaleString()} 루나`,
                     amount: amount,
                     buyer_email: user.email,
                     buyer_name: user.user_metadata?.full_name || ''
                 }, async (response) => {
                     if (response.success) {
                         // Verify payment on server
-                        const { error } = await supabase.functions.invoke('verify-payment', {
+                        const { error } = await sb.functions.invoke('verify-payment', {
                             body: {
                                 imp_uid: response.imp_uid,
                                 merchant_uid: merchantUid,
@@ -791,9 +791,9 @@
                         if (error) {
                             alert('결제 검증 실패: ' + error.message);
                         } else {
-                            let msg = `${selectedPackage.tokens.toLocaleString()} 토큰이 충전되었습니다!`;
+                            let msg = `${selectedPackage.tokens.toLocaleString()} 루나가 충전되었습니다!`;
                             if (tokenPromo && tokenPromo.type === 'tokens') {
-                                msg += ` (+${tokenPromo.value} 보너스 토큰)`;
+                                msg += ` (+${tokenPromo.value} 보너스 루나)`;
                             }
                             alert(msg);
                             window.location.href = '/dashboard.html';
@@ -816,7 +816,7 @@
 
         // Check auth
         async function init() {
-            const { data: { user: u } } = await supabase.auth.getUser();
+            const { data: { user: u } } = await sb.auth.getUser();
             if (!u) {
                 window.location.href = '/login.html';
                 return;
