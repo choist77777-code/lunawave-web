@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>다운로드 - LunaWave</title>
+    <meta name="description" content="LunaWave 앱을 다운로드하세요. Windows 10/11 지원.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="/js/supabase-client.js"></script>
+
+    <style>
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f9f9fb;
+            --text-primary: #1a1a2e;
+            --text-secondary: #64648c;
+            --text-muted: #9999b3;
+            --accent: #f5a623;
+            --accent-hover: #e6951a;
+            --accent-light: rgba(245, 166, 35, 0.1);
+            --border: #e8e8f0;
+            --shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.1);
+            --radius: 12px;
+            --radius-sm: 8px;
+            --success: #22c55e;
+            --warning: #f59e0b;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Noto Sans KR', 'Outfit', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        /* Header */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+
+        .logo span {
+            background: linear-gradient(135deg, var(--accent), #ff8c00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            border: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent), #e6951a);
+            color: white;
+            box-shadow: 0 4px 16px rgba(245, 166, 35, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(245, 166, 35, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-secondary);
+        }
+
+        .btn-lg {
+            padding: 16px 40px;
+            font-size: 18px;
+        }
+
+        /* Main Content */
+        .main-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 140px 24px 80px;
+        }
+
+        .download-hero {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .download-hero h1 {
+            font-size: clamp(36px, 5vw, 48px);
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .download-hero h1 .accent {
+            background: linear-gradient(135deg, var(--accent), #ff8c00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .download-hero p {
+            font-size: 18px;
+            color: var(--text-secondary);
+            max-width: 500px;
+            margin: 0 auto 32px;
+        }
+
+        /* Download Card */
+        .download-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 48px;
+            text-align: center;
+            margin-bottom: 32px;
+            box-shadow: var(--shadow);
+        }
+
+        .download-icon {
+            width: 80px;
+            height: 80px;
+            background: var(--accent-light);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+        }
+
+        .download-icon i {
+            width: 40px;
+            height: 40px;
+            color: var(--accent);
+        }
+
+        .download-card h2 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .download-version {
+            color: var(--text-muted);
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+
+        .download-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .download-meta {
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+        }
+
+        .download-meta-item {
+            text-align: center;
+        }
+
+        .download-meta-item strong {
+            display: block;
+            font-size: 18px;
+            color: var(--text-primary);
+        }
+
+        .download-meta-item span {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        /* Requirements */
+        .requirements {
+            background: var(--bg-secondary);
+            border-radius: var(--radius);
+            padding: 32px;
+            margin-bottom: 32px;
+        }
+
+        .requirements h3 {
+            font-size: 18px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .requirements h3 i {
+            color: var(--accent);
+            width: 20px;
+            height: 20px;
+        }
+
+        .requirements ul {
+            list-style: none;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 12px;
+        }
+
+        .requirements li {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .requirements li i {
+            color: var(--success);
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+        }
+
+        /* Instructions */
+        .instructions {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 32px;
+            margin-bottom: 32px;
+        }
+
+        .instructions h3 {
+            font-size: 18px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .instructions h3 i {
+            color: var(--accent);
+            width: 20px;
+            height: 20px;
+        }
+
+        .steps {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .step {
+            display: flex;
+            gap: 16px;
+        }
+
+        .step-number {
+            width: 32px;
+            height: 32px;
+            background: var(--accent);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .step-content h4 {
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+
+        .step-content p {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        /* Troubleshooting */
+        .troubleshooting {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: var(--radius);
+            padding: 24px;
+        }
+
+        .troubleshooting h3 {
+            font-size: 16px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--warning);
+        }
+
+        .troubleshooting h3 i {
+            width: 20px;
+            height: 20px;
+        }
+
+        .troubleshooting ul {
+            list-style: none;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .troubleshooting li {
+            padding: 8px 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        .troubleshooting li::before {
+            content: "•";
+            color: var(--warning);
+        }
+
+        /* Footer */
+        footer {
+            padding: 40px 24px;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-bottom: 16px;
+        }
+
+        .footer-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .footer-links a:hover {
+            color: var(--accent);
+        }
+
+        .footer-copyright {
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        /* Auth Banner */
+        .auth-banner {
+            background: linear-gradient(135deg, #1a1a2e, #2d2d4a);
+            color: white;
+            padding: 20px 24px;
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 32px;
+        }
+
+        .auth-banner p {
+            font-size: 15px;
+        }
+
+        .auth-banner .btn {
+            background: white;
+            color: var(--text-primary);
+        }
+
+        .auth-banner .btn:hover {
+            background: var(--bg-secondary);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .download-meta {
+                flex-direction: column;
+                gap: 16px;
+            }
+
+            .auth-banner {
+                flex-direction: column;
+                gap: 16px;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="header-inner">
+            <a href="/" class="logo">
+                <span>LunaWave</span>
+            </a>
+
+            <div class="header-actions" id="headerActions">
+                <a href="/login.html" class="btn btn-secondary">로그인</a>
+                <a href="/signup.html" class="btn btn-primary">무료로 시작하기</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-container">
+        <!-- Auth Banner (shown when not logged in) -->
+        <div class="auth-banner" id="authBanner">
+            <p>앱을 사용하려면 계정이 필요합니다.</p>
+            <a href="/signup.html" class="btn">무료 회원가입</a>
+        </div>
+
+        <div class="download-hero">
+            <h1><span class="accent">LunaWave</span> 다운로드</h1>
+            <p>AI 기반 음악 영상 제작 도구를 지금 바로 시작하세요</p>
+        </div>
+
+        <!-- Download Card -->
+        <div class="download-card">
+            <div class="download-icon">
+                <i data-lucide="download"></i>
+            </div>
+            <h2>LunaWave for Windows</h2>
+            <div class="download-version">버전 1.0.0 | 2026.02.02</div>
+
+            <div class="download-buttons">
+                <a href="/download/LunaWave_Setup.exe" class="btn btn-primary btn-lg" id="downloadBtn">
+                    <i data-lucide="download"></i>
+                    Windows 다운로드 (.exe)
+                </a>
+                <span style="color:var(--text-muted); font-size:13px;">64-bit | 약 150MB</span>
+            </div>
+
+            <div class="download-meta">
+                <div class="download-meta-item">
+                    <strong>Windows 10/11</strong>
+                    <span>지원 OS</span>
+                </div>
+                <div class="download-meta-item">
+                    <strong>64-bit</strong>
+                    <span>시스템 요구</span>
+                </div>
+                <div class="download-meta-item">
+                    <strong>~150MB</strong>
+                    <span>설치 파일 크기</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Requirements -->
+        <div class="requirements">
+            <h3>
+                <i data-lucide="cpu"></i>
+                시스템 요구사항
+            </h3>
+            <ul>
+                <li>
+                    <i data-lucide="check"></i>
+                    Windows 10 (64-bit) 이상
+                </li>
+                <li>
+                    <i data-lucide="check"></i>
+                    RAM 8GB 이상 (16GB 권장)
+                </li>
+                <li>
+                    <i data-lucide="check"></i>
+                    저장공간 2GB 이상
+                </li>
+                <li>
+                    <i data-lucide="check"></i>
+                    인터넷 연결 필요
+                </li>
+                <li>
+                    <i data-lucide="check"></i>
+                    CPU: Intel Core i5 / AMD Ryzen 5 이상
+                </li>
+                <li>
+                    <i data-lucide="check"></i>
+                    GPU: DirectX 11 지원 (렌더링 가속)
+                </li>
+            </ul>
+        </div>
+
+        <!-- Installation Instructions -->
+        <div class="instructions">
+            <h3>
+                <i data-lucide="book-open"></i>
+                설치 방법
+            </h3>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h4>다운로드</h4>
+                        <p>위의 다운로드 버튼을 클릭하여 설치 파일을 받습니다.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h4>설치 실행</h4>
+                        <p>다운로드된 LunaWave_Setup.exe를 실행합니다. Windows 보안 경고가 뜨면 "추가 정보" → "실행"을 클릭합니다.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h4>설치 완료</h4>
+                        <p>설치 마법사의 안내에 따라 설치를 완료합니다. 기본 설정을 권장합니다.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h4>로그인</h4>
+                        <p>앱을 실행하고 LunaWave 계정으로 로그인합니다. 계정이 없다면 먼저 회원가입하세요.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Troubleshooting -->
+        <div class="troubleshooting">
+            <h3>
+                <i data-lucide="alert-triangle"></i>
+                설치 문제 해결
+            </h3>
+            <ul>
+                <li>설치가 안 되면 바이러스 백신을 잠시 비활성화하고 다시 시도해보세요.</li>
+                <li>관리자 권한으로 실행해보세요 (우클릭 → 관리자 권한으로 실행).</li>
+                <li>.NET Framework 4.8 이상이 필요합니다. 없으면 자동으로 설치됩니다.</li>
+                <li>문제가 계속되면 <a href="/contact.html" style="color:var(--accent);">고객센터</a>로 문의해주세요.</li>
+            </ul>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-links">
+            <a href="/">홈</a>
+            <a href="/faq.html">FAQ</a>
+            <a href="/contact.html">문의하기</a>
+            <a href="/terms.html">이용약관</a>
+            <a href="/privacy.html">개인정보처리방침</a>
+        </div>
+        <div class="footer-copyright">
+            © 2026 LunaWave. All rights reserved.
+        </div>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+
+        // Check auth status
+        async function checkAuth() {
+            const session = await LW.getSession();
+            const authBanner = document.getElementById('authBanner');
+            const headerActions = document.getElementById('headerActions');
+
+            if (session) {
+                // User is logged in
+                authBanner.style.display = 'none';
+                headerActions.innerHTML = `
+                    <a href="/dashboard.html" class="btn btn-secondary">대시보드</a>
+                `;
+                lucide.createIcons();
+            }
+        }
+
+        checkAuth();
+
+        // Track download clicks
+        document.getElementById('downloadBtn')?.addEventListener('click', async () => {
+            const session = await LW.getSession();
+            if (session) {
+                // Log download event
+                const supabase = LW.supabase;
+                await supabase.from('usage').upsert({
+                    user_id: session.user.id,
+                    year_month: new Date().toISOString().slice(0, 7),
+                    app_download_count: 1
+                }, {
+                    onConflict: 'user_id,year_month',
+                    count: 'app_download_count'
+                });
+            }
+        });
+    </script>
+</body>
+</html>

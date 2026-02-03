@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>결제 - LunaWave</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="/js/supabase-client.js"></script>
+    <!-- PortOne SDK -->
+    <script src="https://cdn.iamport.kr/v1/iamport.js"></script>
+
+    <style>
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f9f9fb;
+            --text-primary: #1a1a2e;
+            --text-secondary: #64648c;
+            --text-muted: #9999b3;
+            --accent: #f5a623;
+            --accent-light: rgba(245, 166, 35, 0.1);
+            --border: #e8e8f0;
+            --shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+            --radius: 12px;
+            --radius-sm: 8px;
+            --success: #22c55e;
+            --error: #ef4444;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Noto Sans KR', 'Outfit', sans-serif;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 24px;
+        }
+        .container { max-width: 800px; margin: 0 auto; }
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+        .back-link:hover { color: var(--text-primary); }
+        .page-title {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 32px;
+            text-align: center;
+        }
+        .payment-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+        @media (max-width: 768px) {
+            .payment-grid { grid-template-columns: 1fr; }
+        }
+        .card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 32px;
+        }
+        .card-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card-title i {
+            color: var(--accent);
+            width: 24px;
+            height: 24px;
+        }
+        /* Subscription */
+        .sub-header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        .sub-price {
+            font-size: 48px;
+            font-weight: 700;
+        }
+        .sub-price span {
+            font-size: 18px;
+            font-weight: 400;
+            color: var(--text-secondary);
+        }
+        .sub-original {
+            font-size: 18px;
+            color: var(--text-muted);
+            text-decoration: line-through;
+            margin-bottom: 8px;
+        }
+        .sub-discount {
+            background: var(--error);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 100px;
+            font-size: 13px;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 16px;
+        }
+        .sub-features {
+            list-style: none;
+            margin-bottom: 24px;
+        }
+        .sub-features li {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 0;
+            font-size: 15px;
+        }
+        .sub-features li i {
+            color: var(--success);
+            width: 18px;
+            height: 18px;
+        }
+        /* Token Packages */
+        .token-options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        .token-option {
+            display: flex;
+            align-items: center;
+            padding: 16px;
+            border: 2px solid var(--border);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .token-option:hover { border-color: var(--accent); }
+        .token-option.selected {
+            border-color: var(--accent);
+            background: var(--accent-light);
+        }
+        .token-option.best { position: relative; }
+        .token-option.best::after {
+            content: 'BEST';
+            position: absolute;
+            top: -8px;
+            right: 12px;
+            background: var(--accent);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 700;
+        }
+        .token-option input { display: none; }
+        .token-radio {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border);
+            border-radius: 50%;
+            margin-right: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .token-option.selected .token-radio {
+            border-color: var(--accent);
+        }
+        .token-option.selected .token-radio::after {
+            content: '';
+            width: 10px;
+            height: 10px;
+            background: var(--accent);
+            border-radius: 50%;
+        }
+        .token-info { flex: 1; }
+        .token-amount {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .token-unit {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+        .token-price {
+            font-size: 18px;
+            font-weight: 700;
+        }
+        /* Promo Code */
+        .promo-section {
+            margin-bottom: 24px;
+        }
+        .promo-input {
+            display: flex;
+            gap: 8px;
+        }
+        .promo-input input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            font-family: inherit;
+        }
+        .promo-input input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        .promo-applied {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px;
+            background: rgba(34, 197, 94, 0.1);
+            border-radius: var(--radius-sm);
+            color: var(--success);
+            font-size: 14px;
+            margin-top: 8px;
+        }
+        /* Payment Method */
+        .payment-methods {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        .payment-method {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 16px;
+            border: 2px solid var(--border);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .payment-method:hover { border-color: var(--accent); }
+        .payment-method.selected {
+            border-color: var(--accent);
+            background: var(--accent-light);
+        }
+        .payment-method img {
+            height: 20px;
+        }
+        /* Button */
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            padding: 16px 24px;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            font-family: inherit;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent), #e6951a);
+            color: white;
+        }
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(245, 166, 35, 0.3);
+        }
+        .btn-primary:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .btn-secondary {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+        /* Summary */
+        .summary {
+            border-top: 1px solid var(--border);
+            padding-top: 24px;
+            margin-top: 24px;
+        }
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 14px;
+        }
+        .summary-row.total {
+            font-size: 18px;
+            font-weight: 700;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+            margin-top: 8px;
+        }
+        .summary-discount { color: var(--error); }
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 32px;
+            justify-content: center;
+        }
+        .tab {
+            padding: 12px 32px;
+            border-radius: 100px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+        }
+        .tab:hover { border-color: var(--accent); }
+        .tab.active {
+            background: linear-gradient(135deg, var(--accent), #e6951a);
+            color: white;
+            border-color: transparent;
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .alert {
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        .alert-error {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+        }
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/dashboard.html" class="back-link">
+            <i data-lucide="arrow-left"></i>
+            대시보드로 돌아가기
+        </a>
+
+        <h1 class="page-title">결제</h1>
+
+        <div class="tabs">
+            <div class="tab active" data-tab="subscription">Pro 구독</div>
+            <div class="tab" data-tab="tokens">토큰 구매</div>
+        </div>
+
+        <div id="alert" class="alert alert-error" style="display:none;"></div>
+
+        <!-- Subscription Tab -->
+        <div class="tab-content active" id="subscription-content">
+            <div class="card">
+                <div class="sub-header">
+                    <div class="sub-discount">첫 달 50% 할인</div>
+                    <div class="sub-original">₩17,900</div>
+                    <div class="sub-price">₩8,950<span>/첫 달</span></div>
+                    <p style="color:var(--text-muted); font-size:14px; margin-top:8px;">
+                        이후 월 ₩17,900
+                    </p>
+                </div>
+
+                <ul class="sub-features">
+                    <li><i data-lucide="check"></i> 월 1,500토큰 지급</li>
+                    <li><i data-lucide="check"></i> 미사용 토큰 이월 (최대 3,000)</li>
+                    <li><i data-lucide="check"></i> 모든 기능 이용 가능</li>
+                    <li><i data-lucide="check"></i> 워터마크 없음</li>
+                    <li><i data-lucide="check"></i> 2이미지 합성 + 컷아웃</li>
+                    <li><i data-lucide="check"></i> AI 메타데이터 생성</li>
+                </ul>
+
+                <div class="promo-section">
+                    <label style="font-size:14px; font-weight:500; display:block; margin-bottom:8px;">프로모션 코드</label>
+                    <div class="promo-input">
+                        <input type="text" id="subPromoCode" placeholder="코드 입력">
+                        <button class="btn btn-secondary" style="width:auto; padding:12px 20px;" onclick="applyPromo('sub')">적용</button>
+                    </div>
+                    <div class="promo-applied" id="subPromoApplied" style="display:none;">
+                        <i data-lucide="check-circle"></i>
+                        <span id="subPromoText"></span>
+                    </div>
+                </div>
+
+                <div class="summary">
+                    <div class="summary-row">
+                        <span>Pro 구독 (첫 달)</span>
+                        <span>₩17,900</span>
+                    </div>
+                    <div class="summary-row summary-discount">
+                        <span>첫 달 할인 (50%)</span>
+                        <span>-₩8,950</span>
+                    </div>
+                    <div class="summary-row summary-discount" id="subPromoDiscount" style="display:none;">
+                        <span>프로모션 할인</span>
+                        <span id="subPromoAmount"></span>
+                    </div>
+                    <div class="summary-row total">
+                        <span>결제 금액</span>
+                        <span id="subTotal">₩8,950</span>
+                    </div>
+                </div>
+
+                <div style="margin-top:24px;">
+                    <label style="font-size:14px; font-weight:500; display:block; margin-bottom:12px;">결제 수단</label>
+                    <div class="payment-methods">
+                        <div class="payment-method selected" data-method="card">
+                            <i data-lucide="credit-card"></i>
+                            신용카드
+                        </div>
+                        <div class="payment-method" data-method="kakaopay">
+                            카카오페이
+                        </div>
+                        <div class="payment-method" data-method="naverpay">
+                            네이버페이
+                        </div>
+                        <div class="payment-method" data-method="tosspay">
+                            토스페이
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" id="subPayBtn" onclick="paySubscription()">
+                    <span id="subBtnText">₩8,950 결제하기</span>
+                    <div id="subSpinner" class="spinner" style="display:none;"></div>
+                </button>
+
+                <p style="font-size:12px; color:var(--text-muted); text-align:center; margin-top:16px;">
+                    구독은 매월 자동 갱신됩니다. 언제든 해지 가능합니다.
+                </p>
+            </div>
+        </div>
+
+        <!-- Tokens Tab -->
+        <div class="tab-content" id="tokens-content">
+            <div class="card">
+                <div class="card-title">
+                    <i data-lucide="coins"></i>
+                    추가 토큰 구매
+                </div>
+
+                <div class="token-options">
+                    <label class="token-option" data-package="small" data-price="7900" data-tokens="500">
+                        <input type="radio" name="tokenPackage" value="small">
+                        <div class="token-radio"></div>
+                        <div class="token-info">
+                            <div class="token-amount">500 토큰</div>
+                            <div class="token-unit">토큰당 ₩15.8</div>
+                        </div>
+                        <div class="token-price">₩7,900</div>
+                    </label>
+
+                    <label class="token-option" data-package="medium" data-price="12900" data-tokens="1000">
+                        <input type="radio" name="tokenPackage" value="medium">
+                        <div class="token-radio"></div>
+                        <div class="token-info">
+                            <div class="token-amount">1,000 토큰</div>
+                            <div class="token-unit">토큰당 ₩12.9</div>
+                        </div>
+                        <div class="token-price">₩12,900</div>
+                    </label>
+
+                    <label class="token-option best selected" data-package="large" data-price="29900" data-tokens="3000">
+                        <input type="radio" name="tokenPackage" value="large" checked>
+                        <div class="token-radio"></div>
+                        <div class="token-info">
+                            <div class="token-amount">3,000 토큰</div>
+                            <div class="token-unit">토큰당 ₩9.9</div>
+                        </div>
+                        <div class="token-price">₩29,900</div>
+                    </label>
+                </div>
+
+                <div class="promo-section">
+                    <label style="font-size:14px; font-weight:500; display:block; margin-bottom:8px;">프로모션 코드</label>
+                    <div class="promo-input">
+                        <input type="text" id="tokenPromoCode" placeholder="코드 입력">
+                        <button class="btn btn-secondary" style="width:auto; padding:12px 20px;" onclick="applyPromo('token')">적용</button>
+                    </div>
+                    <div class="promo-applied" id="tokenPromoApplied" style="display:none;">
+                        <i data-lucide="check-circle"></i>
+                        <span id="tokenPromoText"></span>
+                    </div>
+                </div>
+
+                <div class="summary">
+                    <div class="summary-row">
+                        <span id="tokenPackageName">대형 패키지 (3,000 토큰)</span>
+                        <span id="tokenOriginalPrice">₩29,900</span>
+                    </div>
+                    <div class="summary-row summary-discount" id="tokenPromoDiscount" style="display:none;">
+                        <span>프로모션 할인</span>
+                        <span id="tokenPromoAmount"></span>
+                    </div>
+                    <div class="summary-row total">
+                        <span>결제 금액</span>
+                        <span id="tokenTotal">₩29,900</span>
+                    </div>
+                </div>
+
+                <div style="margin-top:24px;">
+                    <label style="font-size:14px; font-weight:500; display:block; margin-bottom:12px;">결제 수단</label>
+                    <div class="payment-methods" id="tokenPaymentMethods">
+                        <div class="payment-method selected" data-method="card">
+                            <i data-lucide="credit-card"></i>
+                            신용카드
+                        </div>
+                        <div class="payment-method" data-method="kakaopay">
+                            카카오페이
+                        </div>
+                        <div class="payment-method" data-method="naverpay">
+                            네이버페이
+                        </div>
+                        <div class="payment-method" data-method="tosspay">
+                            토스페이
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" id="tokenPayBtn" onclick="payTokens()">
+                    <span id="tokenBtnText">₩29,900 결제하기</span>
+                    <div id="tokenSpinner" class="spinner" style="display:none;"></div>
+                </button>
+
+                <p style="font-size:12px; color:var(--text-muted); text-align:center; margin-top:16px;">
+                    구매한 토큰은 소멸되지 않습니다.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // Config
+        const PORTONE_IMP_KEY = 'imp_your_code'; // TODO: Replace with actual PortOne key
+
+        const supabase = LW.supabase;
+        let user;
+
+        // State
+        let selectedSubMethod = 'card';
+        let selectedTokenMethod = 'card';
+        let selectedPackage = { name: 'large', price: 29900, tokens: 3000 };
+        let subPromo = null;
+        let tokenPromo = null;
+
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.tab + '-content').classList.add('active');
+            });
+        });
+
+        // URL param for initial tab
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('type') === 'tokens') {
+            document.querySelector('[data-tab="tokens"]').click();
+        }
+
+        // Payment method selection
+        document.querySelectorAll('.payment-method').forEach(method => {
+            method.addEventListener('click', () => {
+                const container = method.closest('.card');
+                container.querySelectorAll('.payment-method').forEach(m => m.classList.remove('selected'));
+                method.classList.add('selected');
+
+                if (container.closest('#subscription-content')) {
+                    selectedSubMethod = method.dataset.method;
+                } else {
+                    selectedTokenMethod = method.dataset.method;
+                }
+            });
+        });
+
+        // Token package selection
+        document.querySelectorAll('.token-option').forEach(option => {
+            option.addEventListener('click', () => {
+                document.querySelectorAll('.token-option').forEach(o => o.classList.remove('selected'));
+                option.classList.add('selected');
+                option.querySelector('input').checked = true;
+
+                selectedPackage = {
+                    name: option.dataset.package,
+                    price: parseInt(option.dataset.price),
+                    tokens: parseInt(option.dataset.tokens)
+                };
+
+                updateTokenSummary();
+            });
+        });
+
+        function updateTokenSummary() {
+            const names = { small: '소형', medium: '중형', large: '대형' };
+            document.getElementById('tokenPackageName').textContent =
+                `${names[selectedPackage.name]} 패키지 (${selectedPackage.tokens.toLocaleString()} 토큰)`;
+            document.getElementById('tokenOriginalPrice').textContent = `₩${selectedPackage.price.toLocaleString()}`;
+
+            let total = selectedPackage.price;
+            if (tokenPromo) {
+                if (tokenPromo.type === 'discount') {
+                    total -= Math.floor(selectedPackage.price * tokenPromo.value / 100);
+                }
+            }
+            document.getElementById('tokenTotal').textContent = `₩${total.toLocaleString()}`;
+            document.getElementById('tokenBtnText').textContent = `₩${total.toLocaleString()} 결제하기`;
+        }
+
+        async function applyPromo(type) {
+            const input = document.getElementById(type === 'sub' ? 'subPromoCode' : 'tokenPromoCode');
+            const code = input.value.trim().toUpperCase();
+            if (!code) return;
+
+            const { data, error } = await supabase
+                .from('promo_codes')
+                .select('*')
+                .eq('code', code)
+                .eq('is_active', true)
+                .single();
+
+            if (error || !data) {
+                alert('유효하지 않은 프로모션 코드입니다.');
+                return;
+            }
+
+            if (data.expires_at && new Date(data.expires_at) < new Date()) {
+                alert('만료된 프로모션 코드입니다.');
+                return;
+            }
+
+            if (data.max_uses && data.used_count >= data.max_uses) {
+                alert('사용 횟수가 초과된 프로모션 코드입니다.');
+                return;
+            }
+
+            if (type === 'sub') {
+                subPromo = data;
+                document.getElementById('subPromoApplied').style.display = 'flex';
+                document.getElementById('subPromoText').textContent =
+                    data.type === 'discount' ? `${data.value}% 할인 적용` : `${data.value} 토큰 보너스`;
+            } else {
+                tokenPromo = data;
+                document.getElementById('tokenPromoApplied').style.display = 'flex';
+                document.getElementById('tokenPromoText').textContent =
+                    data.type === 'discount' ? `${data.value}% 할인 적용` : `${data.value} 토큰 보너스`;
+                updateTokenSummary();
+            }
+
+            lucide.createIcons();
+        }
+
+        async function paySubscription() {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            const btn = document.getElementById('subPayBtn');
+            const btnText = document.getElementById('subBtnText');
+            const spinner = document.getElementById('subSpinner');
+
+            btn.disabled = true;
+            btnText.style.display = 'none';
+            spinner.style.display = 'block';
+
+            try {
+                let amount = 8950; // 첫 달 할인가
+                if (subPromo && subPromo.type === 'discount') {
+                    amount -= Math.floor(amount * subPromo.value / 100);
+                }
+
+                const merchantUid = `sub_${Date.now()}_${user.id.slice(0, 8)}`;
+
+                const IMP = window.IMP;
+                IMP.init(PORTONE_IMP_KEY);
+
+                IMP.request_pay({
+                    pg: 'html5_inicis',
+                    pay_method: selectedSubMethod,
+                    merchant_uid: merchantUid,
+                    name: 'LunaWave Pro 구독',
+                    amount: amount,
+                    buyer_email: user.email,
+                    buyer_name: user.user_metadata?.full_name || '',
+                    customer_uid: user.id // For subscription billing
+                }, async (response) => {
+                    if (response.success) {
+                        // Verify payment on server
+                        const { error } = await supabase.functions.invoke('verify-payment', {
+                            body: {
+                                imp_uid: response.imp_uid,
+                                merchant_uid: merchantUid,
+                                type: 'subscription',
+                                promo_code: subPromo?.code
+                            }
+                        });
+
+                        if (error) {
+                            alert('결제 검증 실패: ' + error.message);
+                        } else {
+                            alert('Pro 구독이 시작되었습니다!');
+                            window.location.href = '/dashboard.html';
+                        }
+                    } else {
+                        alert('결제 실패: ' + response.error_msg);
+                    }
+
+                    btn.disabled = false;
+                    btnText.style.display = 'block';
+                    spinner.style.display = 'none';
+                });
+            } catch (err) {
+                alert('결제 오류: ' + err.message);
+                btn.disabled = false;
+                btnText.style.display = 'block';
+                spinner.style.display = 'none';
+            }
+        }
+
+        async function payTokens() {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            const btn = document.getElementById('tokenPayBtn');
+            const btnText = document.getElementById('tokenBtnText');
+            const spinner = document.getElementById('tokenSpinner');
+
+            btn.disabled = true;
+            btnText.style.display = 'none';
+            spinner.style.display = 'block';
+
+            try {
+                let amount = selectedPackage.price;
+                if (tokenPromo && tokenPromo.type === 'discount') {
+                    amount -= Math.floor(amount * tokenPromo.value / 100);
+                }
+
+                const merchantUid = `token_${Date.now()}_${user.id.slice(0, 8)}`;
+
+                const IMP = window.IMP;
+                IMP.init(PORTONE_IMP_KEY);
+
+                IMP.request_pay({
+                    pg: 'html5_inicis',
+                    pay_method: selectedTokenMethod,
+                    merchant_uid: merchantUid,
+                    name: `LunaWave ${selectedPackage.tokens.toLocaleString()} 토큰`,
+                    amount: amount,
+                    buyer_email: user.email,
+                    buyer_name: user.user_metadata?.full_name || ''
+                }, async (response) => {
+                    if (response.success) {
+                        // Verify payment on server
+                        const { error } = await supabase.functions.invoke('verify-payment', {
+                            body: {
+                                imp_uid: response.imp_uid,
+                                merchant_uid: merchantUid,
+                                type: 'token_purchase',
+                                token_package: selectedPackage.name,
+                                promo_code: tokenPromo?.code
+                            }
+                        });
+
+                        if (error) {
+                            alert('결제 검증 실패: ' + error.message);
+                        } else {
+                            let msg = `${selectedPackage.tokens.toLocaleString()} 토큰이 충전되었습니다!`;
+                            if (tokenPromo && tokenPromo.type === 'tokens') {
+                                msg += ` (+${tokenPromo.value} 보너스 토큰)`;
+                            }
+                            alert(msg);
+                            window.location.href = '/dashboard.html';
+                        }
+                    } else {
+                        alert('결제 실패: ' + response.error_msg);
+                    }
+
+                    btn.disabled = false;
+                    btnText.style.display = 'block';
+                    spinner.style.display = 'none';
+                });
+            } catch (err) {
+                alert('결제 오류: ' + err.message);
+                btn.disabled = false;
+                btnText.style.display = 'block';
+                spinner.style.display = 'none';
+            }
+        }
+
+        // Check auth
+        async function init() {
+            const { data: { user: u } } = await supabase.auth.getUser();
+            if (!u) {
+                window.location.href = '/login.html';
+                return;
+            }
+            user = u;
+        }
+
+        init();
+    </script>
+</body>
+</html>

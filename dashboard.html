@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>대시보드 - LunaWave</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="/js/supabase-client.js"></script>
+
+    <style>
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f9f9fb;
+            --text-primary: #1a1a2e;
+            --text-secondary: #64648c;
+            --text-muted: #9999b3;
+            --accent: #f5a623;
+            --accent-hover: #e6951a;
+            --accent-light: rgba(245, 166, 35, 0.1);
+            --border: #e8e8f0;
+            --shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.1);
+            --radius: 12px;
+            --radius-sm: 8px;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --error: #ef4444;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Noto Sans KR', 'Outfit', sans-serif;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        /* Header */
+        header {
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 24px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-inner {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 24px;
+            font-weight: 700;
+            text-decoration: none;
+            color: var(--text-primary);
+        }
+
+        .logo span {
+            background: linear-gradient(135deg, var(--accent), #ff8c00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .token-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--accent-light);
+            padding: 8px 16px;
+            border-radius: 100px;
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        .user-menu {
+            position: relative;
+        }
+
+        .user-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: none;
+            border: 1px solid var(--border);
+            padding: 8px 16px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 14px;
+        }
+
+        .user-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 8px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow-lg);
+            min-width: 200px;
+            display: none;
+            z-index: 1000;
+        }
+
+        .user-dropdown.show { display: block; }
+
+        .user-dropdown a, .user-dropdown button {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            padding: 12px 16px;
+            text-decoration: none;
+            color: var(--text-primary);
+            font-size: 14px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            text-align: left;
+            font-family: inherit;
+        }
+
+        .user-dropdown a:hover, .user-dropdown button:hover {
+            background: var(--bg-secondary);
+        }
+
+        .user-dropdown hr {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 4px 0;
+        }
+
+        /* Main Layout */
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 32px 24px;
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 32px;
+        }
+
+        /* Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+        }
+
+        .card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-title i {
+            width: 20px;
+            height: 20px;
+            color: var(--accent);
+        }
+
+        /* Plan Card */
+        .plan-card {
+            grid-column: span 2;
+        }
+
+        .plan-info {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .plan-badge {
+            padding: 8px 20px;
+            border-radius: 100px;
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        .plan-badge.free {
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+        }
+
+        .plan-badge.pro {
+            background: linear-gradient(135deg, var(--accent), #e6951a);
+            color: white;
+        }
+
+        .plan-details {
+            flex: 1;
+        }
+
+        .plan-details h3 {
+            font-size: 20px;
+            margin-bottom: 4px;
+        }
+
+        .plan-details p {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            border: none;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent), #e6951a);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(245, 166, 35, 0.3);
+        }
+
+        .btn-secondary {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-secondary);
+        }
+
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 13px;
+        }
+
+        /* Token Card */
+        .token-display {
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        .token-amount {
+            font-size: 48px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .token-label {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-top: 4px;
+        }
+
+        .token-breakdown {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+        }
+
+        .token-item {
+            text-align: center;
+        }
+
+        .token-item-value {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .token-item-label {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* Progress Bar */
+        .progress-bar {
+            height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 16px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), #e6951a);
+            border-radius: 4px;
+            transition: width 0.3s;
+        }
+
+        /* Usage Stats */
+        .usage-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+
+        .usage-item {
+            text-align: center;
+            padding: 16px;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-sm);
+        }
+
+        .usage-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .usage-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        /* Device List */
+        .device-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .device-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-sm);
+        }
+
+        .device-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .device-info i {
+            width: 20px;
+            height: 20px;
+            color: var(--text-muted);
+        }
+
+        .device-name {
+            font-weight: 500;
+        }
+
+        .device-date {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .btn-danger {
+            color: var(--error);
+            background: none;
+            border: 1px solid var(--error);
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        /* Referral Card */
+        .referral-code {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--bg-secondary);
+            padding: 16px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 16px;
+        }
+
+        .referral-code code {
+            flex: 1;
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: var(--accent);
+        }
+
+        .referral-stats {
+            display: flex;
+            gap: 24px;
+            margin-top: 16px;
+        }
+
+        .referral-stat {
+            text-align: center;
+        }
+
+        .referral-stat-value {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .referral-stat-label {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* Payment History */
+        .payment-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .payment-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .payment-item:last-child {
+            border-bottom: none;
+        }
+
+        .payment-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .payment-type {
+            font-weight: 500;
+        }
+
+        .payment-date {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .payment-amount {
+            font-weight: 600;
+        }
+
+        /* Download Section */
+        .download-card {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .download-icon {
+            width: 64px;
+            height: 64px;
+            background: var(--accent-light);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+        }
+
+        .download-icon i {
+            width: 32px;
+            height: 32px;
+            color: var(--accent);
+        }
+
+        .download-card h3 {
+            font-size: 20px;
+            margin-bottom: 8px;
+        }
+
+        .download-card p {
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        /* Notices */
+        .notice-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .notice-item {
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            border-left: 3px solid var(--accent);
+            background: var(--bg-secondary);
+        }
+
+        .notice-item.urgent {
+            border-left-color: var(--error);
+            background: rgba(239, 68, 68, 0.05);
+        }
+
+        .notice-title {
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .notice-date {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* Free Plan Banner */
+        .upgrade-banner {
+            background: linear-gradient(135deg, #1a1a2e, #2d2d4a);
+            color: white;
+            padding: 32px;
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+        }
+
+        .upgrade-banner h3 {
+            font-size: 20px;
+            margin-bottom: 8px;
+        }
+
+        .upgrade-banner p {
+            opacity: 0.8;
+            font-size: 14px;
+        }
+
+        .free-limit {
+            text-align: center;
+            padding: 20px;
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: var(--radius-sm);
+        }
+
+        .free-limit-count {
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--warning);
+        }
+
+        .free-limit-label {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .plan-card { grid-column: span 1; }
+            .plan-info { flex-direction: column; text-align: center; }
+            .upgrade-banner { flex-direction: column; text-align: center; gap: 20px; }
+            .usage-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="header-inner">
+            <a href="/" class="logo">
+                <span>🌙</span>
+                <span>LunaWave</span>
+            </a>
+
+            <div class="header-right">
+                <div class="token-badge" id="headerTokens">
+                    <i data-lucide="coins"></i>
+                    <span id="headerTokenCount">0</span> 토큰
+                </div>
+
+                <div class="user-menu">
+                    <button class="user-btn" id="userMenuBtn">
+                        <i data-lucide="user"></i>
+                        <span id="userName">사용자</span>
+                        <i data-lucide="chevron-down"></i>
+                    </button>
+                    <div class="user-dropdown" id="userDropdown">
+                        <a href="/settings.html"><i data-lucide="settings"></i> 설정</a>
+                        <a href="/inquiry.html"><i data-lucide="message-circle"></i> 문의하기</a>
+                        <hr>
+                        <button id="logoutBtn"><i data-lucide="log-out"></i> 로그아웃</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-container">
+        <h1 class="page-title">대시보드</h1>
+
+        <!-- Free Plan Upgrade Banner (hidden for Pro) -->
+        <div class="upgrade-banner" id="upgradeBanner">
+            <div>
+                <h3>Pro로 업그레이드하고 모든 기능을 사용하세요</h3>
+                <p>2이미지 합성, 컷아웃, 메타데이터 생성 등 프리미엄 기능 이용 가능</p>
+            </div>
+            <a href="/payment.html?type=subscription" class="btn btn-primary">
+                <i data-lucide="crown"></i>
+                Pro 업그레이드 ₩17,900/월
+            </a>
+        </div>
+
+        <div class="dashboard-grid">
+            <!-- Plan Info -->
+            <div class="card plan-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i data-lucide="credit-card"></i>
+                        내 플랜
+                    </div>
+                    <a href="/payment.html" class="btn btn-secondary btn-sm">플랜 관리</a>
+                </div>
+                <div class="plan-info">
+                    <div class="plan-badge" id="planBadge">Free</div>
+                    <div class="plan-details">
+                        <h3 id="planName">Free 플랜</h3>
+                        <p id="planDesc">무료 체험 중 (3곡 제한)</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Token Balance (Pro only) -->
+            <div class="card" id="tokenCard" style="display:none;">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i data-lucide="coins"></i>
+                        토큰 잔액
+                    </div>
+                    <a href="/payment.html?type=tokens" class="btn btn-primary btn-sm">
+                        <i data-lucide="plus"></i>
+                        토큰 구매
+                    </a>
+                </div>
+                <div class="token-display">
+                    <div class="token-amount" id="totalTokens">0</div>
+                    <div class="token-label">사용 가능한 토큰</div>
+                    <div class="token-breakdown">
+                        <div class="token-item">
+                            <div class="token-item-value" id="monthlyTokens">0</div>
+                            <div class="token-item-label">월간 토큰</div>
+                        </div>
+                        <div class="token-item">
+                            <div class="token-item-value" id="purchasedTokens">0</div>
+                            <div class="token-item-label">구매 토큰</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="tokenProgress" style="width: 100%;"></div>
+                </div>
+                <p style="font-size:12px; color:var(--text-muted); margin-top:8px; text-align:center;">
+                    월간 토큰은 다음 달로 이월됩니다 (최대 3,000)
+                </p>
+            </div>
+
+            <!-- Free Songs (Free only) -->
+            <div class="card" id="freeSongsCard">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i data-lucide="music"></i>
+                        무료 노래
+                    </div>
+                </div>
+                <div class="free-limit">
+                    <div class="free-limit-count"><span id="freeSongsRemaining">3</span>/3</div>
+                    <div class="free-limit-label">남은 무료 노래</div>
+                </div>
+                <p style="font-size:13px; color:var(--text-secondary); margin-top:16px; text-align:center;">
+                    Pro 업그레이드 시 무제한 노래 생성
+                </p>
+            </div>
+
+            <!-- Usage Stats -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i data-lucide="bar-chart-2"></i>
+                        이번 달 사용량
+                    </div>
+                </div>
+                <div class="usage-grid">
+                    <div class="usage-item">
+                        <div class="usage-value" id="usageRender">0</div>
+                        <div class="usage-label">렌더링</div>
+                    </div>
+                    <div class="usage-item">
+                        <div class="usage-value" id="usageCutout">0</div>
+                        <div class="usage-label">컷아웃</div>
+                    </div>
+                    <div class="usage-item">
+                        <div class="usage-value" id="usageMetadata">0</div>
+                        <div class="usage-label">메타데이터</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- App Download -->
+            <div class="card download-card">
+                <div class="download-icon">
+                    <i data-lucide="download"></i>
+                </div>
+                <h3>앱 다운로드</h3>
+                <p>Windows용 LunaWave 앱을 다운로드하세요</p>
+                <a href="/download/LunaWave_Setup.exe" class="btn btn-primary">
+                    <i data-lucide="download"></i>
+                    Windows 다운로드
+                </a>
+                <p style="font-size:12px; color:var(--text-muted); margin-top:12px;">
+                    v1.0.0 | Windows 10/11
+                </p>
+            </div>
+
+            <!-- Registered Devices -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i data-lucide="monitor"></i>
+                        등록된 기기
+                    </div>
+                    <span style="font-size:13px; color:var(--text-muted);">최대 2대</span>
+                </div>
+                <div class="device-list" id="deviceList">
+                    <div class="device-item">
+                        <div class="device-info">
+                            <i data-lucide="monitor"></i>
+                            <div>
+                                <div class="device-name">등록된 기기 없음</div>
+                                <div class="device-date">앱에서 로그인하면 자동 등록됩니다</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Referral -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i data-lucide="gift"></i>
+                        친구 추천
+                    </div>
+                </div>
+                <div class="referral-code">
+                    <code id="referralCode">XXXXXXXX</code>
+                    <button class="btn btn-secondary btn-sm" id="copyReferral">
+                        <i data-lucide="copy"></i>
+                        복사
+                    </button>
+                </div>
+                <p style="font-size:13px; color:var(--text-secondary); margin-bottom:16px;">
+                    친구가 Pro 결제 시 양쪽 모두 200토큰 보너스!
+                </p>
+                <div class="referral-stats">
+                    <div class="referral-stat">
+                        <div class="referral-stat-value" id="referralCount">0</div>
+                        <div class="referral-stat-label">추천한 친구</div>
+                    </div>
+                    <div class="referral-stat">
+                        <div class="referral-stat-value" id="referralBonus">0</div>
+                        <div class="referral-stat-label">받은 보너스</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment History -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i data-lucide="receipt"></i>
+                        결제 내역
+                    </div>
+                    <a href="/payments.html" class="btn btn-secondary btn-sm">전체 보기</a>
+                </div>
+                <div class="payment-list" id="paymentList">
+                    <div class="payment-item">
+                        <div class="payment-info">
+                            <div class="payment-type">결제 내역이 없습니다</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notices -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i data-lucide="bell"></i>
+                        공지사항
+                    </div>
+                </div>
+                <div class="notice-list" id="noticeList">
+                    <div class="notice-item">
+                        <div class="notice-title">LunaWave 서비스 오픈!</div>
+                        <div class="notice-date">2026.02.02</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        lucide.createIcons();
+
+        // Supabase 초기화
+        const supabase = LW.supabase;
+
+        // User Menu Toggle
+        const userMenuBtn = document.getElementById('userMenuBtn');
+        const userDropdown = document.getElementById('userDropdown');
+
+        userMenuBtn.addEventListener('click', () => {
+            userDropdown.classList.toggle('show');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!userMenuBtn.contains(e.target)) {
+                userDropdown.classList.remove('show');
+            }
+        });
+
+        // Copy Referral Code
+        document.getElementById('copyReferral').addEventListener('click', () => {
+            const code = document.getElementById('referralCode').textContent;
+            const url = `${window.location.origin}/signup.html?ref=${code}`;
+            navigator.clipboard.writeText(url).then(() => {
+                alert('추천 링크가 복사되었습니다!');
+            });
+        });
+
+        // Logout
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await LW.signOut();
+        });
+
+        // Load Dashboard Data
+        async function loadDashboard() {
+            try {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) {
+                    window.location.href = '/login.html';
+                    return;
+                }
+
+                // Get user status
+                const { data: status } = await supabase.rpc('get_user_status', {
+                    p_user_id: user.id
+                });
+
+                if (status && status.success) {
+                    updateUI(status);
+                }
+
+                // Get user profile
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', user.id)
+                    .single();
+
+                if (profile) {
+                    document.getElementById('userName').textContent = profile.name || user.email.split('@')[0];
+                    document.getElementById('referralCode').textContent = profile.referral_code || 'XXXXXXXX';
+                }
+
+                // Load devices
+                const { data: devices } = await supabase
+                    .from('devices')
+                    .select('*')
+                    .eq('user_id', user.id)
+                    .order('last_active_at', { ascending: false });
+
+                if (devices && devices.length > 0) {
+                    renderDevices(devices);
+                }
+
+                // Load payments
+                const { data: payments } = await supabase
+                    .from('payments')
+                    .select('*')
+                    .eq('user_id', user.id)
+                    .eq('status', 'paid')
+                    .order('paid_at', { ascending: false })
+                    .limit(5);
+
+                if (payments && payments.length > 0) {
+                    renderPayments(payments);
+                }
+
+                // Load notices
+                const { data: notices } = await supabase
+                    .from('notices')
+                    .select('*')
+                    .eq('is_active', true)
+                    .order('created_at', { ascending: false })
+                    .limit(3);
+
+                if (notices && notices.length > 0) {
+                    renderNotices(notices);
+                }
+
+                // Load usage
+                const yearMonth = new Date().toISOString().slice(0, 7);
+                const { data: usage } = await supabase
+                    .from('usage')
+                    .select('*')
+                    .eq('user_id', user.id)
+                    .eq('year_month', yearMonth)
+                    .single();
+
+                if (usage) {
+                    document.getElementById('usageRender').textContent =
+                        (usage.render_1img_count || 0) + (usage.render_2img_count || 0);
+                    document.getElementById('usageCutout').textContent = usage.cutout_count || 0;
+                    document.getElementById('usageMetadata').textContent = usage.metadata_count || 0;
+                }
+
+            } catch (err) {
+                console.error('Dashboard error:', err);
+            }
+        }
+
+        function updateUI(status) {
+            const isPro = status.plan === 'pro';
+
+            // Update header tokens
+            document.getElementById('headerTokenCount').textContent = status.tokens_total || 0;
+
+            // Plan badge
+            const planBadge = document.getElementById('planBadge');
+            const planName = document.getElementById('planName');
+            const planDesc = document.getElementById('planDesc');
+
+            if (isPro) {
+                planBadge.textContent = 'Pro';
+                planBadge.className = 'plan-badge pro';
+                planName.textContent = 'Pro 플랜';
+                planDesc.textContent = status.plan_expires_at
+                    ? `만료일: ${new Date(status.plan_expires_at).toLocaleDateString()}`
+                    : '월 1,500토큰 + 모든 기능';
+
+                // Show token card, hide free songs card
+                document.getElementById('tokenCard').style.display = 'block';
+                document.getElementById('freeSongsCard').style.display = 'none';
+                document.getElementById('upgradeBanner').style.display = 'none';
+                document.getElementById('headerTokens').style.display = 'flex';
+
+                // Token display
+                document.getElementById('totalTokens').textContent = status.tokens_total || 0;
+                document.getElementById('monthlyTokens').textContent = status.tokens_balance || 0;
+                document.getElementById('purchasedTokens').textContent = status.tokens_purchased || 0;
+
+                // Progress bar (percentage of 1500)
+                const progress = Math.min(100, (status.tokens_balance / 1500) * 100);
+                document.getElementById('tokenProgress').style.width = progress + '%';
+
+            } else {
+                planBadge.textContent = 'Free';
+                planBadge.className = 'plan-badge free';
+                planName.textContent = 'Free 플랜';
+                planDesc.textContent = '무료 체험 중 (3곡 제한)';
+
+                // Show free songs card, hide token card
+                document.getElementById('tokenCard').style.display = 'none';
+                document.getElementById('freeSongsCard').style.display = 'block';
+                document.getElementById('upgradeBanner').style.display = 'flex';
+                document.getElementById('headerTokens').style.display = 'none';
+
+                // Free songs remaining
+                document.getElementById('freeSongsRemaining').textContent = status.free_songs_remaining || 0;
+            }
+        }
+
+
+        function renderDevices(devices) {
+            const container = document.getElementById('deviceList');
+            container.innerHTML = devices.map(d => `
+                <div class="device-item">
+                    <div class="device-info">
+                        <i data-lucide="monitor"></i>
+                        <div>
+                            <div class="device-name">${d.device_name || '알 수 없는 기기'}</div>
+                            <div class="device-date">마지막 접속: ${new Date(d.last_active_at).toLocaleDateString()}</div>
+                        </div>
+                    </div>
+                    <button class="btn btn-danger btn-sm" onclick="removeDevice('${d.id}')">
+                        해제
+                    </button>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function renderPayments(payments) {
+            const container = document.getElementById('paymentList');
+            container.innerHTML = payments.map(p => `
+                <div class="payment-item">
+                    <div class="payment-info">
+                        <div class="payment-type">${p.type === 'subscription' ? 'Pro 구독' : '토큰 구매'}</div>
+                        <div class="payment-date">${new Date(p.paid_at).toLocaleDateString()}</div>
+                    </div>
+                    <div class="payment-amount">₩${p.amount.toLocaleString()}</div>
+                </div>
+            `).join('');
+        }
+
+        function renderNotices(notices) {
+            const container = document.getElementById('noticeList');
+            container.innerHTML = notices.map(n => `
+                <div class="notice-item ${n.type === 'urgent' ? 'urgent' : ''}">
+                    <div class="notice-title">${n.title}</div>
+                    <div class="notice-date">${new Date(n.created_at).toLocaleDateString()}</div>
+                </div>
+            `).join('');
+        }
+
+        async function removeDevice(deviceId) {
+            if (!confirm('이 기기를 해제하시겠습니까?')) return;
+
+            await supabase.from('devices').delete().eq('id', deviceId);
+            loadDashboard();
+        }
+
+        // Init
+        loadDashboard();
+    </script>
+</body>
+</html>

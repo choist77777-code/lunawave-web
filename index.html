@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LunaWave - AI Music Video Creator</title>
+    <meta name="description" content="AI로 음악 영상을 자동 제작하세요. 노래 생성부터 렌더링까지 한 번에.">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Supabase -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="/js/supabase-client.js"></script>
+
+    <style>
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f9f9fb;
+            --bg-card: #ffffff;
+            --text-primary: #1a1a2e;
+            --text-secondary: #64648c;
+            --text-muted: #9999b3;
+            --accent: #f5a623;
+            --accent-hover: #e6951a;
+            --accent-light: rgba(245, 166, 35, 0.1);
+            --border: #e8e8f0;
+            --shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.1);
+            --radius: 12px;
+            --radius-sm: 8px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        /* Header */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            font-size: 28px;
+        }
+
+        .logo span {
+            background: linear-gradient(135deg, var(--accent), #ff8c00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        nav {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+        }
+
+        nav a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 15px;
+            transition: color 0.2s;
+        }
+
+        nav a:hover {
+            color: var(--text-primary);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            border: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent), #e6951a);
+            color: white;
+            box-shadow: 0 4px 16px rgba(245, 166, 35, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(245, 166, 35, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-secondary);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--accent);
+            border: 2px solid var(--accent);
+        }
+
+        .btn-outline:hover {
+            background: var(--accent);
+            color: white;
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 160px 24px 80px;
+            text-align: center;
+            background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--accent-light);
+            color: var(--accent);
+            padding: 8px 16px;
+            border-radius: 100px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 24px;
+        }
+
+        .hero h1 {
+            font-size: clamp(40px, 6vw, 64px);
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 24px;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .hero h1 .accent {
+            background: linear-gradient(135deg, var(--accent), #ff8c00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p {
+            font-size: 20px;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto 40px;
+        }
+
+        .hero-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .hero-image {
+            margin-top: 60px;
+            position: relative;
+        }
+
+        .hero-image img {
+            max-width: 100%;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+        }
+
+        /* Pricing Section */
+        .pricing {
+            padding: 100px 24px;
+            background: var(--bg-primary);
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .section-header h2 {
+            font-size: 40px;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .section-header p {
+            font-size: 18px;
+            color: var(--text-secondary);
+        }
+
+        .pricing-grid {
+            max-width: 1000px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+        }
+
+        .pricing-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 40px;
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .pricing-card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-4px);
+        }
+
+        .pricing-card.featured {
+            border: 2px solid var(--accent);
+        }
+
+        .pricing-card.featured::before {
+            content: 'BEST';
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, var(--accent), #e6951a);
+            color: white;
+            padding: 4px 16px;
+            border-radius: 100px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .pricing-name {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .pricing-price {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .pricing-price span {
+            font-size: 18px;
+            font-weight: 400;
+            color: var(--text-secondary);
+        }
+
+        .pricing-desc {
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .pricing-features {
+            list-style: none;
+            margin-bottom: 32px;
+        }
+
+        .pricing-features li {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+            font-size: 15px;
+        }
+
+        .pricing-features li i {
+            color: #22c55e;
+            width: 20px;
+            height: 20px;
+        }
+
+        .pricing-features li.disabled {
+            color: var(--text-muted);
+        }
+
+        .pricing-features li.disabled i {
+            color: var(--text-muted);
+        }
+
+        /* Features Section */
+        .features {
+            padding: 100px 24px;
+            background: var(--bg-secondary);
+        }
+
+        .features-grid {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 32px;
+        }
+
+        .feature-card {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 32px;
+            border: 1px solid var(--border);
+            transition: all 0.3s;
+        }
+
+        .feature-card:hover {
+            box-shadow: var(--shadow);
+            transform: translateY(-4px);
+        }
+
+        .feature-icon {
+            width: 56px;
+            height: 56px;
+            background: var(--accent-light);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .feature-icon i {
+            width: 28px;
+            height: 28px;
+            color: var(--accent);
+        }
+
+        .feature-card h3 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .feature-card p {
+            color: var(--text-secondary);
+            font-size: 15px;
+        }
+
+        /* Token Packages */
+        .tokens {
+            padding: 100px 24px;
+            background: var(--bg-primary);
+        }
+
+        .tokens-grid {
+            max-width: 900px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .token-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .token-card:hover {
+            border-color: var(--accent);
+        }
+
+        .token-card.best {
+            border: 2px solid var(--accent);
+            position: relative;
+        }
+
+        .token-card.best::after {
+            content: '토큰당 최저가';
+            position: absolute;
+            top: -10px;
+            right: 10px;
+            background: var(--accent);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .token-amount {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .token-price {
+            font-size: 24px;
+            font-weight: 600;
+            margin: 8px 0;
+        }
+
+        .token-unit {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        /* How It Works */
+        .how-it-works {
+            padding: 100px 24px;
+            background: var(--bg-secondary);
+        }
+
+        .steps {
+            max-width: 1000px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 32px;
+        }
+
+        .step {
+            text-align: center;
+            padding: 24px;
+        }
+
+        .step-number {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--accent), #e6951a);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 700;
+            margin: 0 auto 20px;
+        }
+
+        .step h3 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .step p {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        /* CTA Section */
+        .cta {
+            padding: 100px 24px;
+            background: linear-gradient(135deg, #1a1a2e 0%, #2d2d4a 100%);
+            text-align: center;
+            color: white;
+        }
+
+        .cta h2 {
+            font-size: 40px;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .cta p {
+            font-size: 18px;
+            opacity: 0.8;
+            margin-bottom: 40px;
+        }
+
+        /* Footer */
+        footer {
+            padding: 60px 24px;
+            background: var(--bg-primary);
+            border-top: 1px solid var(--border);
+        }
+
+        .footer-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 48px;
+        }
+
+        .footer-brand {
+            max-width: 300px;
+        }
+
+        .footer-brand .logo {
+            margin-bottom: 16px;
+        }
+
+        .footer-brand p {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .footer-links h4 {
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+        }
+
+        .footer-links a {
+            display: block;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            padding: 6px 0;
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover {
+            color: var(--accent);
+        }
+
+        .footer-bottom {
+            max-width: 1200px;
+            margin: 40px auto 0;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            nav {
+                display: none;
+            }
+
+            .footer-inner {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .tokens-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .hero h1 {
+                font-size: 36px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="header-inner">
+            <a href="/" class="logo">
+                <span class="logo-icon">🌙</span>
+                <span>LunaWave</span>
+            </a>
+
+            <nav>
+                <a href="#features">기능</a>
+                <a href="#pricing">요금제</a>
+                <a href="#how-it-works">사용방법</a>
+                <a href="/faq.html">FAQ</a>
+            </nav>
+
+            <div class="header-actions">
+                <a href="/login.html" class="btn btn-secondary">로그인</a>
+                <a href="/signup.html" class="btn btn-primary">무료로 시작하기</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero -->
+    <section class="hero">
+        <div class="hero-badge">
+            <i data-lucide="sparkles"></i>
+            AI 기반 음악 영상 제작
+        </div>
+
+        <h1>
+            노래 생성부터 영상 렌더링까지<br>
+            <span class="accent">한 번에</span>
+        </h1>
+
+        <p>
+            AI가 노래를 만들고, 고품질 영상을 자동으로 렌더링합니다.<br>
+            유튜브 채널 운영을 위한 최적의 솔루션.
+        </p>
+
+        <div class="hero-buttons">
+            <a href="/signup.html" class="btn btn-primary">
+                <i data-lucide="download"></i>
+                무료로 시작하기
+            </a>
+            <a href="#features" class="btn btn-outline">
+                기능 살펴보기
+            </a>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section class="features" id="features">
+        <div class="section-header">
+            <h2>강력한 기능</h2>
+            <p>음악 영상 제작에 필요한 모든 것</p>
+        </div>
+
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i data-lucide="music"></i>
+                </div>
+                <h3>AI 노래 생성</h3>
+                <p>장르, 분위기, 가사를 입력하면 AI가 고품질 노래를 자동으로 생성합니다.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i data-lucide="scissors"></i>
+                </div>
+                <h3>스마트 컷아웃</h3>
+                <p>BiRefNet 기술로 인물을 깔끔하게 분리. 머리카락까지 자연스럽게.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i data-lucide="film"></i>
+                </div>
+                <h3>2이미지 합성</h3>
+                <p>배경 + 인물을 합성하여 프로페셔널한 뮤직비디오 퀄리티의 영상을 제작.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i data-lucide="bar-chart-2"></i>
+                </div>
+                <h3>실시간 비주얼라이저</h3>
+                <p>음악에 맞춰 움직이는 비주얼라이저. 다양한 스타일과 색상 지원.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i data-lucide="type"></i>
+                </div>
+                <h3>텍스트 오버레이</h3>
+                <p>제목, 가사 등 텍스트를 자유롭게 배치. 그라데이션, 외곽선 지원.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i data-lucide="file-text"></i>
+                </div>
+                <h3>YouTube 메타데이터</h3>
+                <p>유튜브 트렌드 분석 기반 제목, 설명, 태그 자동 생성.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing -->
+    <section class="pricing" id="pricing">
+        <div class="section-header">
+            <h2>요금제</h2>
+            <p>목적에 맞는 플랜을 선택하세요</p>
+        </div>
+
+        <div class="pricing-grid">
+            <div class="pricing-card">
+                <div class="pricing-name">Free</div>
+                <div class="pricing-price">₩0</div>
+                <div class="pricing-desc">입문자를 위한 체험</div>
+
+                <ul class="pricing-features">
+                    <li><i data-lucide="check"></i> 노래 생성 3곡</li>
+                    <li><i data-lucide="check"></i> 1이미지 렌더링 (워터마크)</li>
+                    <li><i data-lucide="check"></i> 기본 텍스트/비주얼라이저</li>
+                    <li class="disabled"><i data-lucide="x"></i> 2이미지 합성</li>
+                    <li class="disabled"><i data-lucide="x"></i> 컷아웃</li>
+                    <li class="disabled"><i data-lucide="x"></i> 메타데이터 생성</li>
+                    <li class="disabled"><i data-lucide="x"></i> 후처리 효과</li>
+                </ul>
+
+                <a href="/signup.html" class="btn btn-secondary" style="width:100%;">무료로 시작</a>
+            </div>
+
+            <div class="pricing-card featured">
+                <div class="pricing-name">Pro</div>
+                <div class="pricing-price">₩17,900<span>/월</span></div>
+                <div class="pricing-desc">월 1,500토큰 + 모든 기능</div>
+
+                <ul class="pricing-features">
+                    <li><i data-lucide="check"></i> 모든 기능 이용 가능</li>
+                    <li><i data-lucide="check"></i> 월 1,500토큰 지급</li>
+                    <li><i data-lucide="check"></i> 미사용 토큰 이월 (최대 3,000)</li>
+                    <li><i data-lucide="check"></i> 워터마크 없음</li>
+                    <li><i data-lucide="check"></i> 2이미지 합성 + 컷아웃</li>
+                    <li><i data-lucide="check"></i> AI 메타데이터 (GPT/Gemini)</li>
+                    <li><i data-lucide="check"></i> 후처리 효과 (Halo, Edge)</li>
+                </ul>
+
+                <a href="/signup.html?plan=pro" class="btn btn-primary" style="width:100%;">Pro 시작하기</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Token Packages -->
+    <section class="tokens">
+        <div class="section-header">
+            <h2>추가 토큰</h2>
+            <p>더 많은 영상을 만들고 싶다면</p>
+        </div>
+
+        <div class="tokens-grid">
+            <div class="token-card">
+                <div class="token-amount">500</div>
+                <div>토큰</div>
+                <div class="token-price">₩7,900</div>
+                <div class="token-unit">토큰당 ₩15.8</div>
+            </div>
+
+            <div class="token-card">
+                <div class="token-amount">1,000</div>
+                <div>토큰</div>
+                <div class="token-price">₩12,900</div>
+                <div class="token-unit">토큰당 ₩12.9</div>
+            </div>
+
+            <div class="token-card best">
+                <div class="token-amount">3,000</div>
+                <div>토큰</div>
+                <div class="token-price">₩29,900</div>
+                <div class="token-unit">토큰당 ₩9.9</div>
+            </div>
+        </div>
+
+        <p style="text-align:center; margin-top:24px; color:var(--text-muted); font-size:14px;">
+            구매한 토큰은 소멸되지 않습니다. 이월 상한 없음.
+        </p>
+    </section>
+
+    <!-- How It Works -->
+    <section class="how-it-works" id="how-it-works">
+        <div class="section-header">
+            <h2>사용 방법</h2>
+            <p>4단계로 영상 완성</p>
+        </div>
+
+        <div class="steps">
+            <div class="step">
+                <div class="step-number">1</div>
+                <h3>회원가입</h3>
+                <p>무료 계정 생성 후<br>앱 다운로드</p>
+            </div>
+
+            <div class="step">
+                <div class="step-number">2</div>
+                <h3>노래 생성</h3>
+                <p>장르, 분위기 선택하면<br>AI가 노래 제작</p>
+            </div>
+
+            <div class="step">
+                <div class="step-number">3</div>
+                <h3>영상 설정</h3>
+                <p>이미지, 텍스트, 비주얼라이저<br>원하는대로 설정</p>
+            </div>
+
+            <div class="step">
+                <div class="step-number">4</div>
+                <h3>렌더링</h3>
+                <p>고품질 영상 완성!<br>바로 유튜브 업로드</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta">
+        <h2>지금 시작하세요</h2>
+        <p>무료 3곡으로 체험해보세요</p>
+        <a href="/signup.html" class="btn btn-primary" style="font-size:18px; padding:16px 40px;">
+            <i data-lucide="download"></i>
+            무료로 시작하기
+        </a>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-inner">
+            <div class="footer-brand">
+                <a href="/" class="logo">
+                    <span class="logo-icon">🌙</span>
+                    <span>LunaWave</span>
+                </a>
+                <p>AI로 음악 영상을 쉽고 빠르게 제작하세요.</p>
+            </div>
+
+            <div class="footer-links">
+                <h4>제품</h4>
+                <a href="#features">기능</a>
+                <a href="#pricing">요금제</a>
+                <a href="/download.html">다운로드</a>
+            </div>
+
+            <div class="footer-links">
+                <h4>지원</h4>
+                <a href="/faq.html">FAQ</a>
+                <a href="/contact.html">문의하기</a>
+                <a href="/guide.html">사용 가이드</a>
+            </div>
+
+            <div class="footer-links">
+                <h4>법적 고지</h4>
+                <a href="/terms.html">이용약관</a>
+                <a href="/privacy.html">개인정보처리방침</a>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <span>© 2026 LunaWave. All rights reserved.</span>
+            <span>문의: support@lunawave.io</span>
+        </div>
+    </footer>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Update header for logged-in users
+        async function updateHeader() {
+            const session = await LW.getSession();
+            if (session) {
+                const headerActions = document.querySelector('.header-actions');
+                if (headerActions) {
+                    headerActions.innerHTML = `
+                        <a href="/dashboard.html" class="btn btn-primary">대시보드</a>
+                    `;
+                }
+            }
+        }
+
+        updateHeader();
+    </script>
+</body>
+</html>
