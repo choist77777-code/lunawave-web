@@ -1,0 +1,24 @@
+{
+  "name": "web",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/choist77777-code/lunawave-web.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/choist77777-code/lunawave-web/issues"
+  },
+  "homepage": "https://github.com/choist77777-code/lunawave-web#readme",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.93.3"
+  }
+}
