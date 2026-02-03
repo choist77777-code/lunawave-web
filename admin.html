@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LunaWave Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="/js/supabase-client.js"></script>
+<style>
+:root {
+    --bg: #0f0f14; --bg2: #16161e; --bg3: #1e1e28; --bg4: #282834;
+    --gold: #f5a623; --gold2: #e8941a; --gold-dim: rgba(245,166,35,.12);
+    --text: #e8e8f0; --text2: #9999b3; --text3: #64648c;
+    --green: #22c55e; --red: #ef4444; --blue: #3b82f6;
+    --line: #2a2a3a; --radius: 10px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Noto Sans KR','Outfit',sans-serif; background:var(--bg); color:var(--text); display:flex; min-height:100vh; }
+
+/* SIDEBAR */
+.sidebar { width:220px; background:var(--bg2); border-right:1px solid var(--line); padding:20px 0; position:fixed; top:0; left:0; bottom:0; display:flex; flex-direction:column; z-index:100; }
+.sidebar-logo { display:flex; align-items:center; gap:10px; padding:0 20px 24px; border-bottom:1px solid var(--line); margin-bottom:12px; }
+.sidebar-logo svg { flex-shrink:0; }
+.sidebar-logo-text { font-family:'Outfit'; font-weight:700; font-size:18px; letter-spacing:1px; }
+.sidebar-logo-text span { font-weight:300; color:var(--text3); }
+.nav-item { display:flex; align-items:center; gap:10px; padding:10px 20px; font-size:13px; color:var(--text2); cursor:pointer; transition:all .15s; border-left:3px solid transparent; }
+.nav-item:hover { color:var(--text); background:var(--bg3); }
+.nav-item.active { color:var(--gold); background:var(--gold-dim); border-left-color:var(--gold); }
+.nav-item i { width:18px; height:18px; }
+.sidebar-footer { margin-top:auto; padding:16px 20px; border-top:1px solid var(--line); }
+.sidebar-footer a { font-size:12px; color:var(--text3); text-decoration:none; display:flex; align-items:center; gap:8px; }
+.sidebar-footer a:hover { color:var(--text); }
+
+/* MAIN */
+.main { margin-left:220px; flex:1; padding:24px 32px; min-height:100vh; }
+.page-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:28px; }
+.page-title { font-size:22px; font-weight:700; }
+.page-subtitle { font-size:13px; color:var(--text3); margin-top:4px; }
+
+/* CARDS */
+.stat-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px; }
+.stat-card { background:var(--bg2); border:1px solid var(--line); border-radius:var(--radius); padding:20px; }
+.stat-label { font-size:12px; color:var(--text3); margin-bottom:8px; display:flex; align-items:center; gap:6px; }
+.stat-label i { width:14px; height:14px; }
+.stat-value { font-family:'Outfit'; font-size:28px; font-weight:800; }
+.stat-sub { font-size:11px; color:var(--text3); margin-top:4px; }
+.stat-up { color:var(--green); }
+.stat-down { color:var(--red); }
+
+/* TABLE */
+.table-wrap { background:var(--bg2); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; margin-bottom:24px; }
+.table-header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid var(--line); }
+.table-title { font-size:15px; font-weight:600; }
+.table-actions { display:flex; gap:8px; }
+.search-box { background:var(--bg3); border:1px solid var(--line); border-radius:6px; padding:7px 12px; color:var(--text); font-size:13px; font-family:inherit; width:220px; }
+.search-box::placeholder { color:var(--text3); }
+.search-box:focus { outline:none; border-color:var(--gold); }
+table { width:100%; border-collapse:collapse; }
+th { text-align:left; font-size:11px; font-weight:600; color:var(--text3); text-transform:uppercase; letter-spacing:1px; padding:12px 16px; border-bottom:1px solid var(--line); }
+td { padding:12px 16px; font-size:13px; border-bottom:1px solid var(--line); }
+tr:hover td { background:var(--bg3); }
+tr:last-child td { border-bottom:none; }
+
+/* BADGES */
+.badge { padding:3px 10px; border-radius:100px; font-size:11px; font-weight:600; }
+.badge-pro { background:rgba(245,166,35,.15); color:var(--gold); }
+.badge-free { background:rgba(100,100,140,.15); color:var(--text3); }
+.badge-paid { background:rgba(34,197,94,.15); color:var(--green); }
+.badge-refund { background:rgba(239,68,68,.15); color:var(--red); }
+.badge-open { background:rgba(59,130,246,.15); color:var(--blue); }
+.badge-replied { background:rgba(34,197,94,.15); color:var(--green); }
+.badge-closed { background:rgba(100,100,140,.15); color:var(--text3); }
+
+/* BUTTONS */
+.btn { padding:7px 14px; border-radius:6px; font-size:12px; font-weight:600; border:none; cursor:pointer; font-family:inherit; transition:all .15s; display:inline-flex; align-items:center; gap:6px; }
+.btn i { width:14px; height:14px; }
+.btn-gold { background:var(--gold); color:#fff; }
+.btn-gold:hover { background:var(--gold2); }
+.btn-outline { background:transparent; border:1px solid var(--line); color:var(--text2); }
+.btn-outline:hover { border-color:var(--text2); color:var(--text); }
+.btn-danger { background:rgba(239,68,68,.15); color:var(--red); }
+.btn-danger:hover { background:rgba(239,68,68,.25); }
+.btn-sm { padding:5px 10px; font-size:11px; }
+
+/* TAB CONTENT */
+.tab-content { display:none; }
+.tab-content.active { display:block; }
+
+/* MODAL */
+.modal-overlay { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,.6); z-index:1000; align-items:center; justify-content:center; }
+.modal-overlay.show { display:flex; }
+.modal { background:var(--bg2); border:1px solid var(--line); border-radius:var(--radius); padding:28px; width:420px; max-width:90vw; }
+.modal h3 { font-size:18px; margin-bottom:20px; }
+.modal label { display:block; font-size:13px; color:var(--text2); margin-bottom:6px; margin-top:14px; }
+.modal input, .modal select, .modal textarea { width:100%; background:var(--bg3); border:1px solid var(--line); border-radius:6px; padding:9px 12px; color:var(--text); font-size:13px; font-family:inherit; }
+.modal input:focus, .modal select:focus, .modal textarea:focus { outline:none; border-color:var(--gold); }
+.modal-btns { display:flex; gap:8px; margin-top:20px; justify-content:flex-end; }
+
+/* CHART placeholder */
+.chart-placeholder { background:var(--bg2); border:1px solid var(--line); border-radius:var(--radius); padding:40px; text-align:center; color:var(--text3); font-size:13px; margin-bottom:24px; min-height:200px; display:flex; align-items:center; justify-content:center; }
+
+/* FORM ROW */
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+
+/* SECTION */
+.section-title { font-size:15px; font-weight:600; margin-bottom:16px; margin-top:28px; display:flex; align-items:center; gap:8px; }
+.section-title i { width:18px; height:18px; color:var(--gold); }
+
+/* Loading */
+.loading { text-align:center; padding:40px; color:var(--text3); font-size:13px; }
+
+@media(max-width:768px) {
+    .sidebar { width:60px; } .sidebar-logo-text, .nav-item span { display:none; }
+    .main { margin-left:60px; padding:16px; } .stat-grid { grid-template-columns:1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+    <div class="sidebar-logo">
+        <svg width="28" height="28" viewBox="0 0 42 42"><circle cx="21" cy="21" r="19.5" fill="none" stroke="#f5a623" stroke-width="2.5"/><ellipse cx="18" cy="16" rx="1.3" ry="4.2" fill="#f5a623"/><ellipse cx="24" cy="16" rx="1.3" ry="4.2" fill="#f5a623"/></svg>
+        <div class="sidebar-logo-text">Luna<span>Wave</span></div>
+    </div>
+    <div class="nav-item active" data-tab="dashboard"><i data-lucide="layout-dashboard"></i><span>대시보드</span></div>
+    <div class="nav-item" data-tab="users"><i data-lucide="users"></i><span>유저 관리</span></div>
+    <div class="nav-item" data-tab="luna"><i data-lucide="coins"></i><span>루나 현황</span></div>
+    <div class="nav-item" data-tab="payments"><i data-lucide="credit-card"></i><span>결제 내역</span></div>
+    <div class="nav-item" data-tab="marketing"><i data-lucide="megaphone"></i><span>마케팅</span></div>
+    <div class="nav-item" data-tab="analytics"><i data-lucide="bar-chart-2"></i><span>분석</span></div>
+    <div class="nav-item" data-tab="cs"><i data-lucide="headphones"></i><span>CS / 운영</span></div>
+    <div class="nav-item" data-tab="security"><i data-lucide="shield"></i><span>보안</span></div>
+    <div class="sidebar-footer">
+        <a href="/"><i data-lucide="arrow-left"></i><span>사이트로 돌아가기</span></a>
+    </div>
+</aside>
+
+<!-- MAIN CONTENT -->
+<div class="main">
+
+<!-- ==================== TAB 1: 대시보드 ==================== -->
+<div class="tab-content active" id="tab-dashboard">
+    <div class="page-header">
+        <div><div class="page-title">매출 대시보드</div><div class="page-subtitle">실시간 매출 및 핵심 지표</div></div>
+        <button class="btn btn-outline" onclick="loadDashboardData()"><i data-lucide="refresh-cw"></i> 새로고침</button>
+    </div>
+    <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label"><i data-lucide="won-sign"></i>오늘 매출</div><div class="stat-value" id="d-today">₩0</div></div>
+        <div class="stat-card"><div class="stat-label"><i data-lucide="trending-up"></i>이번 달 매출</div><div class="stat-value" id="d-month">₩0</div></div>
+        <div class="stat-card"><div class="stat-label"><i data-lucide="users"></i>총 유저</div><div class="stat-value" id="d-users">0</div></div>
+        <div class="stat-card"><div class="stat-label"><i data-lucide="crown"></i>활성 구독자</div><div class="stat-value" id="d-subs">0</div></div>
+    </div>
+    <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label">MRR (월간 반복매출)</div><div class="stat-value" id="d-mrr">₩0</div></div>
+        <div class="stat-card"><div class="stat-label">구독 이탈률</div><div class="stat-value" id="d-churn">0%</div></div>
+        <div class="stat-card"><div class="stat-label">ARPU</div><div class="stat-value" id="d-arpu">₩0</div></div>
+        <div class="stat-card"><div class="stat-label">오늘 가입</div><div class="stat-value" id="d-new">0</div></div>
+    </div>
+    <div class="chart-placeholder">매출 차트 (데이터 수집 후 표시)</div>
+</div>
+
+<!-- ==================== TAB 2: 유저 관리 ==================== -->
+<div class="tab-content" id="tab-users">
+    <div class="page-header">
+        <div><div class="page-title">유저 관리</div><div class="page-subtitle">전체 회원 목록 및 관리</div></div>
+    </div>
+    <div class="table-wrap">
+        <div class="table-header">
+            <div class="table-title">유저 목록</div>
+            <div class="table-actions">
+                <input type="text" class="search-box" id="userSearch" placeholder="이메일 또는 이름 검색...">
+            </div>
+        </div>
+        <table>
+            <thead><tr><th>이메일</th><th>이름</th><th>플랜</th><th>루나 잔액</th><th>가입일</th><th>액션</th></tr></thead>
+            <tbody id="userTableBody"><tr><td colspan="6" class="loading">로딩 중...</td></tr></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ==================== TAB 3: 루나 현황 ==================== -->
+<div class="tab-content" id="tab-luna">
+    <div class="page-header">
+        <div><div class="page-title">루나 현황</div><div class="page-subtitle">전체 루나 발행 및 사용 현황</div></div>
+    </div>
+    <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label"><i data-lucide="coins"></i>총 발행 루나</div><div class="stat-value" id="l-issued">0</div></div>
+        <div class="stat-card"><div class="stat-label"><i data-lucide="flame"></i>총 사용 루나</div><div class="stat-value" id="l-used">0</div></div>
+        <div class="stat-card"><div class="stat-label"><i data-lucide="wallet"></i>총 잔여 루나</div><div class="stat-value" id="l-remaining">0</div></div>
+        <div class="stat-card"><div class="stat-label"><i data-lucide="alert-triangle"></i>이상 사용</div><div class="stat-value" id="l-anomaly">0</div></div>
+    </div>
+    <div class="section-title"><i data-lucide="pie-chart"></i> 기능별 사용 비율</div>
+    <div class="chart-placeholder">기능별 루나 사용 비율 차트 (데이터 수집 후 표시)</div>
+    <div class="section-title"><i data-lucide="list"></i> 최근 루나 사용 내역</div>
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>유저</th><th>기능</th><th>소비량</th><th>잔액</th><th>시간</th></tr></thead>
+            <tbody id="lunaLogBody"><tr><td colspan="5" class="loading">데이터 수집 중...</td></tr></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ==================== TAB 4: 결제 내역 ==================== -->
+<div class="tab-content" id="tab-payments">
+    <div class="page-header">
+        <div><div class="page-title">결제 내역</div><div class="page-subtitle">전체 결제 및 환불 관리</div></div>
+    </div>
+    <div class="table-wrap">
+        <div class="table-header">
+            <div class="table-title">결제 목록</div>
+            <div class="table-actions">
+                <select class="search-box" id="payFilter" style="width:140px;">
+                    <option value="all">전체</option>
+                    <option value="paid">결제완료</option>
+                    <option value="refunded">환불</option>
+                </select>
+                <input type="text" class="search-box" id="paySearch" placeholder="이메일 검색...">
+            </div>
+        </div>
+        <table>
+            <thead><tr><th>날짜</th><th>유저</th><th>유형</th><th>금액</th><th>상태</th><th>액션</th></tr></thead>
+            <tbody id="payTableBody"><tr><td colspan="6" class="loading">로딩 중...</td></tr></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ==================== TAB 5: 마케팅 ==================== -->
+<div class="tab-content" id="tab-marketing">
+    <div class="page-header">
+        <div><div class="page-title">마케팅</div><div class="page-subtitle">추천인, 프로모션 코드, 할인 관리</div></div>
+    </div>
+
+    <div class="section-title"><i data-lucide="gift"></i> 추천인 시스템</div>
+    <div class="stat-grid" style="grid-template-columns:repeat(3,1fr);">
+        <div class="stat-card"><div class="stat-label">총 추천 수</div><div class="stat-value" id="m-refs">0</div></div>
+        <div class="stat-card"><div class="stat-label">전환 수 (Pro 결제)</div><div class="stat-value" id="m-conv">0</div></div>
+        <div class="stat-card"><div class="stat-label">지급 보너스 루나</div><div class="stat-value" id="m-bonus">0</div></div>
+    </div>
+
+    <div class="section-title"><i data-lucide="tag"></i> 프로모션 코드</div>
+    <div class="table-wrap">
+        <div class="table-header">
+            <div class="table-title">코드 목록</div>
+            <button class="btn btn-gold" onclick="showPromoModal()"><i data-lucide="plus"></i> 코드 생성</button>
+        </div>
+        <table>
+            <thead><tr><th>코드</th><th>유형</th><th>값</th><th>사용/최대</th><th>만료일</th><th>상태</th></tr></thead>
+            <tbody id="promoTableBody"><tr><td colspan="6" class="loading">로딩 중...</td></tr></tbody>
+        </table>
+    </div>
+
+    <div class="section-title"><i data-lucide="percent"></i> 첫 결제 할인</div>
+    <div class="stat-card" style="display:flex;align-items:center;justify-content:space-between;background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:20px;">
+        <div>
+            <div style="font-size:15px;font-weight:600;">첫 달 할인율</div>
+            <div style="font-size:13px;color:var(--text3);margin-top:4px;">현재: 30% (₩12,530)</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;">
+            <input type="number" id="discountRate" value="30" min="0" max="80" style="width:80px;background:var(--bg3);border:1px solid var(--line);border-radius:6px;padding:8px;color:var(--text);font-size:15px;font-weight:700;text-align:center;">
+            <span style="color:var(--text2);">%</span>
+            <button class="btn btn-gold" onclick="saveDiscount()">저장</button>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== TAB 6: 분석 ==================== -->
+<div class="tab-content" id="tab-analytics">
+    <div class="page-header">
+        <div><div class="page-title">유저 분석</div><div class="page-subtitle">전환율, 이탈 경고, 활성 유저</div></div>
+    </div>
+    <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label">DAU (일간 활성)</div><div class="stat-value" id="a-dau">0</div></div>
+        <div class="stat-card"><div class="stat-label">WAU (주간 활성)</div><div class="stat-value" id="a-wau">0</div></div>
+        <div class="stat-card"><div class="stat-label">MAU (월간 활성)</div><div class="stat-value" id="a-mau">0</div></div>
+        <div class="stat-card"><div class="stat-label">Free→Pro 전환율</div><div class="stat-value" id="a-conv">0%</div></div>
+    </div>
+    <div class="section-title"><i data-lucide="funnel"></i> 전환 퍼널</div>
+    <div class="chart-placeholder">가입 → 앱 다운로드 → 첫 실행 → Free 3곡 소진 → Pro 결제 (데이터 수집 후 표시)</div>
+    <div class="section-title"><i data-lucide="alert-circle"></i> 이탈 경고 (7일 이상 미접속)</div>
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>이메일</th><th>플랜</th><th>마지막 접속</th><th>미접속 일수</th><th>액션</th></tr></thead>
+            <tbody id="churnTableBody"><tr><td colspan="5" class="loading">데이터 수집 중...</td></tr></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ==================== TAB 7: CS / 운영 ==================== -->
+<div class="tab-content" id="tab-cs">
+    <div class="page-header">
+        <div><div class="page-title">CS / 운영</div><div class="page-subtitle">문의, 공지사항, 버전 관리</div></div>
+    </div>
+
+    <div class="section-title"><i data-lucide="message-circle"></i> 1:1 문의</div>
+    <div class="table-wrap">
+        <div class="table-header">
+            <div class="table-title">문의 목록</div>
+            <select class="search-box" id="csFilter" style="width:120px;">
+                <option value="all">전체</option>
+                <option value="open">대기중</option>
+                <option value="replied">답변완료</option>
+            </select>
+        </div>
+        <table>
+            <thead><tr><th>유저</th><th>제목</th><th>상태</th><th>날짜</th><th>액션</th></tr></thead>
+            <tbody id="csTableBody"><tr><td colspan="5" class="loading">문의 없음</td></tr></tbody>
+        </table>
+    </div>
+
+    <div class="section-title"><i data-lucide="bell"></i> 공지사항</div>
+    <div class="table-wrap">
+        <div class="table-header">
+            <div class="table-title">공지 목록</div>
+            <button class="btn btn-gold" onclick="showNoticeModal()"><i data-lucide="plus"></i> 공지 작성</button>
+        </div>
+        <table>
+            <thead><tr><th>제목</th><th>유형</th><th>상태</th><th>날짜</th><th>액션</th></tr></thead>
+            <tbody id="noticeTableBody"><tr><td colspan="5" class="loading">로딩 중...</td></tr></tbody>
+        </table>
+    </div>
+
+    <div class="section-title"><i data-lucide="download"></i> 앱 버전 관리</div>
+    <div class="stat-card" style="display:flex;align-items:center;justify-content:space-between;background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:20px;">
+        <div>
+            <div style="font-size:15px;font-weight:600;">현재 최신 버전</div>
+            <div style="font-size:13px;color:var(--text3);margin-top:4px;">최소 지원: v1.0.0</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;">
+            <input type="text" id="appVersion" value="1.0.0" style="width:100px;background:var(--bg3);border:1px solid var(--line);border-radius:6px;padding:8px;color:var(--text);font-size:14px;text-align:center;">
+            <button class="btn btn-gold" onclick="saveVersion()">저장</button>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== TAB 8: 보안 ==================== -->
+<div class="tab-content" id="tab-security">
+    <div class="page-header">
+        <div><div class="page-title">보안 / 감시</div><div class="page-subtitle">이상 사용 감지, 로그인 기록, API 모니터링</div></div>
+    </div>
+
+    <div class="section-title"><i data-lucide="alert-triangle"></i> 이상 사용 감지</div>
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>유저</th><th>유형</th><th>내용</th><th>시간</th><th>액션</th></tr></thead>
+            <tbody id="secAlertBody">
+                <tr><td colspan="5" class="loading">이상 감지 없음</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="section-title"><i data-lucide="log-in"></i> 최근 로그인 기록</div>
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>유저</th><th>IP</th><th>기기</th><th>시간</th></tr></thead>
+            <tbody id="loginLogBody"><tr><td colspan="4" class="loading">데이터 수집 중...</td></tr></tbody>
+        </table>
+    </div>
+
+    <div class="section-title"><i data-lucide="monitor"></i> Free 악용 현황</div>
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>기기 ID</th><th>연결 계정 수</th><th>계정 목록</th><th>상태</th></tr></thead>
+            <tbody id="freeAbuseBody"><tr><td colspan="4" class="loading">데이터 수집 중...</td></tr></tbody>
+        </table>
+    </div>
+</div>
+
+</div><!-- /main -->
+
+<!-- ==================== MODALS ==================== -->
+
+<!-- 루나 지급/차감 모달 -->
+<div class="modal-overlay" id="lunaModal">
+    <div class="modal">
+        <h3>루나 수동 관리</h3>
+        <label>유저</label>
+        <input type="text" id="lunaModalUser" readonly>
+        <div class="form-row">
+            <div><label>유형</label><select id="lunaModalType"><option value="grant">지급</option><option value="deduct">차감</option></select></div>
+            <div><label>수량</label><input type="number" id="lunaModalAmount" value="100" min="1"></div>
+        </div>
+        <label>사유</label>
+        <input type="text" id="lunaModalReason" placeholder="CS 보상, 이벤트 등">
+        <div class="modal-btns">
+            <button class="btn btn-outline" onclick="closeLunaModal()">취소</button>
+            <button class="btn btn-gold" onclick="submitLunaAction()">확인</button>
+        </div>
+    </div>
+</div>
+
+<!-- 프로모션 코드 생성 모달 -->
+<div class="modal-overlay" id="promoModal">
+    <div class="modal">
+        <h3>프로모션 코드 생성</h3>
+        <label>코드</label>
+        <input type="text" id="promoCode" placeholder="예: LAUNCH30" style="text-transform:uppercase;">
+        <div class="form-row">
+            <div><label>유형</label><select id="promoType"><option value="discount">할인(%)</option><option value="tokens">루나 보너스</option></select></div>
+            <div><label>값</label><input type="number" id="promoValue" value="30" min="1"></div>
+        </div>
+        <div class="form-row">
+            <div><label>최대 사용 횟수</label><input type="number" id="promoMax" value="100" min="1"></div>
+            <div><label>만료일</label><input type="date" id="promoExpiry"></div>
+        </div>
+        <div class="modal-btns">
+            <button class="btn btn-outline" onclick="closePromoModal()">취소</button>
+            <button class="btn btn-gold" onclick="submitPromo()">생성</button>
+        </div>
+    </div>
+</div>
+
+<!-- 공지사항 모달 -->
+<div class="modal-overlay" id="noticeModal">
+    <div class="modal">
+        <h3>공지사항 작성</h3>
+        <label>제목</label>
+        <input type="text" id="noticeTitle" placeholder="공지 제목">
+        <label>내용</label>
+        <textarea id="noticeContent" rows="4" placeholder="공지 내용"></textarea>
+        <label>유형</label>
+        <select id="noticeType"><option value="info">일반</option><option value="warning">경고</option><option value="urgent">긴급</option></select>
+        <div class="modal-btns">
+            <button class="btn btn-outline" onclick="closeNoticeModal()">취소</button>
+            <button class="btn btn-gold" onclick="submitNotice()">등록</button>
+        </div>
+    </div>
+</div>
+
+<!-- 환불 모달 -->
+<div class="modal-overlay" id="refundModal">
+    <div class="modal">
+        <h3>환불 처리</h3>
+        <label>결제 정보</label>
+        <input type="text" id="refundInfo" readonly>
+        <label>환불 금액</label>
+        <input type="number" id="refundAmount" min="0">
+        <label>환불 사유</label>
+        <input type="text" id="refundReason" placeholder="환불 사유 입력">
+        <div class="modal-btns">
+            <button class="btn btn-outline" onclick="closeRefundModal()">취소</button>
+            <button class="btn btn-danger" onclick="submitRefund()">환불 처리</button>
+        </div>
+    </div>
+</div>
+
+<script>
+lucide.createIcons();
+
+const sb = LW.supabase;
+
+// ========== TAB NAVIGATION ==========
+document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', () => {
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        item.classList.add('active');
+        document.getElementById('tab-' + item.dataset.tab).classList.add('active');
+        lucide.createIcons();
+    });
+});
+
+// ========== AUTH CHECK ==========
+async function checkAdmin() {
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) { window.location.href = '/login.html'; return; }
+    const { data: profile } = await sb.from('profiles').select('role').eq('id', user.id).single();
+    if (!profile || profile.role !== 'admin') {
+        alert('관리자 권한이 없습니다.');
+        window.location.href = '/dashboard.html';
+        return;
+    }
+    loadAllData();
+}
+
+// ========== LOAD ALL DATA ==========
+async function loadAllData() {
+    loadDashboardData();
+    loadUsers();
+    loadPayments();
+    loadPromos();
+    loadNotices();
+}
+
+// ========== DASHBOARD ==========
+async function loadDashboardData() {
+    try {
+        // Total users
+        const { count: totalUsers } = await sb.from('profiles').select('*', { count: 'exact', head: true });
+        document.getElementById('d-users').textContent = totalUsers || 0;
+
+        // Pro subscribers
+        const { count: proUsers } = await sb.from('profiles').select('*', { count: 'exact', head: true }).eq('plan', 'pro');
+        document.getElementById('d-subs').textContent = proUsers || 0;
+
+        // MRR
+        const mrr = (proUsers || 0) * 17900;
+        document.getElementById('d-mrr').textContent = '₩' + mrr.toLocaleString();
+
+        // Today signups
+        const today = new Date().toISOString().split('T')[0];
+        const { count: newToday } = await sb.from('profiles').select('*', { count: 'exact', head: true }).gte('created_at', today);
+        document.getElementById('d-new').textContent = newToday || 0;
+
+        // Payments this month
+        const monthStart = new Date().toISOString().slice(0, 7) + '-01';
+        const { data: monthPay } = await sb.from('payments').select('amount').eq('status', 'paid').gte('paid_at', monthStart);
+        const monthTotal = (monthPay || []).reduce((s, p) => s + (p.amount || 0), 0);
+        document.getElementById('d-month').textContent = '₩' + monthTotal.toLocaleString();
+
+        // Today payments
+        const { data: todayPay } = await sb.from('payments').select('amount').eq('status', 'paid').gte('paid_at', today);
+        const todayTotal = (todayPay || []).reduce((s, p) => s + (p.amount || 0), 0);
+        document.getElementById('d-today').textContent = '₩' + todayTotal.toLocaleString();
+
+        // ARPU
+        const arpu = totalUsers ? Math.round(monthTotal / totalUsers) : 0;
+        document.getElementById('d-arpu').textContent = '₩' + arpu.toLocaleString();
+
+    } catch (e) { console.error('Dashboard error:', e); }
+}
+
+// ========== USERS ==========
+async function loadUsers() {
+    try {
+        const { data: users } = await sb.from('profiles').select('*').order('created_at', { ascending: false });
+        renderUsers(users || []);
+    } catch (e) { console.error('Users error:', e); }
+}
+
+function renderUsers(users) {
+    const tbody = document.getElementById('userTableBody');
+    if (!users.length) { tbody.innerHTML = '<tr><td colspan="6" class="loading">등록된 유저 없음</td></tr>'; return; }
+    tbody.innerHTML = users.map(u => `
+        <tr>
+            <td>${u.email || '-'}</td>
+            <td>${u.name || '-'}</td>
+            <td><span class="badge badge-${u.plan === 'pro' ? 'pro' : 'free'}">${u.plan === 'pro' ? 'Pro' : 'Free'}</span></td>
+            <td>${(u.tokens_balance || 0) + (u.tokens_purchased || 0)}</td>
+            <td>${u.created_at ? new Date(u.created_at).toLocaleDateString() : '-'}</td>
+            <td>
+                <button class="btn btn-sm btn-outline" onclick="showLunaModal('${u.id}','${u.email}')">루나 관리</button>
+                <button class="btn btn-sm btn-danger" onclick="toggleBan('${u.id}', ${u.is_banned || false})">${u.is_banned ? '해제' : '차단'}</button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+// User search
+document.getElementById('userSearch').addEventListener('input', async (e) => {
+    const q = e.target.value.toLowerCase();
+    const { data: users } = await sb.from('profiles').select('*').order('created_at', { ascending: false });
+    const filtered = (users || []).filter(u => (u.email || '').toLowerCase().includes(q) || (u.name || '').toLowerCase().includes(q));
+    renderUsers(filtered);
+});
+
+// ========== LUNA MODAL ==========
+let lunaTargetUser = null;
+function showLunaModal(userId, email) {
+    lunaTargetUser = userId;
+    document.getElementById('lunaModalUser').value = email;
+    document.getElementById('lunaModal').classList.add('show');
+}
+function closeLunaModal() { document.getElementById('lunaModal').classList.remove('show'); }
+async function submitLunaAction() {
+    const type = document.getElementById('lunaModalType').value;
+    const amount = parseInt(document.getElementById('lunaModalAmount').value);
+    const reason = document.getElementById('lunaModalReason').value;
+    if (!amount || amount <= 0) { alert('수량을 입력하세요'); return; }
+
+    const field = 'tokens_purchased';
+    const { data: profile } = await sb.from('profiles').select(field).eq('id', lunaTargetUser).single();
+    const current = profile?.[field] || 0;
+    const newVal = type === 'grant' ? current + amount : Math.max(0, current - amount);
+
+    await sb.from('profiles').update({ [field]: newVal }).eq('id', lunaTargetUser);
+    alert(`${type === 'grant' ? '지급' : '차감'} 완료: ${amount} 루나 (${reason})`);
+    closeLunaModal();
+    loadUsers();
+}
+
+// ========== BAN ==========
+async function toggleBan(userId, isBanned) {
+    const action = isBanned ? '차단 해제' : '차단';
+    if (!confirm(`이 유저를 ${action}하시겠습니까?`)) return;
+    await sb.from('profiles').update({ is_banned: !isBanned }).eq('id', userId);
+    loadUsers();
+}
+
+// ========== PAYMENTS ==========
+async function loadPayments() {
+    try {
+        const { data: payments } = await sb.from('payments').select('*, profiles(email)').order('created_at', { ascending: false }).limit(50);
+        renderPayments(payments || []);
+    } catch (e) { console.error('Payments error:', e); }
+}
+
+function renderPayments(payments) {
+    const tbody = document.getElementById('payTableBody');
+    if (!payments.length) { tbody.innerHTML = '<tr><td colspan="6" class="loading">결제 내역 없음</td></tr>'; return; }
+    tbody.innerHTML = payments.map(p => `
+        <tr>
+            <td>${p.paid_at ? new Date(p.paid_at).toLocaleDateString() : new Date(p.created_at).toLocaleDateString()}</td>
+            <td>${p.profiles?.email || '-'}</td>
+            <td>${p.type === 'subscription' ? 'Pro 구독' : '루나 구매'}</td>
+            <td>₩${(p.amount || 0).toLocaleString()}</td>
+            <td><span class="badge badge-${p.status === 'paid' ? 'paid' : 'refund'}">${p.status === 'paid' ? '결제완료' : '환불'}</span></td>
+            <td>${p.status === 'paid' ? `<button class="btn btn-sm btn-danger" onclick="showRefundModal('${p.id}','${p.profiles?.email}',${p.amount})">환불</button>` : '-'}</td>
+        </tr>
+    `).join('');
+}
+
+// ========== REFUND MODAL ==========
+let refundTargetId = null;
+function showRefundModal(payId, email, amount) {
+    refundTargetId = payId;
+    document.getElementById('refundInfo').value = `${email} - ₩${amount.toLocaleString()}`;
+    document.getElementById('refundAmount').value = amount;
+    document.getElementById('refundModal').classList.add('show');
+}
+function closeRefundModal() { document.getElementById('refundModal').classList.remove('show'); }
+async function submitRefund() {
+    const reason = document.getElementById('refundReason').value;
+    if (!reason) { alert('환불 사유를 입력하세요'); return; }
+    await sb.from('payments').update({ status: 'refunded', refund_reason: reason }).eq('id', refundTargetId);
+    alert('환불 처리 완료');
+    closeRefundModal();
+    loadPayments();
+    loadDashboardData();
+}
+
+// ========== PROMO ==========
+async function loadPromos() {
+    try {
+        const { data: promos } = await sb.from('promo_codes').select('*').order('created_at', { ascending: false });
+        renderPromos(promos || []);
+    } catch (e) { console.error('Promos error:', e); }
+}
+
+function renderPromos(promos) {
+    const tbody = document.getElementById('promoTableBody');
+    if (!promos.length) { tbody.innerHTML = '<tr><td colspan="6" class="loading">프로모션 코드 없음</td></tr>'; return; }
+    tbody.innerHTML = promos.map(p => `
+        <tr>
+            <td style="font-family:monospace;font-weight:600;">${p.code}</td>
+            <td>${p.type === 'discount' ? '할인' : '루나 보너스'}</td>
+            <td>${p.type === 'discount' ? p.value + '%' : p.value + ' 루나'}</td>
+            <td>${p.used_count}/${p.max_uses}</td>
+            <td>${p.expires_at ? new Date(p.expires_at).toLocaleDateString() : '무기한'}</td>
+            <td><span class="badge ${p.is_active ? 'badge-paid' : 'badge-free'}">${p.is_active ? '활성' : '비활성'}</span></td>
+        </tr>
+    `).join('');
+}
+
+function showPromoModal() { document.getElementById('promoModal').classList.add('show'); }
+function closePromoModal() { document.getElementById('promoModal').classList.remove('show'); }
+async function submitPromo() {
+    const code = document.getElementById('promoCode').value.toUpperCase().trim();
+    const type = document.getElementById('promoType').value;
+    const value = parseFloat(document.getElementById('promoValue').value);
+    const max_uses = parseInt(document.getElementById('promoMax').value);
+    const expiry = document.getElementById('promoExpiry').value;
+
+    if (!code) { alert('코드를 입력하세요'); return; }
+
+    await sb.from('promo_codes').insert({
+        code, type, value, max_uses,
+        expires_at: expiry || null,
+        is_active: true
+    });
+    alert('프로모션 코드 생성 완료');
+    closePromoModal();
+    loadPromos();
+}
+
+// ========== NOTICES ==========
+async function loadNotices() {
+    try {
+        const { data: notices } = await sb.from('notices').select('*').order('created_at', { ascending: false });
+        renderNotices(notices || []);
+    } catch (e) { console.error('Notices error:', e); }
+}
+
+function renderNotices(notices) {
+    const tbody = document.getElementById('noticeTableBody');
+    if (!notices.length) { tbody.innerHTML = '<tr><td colspan="5" class="loading">공지 없음</td></tr>'; return; }
+    tbody.innerHTML = notices.map(n => {
+        const typeLabel = { info: '일반', warning: '경고', urgent: '긴급' };
+        return `
+        <tr>
+            <td>${n.title}</td>
+            <td>${typeLabel[n.type] || n.type}</td>
+            <td><span class="badge ${n.is_active ? 'badge-paid' : 'badge-free'}">${n.is_active ? '활성' : '비활성'}</span></td>
+            <td>${new Date(n.created_at).toLocaleDateString()}</td>
+            <td>
+                <button class="btn btn-sm btn-outline" onclick="toggleNotice('${n.id}', ${n.is_active})">${n.is_active ? '비활성화' : '활성화'}</button>
+                <button class="btn btn-sm btn-danger" onclick="deleteNotice('${n.id}')">삭제</button>
+            </td>
+        </tr>
+    `}).join('');
+}
+
+function showNoticeModal() { document.getElementById('noticeModal').classList.add('show'); }
+function closeNoticeModal() { document.getElementById('noticeModal').classList.remove('show'); }
+async function submitNotice() {
+    const title = document.getElementById('noticeTitle').value;
+    const content = document.getElementById('noticeContent').value;
+    const type = document.getElementById('noticeType').value;
+    if (!title || !content) { alert('제목과 내용을 입력하세요'); return; }
+    await sb.from('notices').insert({ title, content, type, is_active: true });
+    alert('공지사항 등록 완료');
+    closeNoticeModal();
+    loadNotices();
+}
+
+async function toggleNotice(id, isActive) {
+    await sb.from('notices').update({ is_active: !isActive }).eq('id', id);
+    loadNotices();
+}
+
+async function deleteNotice(id) {
+    if (!confirm('삭제하시겠습니까?')) return;
+    await sb.from('notices').delete().eq('id', id);
+    loadNotices();
+}
+
+// ========== HELPERS ==========
+function saveDiscount() { alert('할인율이 저장되었습니다. payment.html에 반영해주세요.'); }
+function saveVersion() { alert('버전 정보가 저장되었습니다.'); }
+
+// ========== INIT ==========
+checkAdmin();
+</script>
+</body>
+</html>
