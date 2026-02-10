@@ -2,6 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
+<link rel="icon" href="/favicon.ico">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>LunaWave — 유튜브 음원 영상, 클릭 몇 번이면 끝</title>
 <meta name="description" content="강의 안 듣고, 편집 안 배우고, 영상 전문가 안 써도 됩니다.">
@@ -84,13 +85,19 @@ nav {
     font-size: 14px; color: var(--text3); max-width: 480px; line-height: 1.7; margin-bottom: 48px;
     animation: fadeUp .6s ease .3s both;
 }
-.hero-cta {
-    display: inline-block; background: var(--gold); color: #fff;
-    padding: 15px 44px; border-radius: 8px; font-size: 15px; font-weight: 700;
-    text-decoration: none; transition: all .2s; letter-spacing: .5px;
+.hero-cta-wrap {
+    display: flex; gap: 16px; justify-content: center; align-items: center;
     animation: fadeUp .6s ease .4s both;
 }
-.hero-cta:hover { background: var(--gold-dark); transform: translateY(-2px); }
+.hero-cta {
+    display: inline-block; width: 200px; text-align: center;
+    padding: 15px 0; border-radius: 8px; font-size: 15px; font-weight: 700;
+    text-decoration: none; transition: all .2s; letter-spacing: .5px;
+}
+.hero-cta-fill { background: #f59e0b; color: #fff; }
+.hero-cta-fill:hover { background: var(--gold-dark); transform: translateY(-2px); }
+.hero-cta-outline { background: transparent; color: #f59e0b; border: 2px solid #f59e0b; }
+.hero-cta-outline:hover { background: rgba(245,158,11,0.08); transform: translateY(-2px); }
 .hero-logo {
     display: flex; align-items: center; gap: 14px; margin-bottom: 28px;
     animation: fadeUp .6s ease;
@@ -227,6 +234,8 @@ footer a:hover { color: var(--text); }
 @media (max-width:768px) {
     nav { padding: 14px 20px; }
     .nav-r { display: none; }
+    .hero-cta-wrap { flex-direction: column; align-items: center; }
+    .hero-cta { width: 240px; }
     .cmp-grid { grid-template-columns: 1fr; gap: 16px; }
     .cmp-arrow { transform: rotate(90deg); padding: 8px 0; }
     .steps-grid, .feat-grid { grid-template-columns: 1fr; }
@@ -247,7 +256,8 @@ footer a:hover { color: var(--text); }
         <a href="#features">기능</a>
         <a href="#pricing">요금제</a>
         <a href="#faq">FAQ</a>
-        <a href="/login" class="nav-btn">시작하기</a>
+        <a href="/signup.html">회원가입</a>
+        <a href="/login.html" class="nav-btn">로그인</a>
     </div>
 </nav>
 
@@ -261,8 +271,10 @@ footer a:hover { color: var(--text); }
     <h1>강의 안 듣고, 편집 안 배우고,<br><span style="color: var(--gold-dark);">영상 전문가</span> 안 써도 됩니다</h1>
     <p class="hero-sub">클릭 몇 번이면 유튜브에 올릴 영상이 나옵니다.</p>
     <p class="hero-hook">누군가는 시작하는 법을 배우느라 3개월을 씁니다.<br>그 시간에 영상 200개 만들 수 있었습니다.</p>
-    <a href="/signup" class="hero-cta">무료로 시작하기</a>
-    <a href="/download.html" class="hero-cta" style="margin-left:12px; background:linear-gradient(135deg,#f59e0b,#d97706);">다운로드</a>
+    <div class="hero-cta-wrap">
+        <a href="/signup.html" class="hero-cta hero-cta-fill">무료로 시작하기</a>
+        <a href="/download.html" class="hero-cta hero-cta-outline">다운로드</a>
+    </div>
 </section>
 
 <!-- COMPARE -->
@@ -359,7 +371,7 @@ footer a:hover { color: var(--text); }
                 <li class="off"><span>—</span>컷아웃 / 메타데이터</li>
                 <li class="off"><span>—</span>워터마크 제거</li>
             </ul>
-            <a href="/signup" class="pr-btn btn-o">무료로 시작</a>
+            <a href="/signup.html" class="pr-btn btn-o">무료로 시작</a>
         </div>
         <div class="pr-card pop">
             <div class="pr-badge">PRO</div>
@@ -373,7 +385,7 @@ footer a:hover { color: var(--text); }
                 <li class="on"><span>—</span>AI 메타데이터 생성</li>
                 <li class="on"><span>—</span>추가 루나 구매 가능</li>
             </ul>
-            <a href="/signup" class="pr-btn btn-g">Pro 시작하기</a>
+            <a href="/signup.html" class="pr-btn btn-g">Pro 시작하기</a>
         </div>
     </div>
     <p class="pr-note">※ LunaWave는 노래를 영상으로 만드는 도구입니다. 노래 생성은 Suno 등 외부 서비스를 이용해주세요. (Suno 무료 플랜: 하루 약 4–5곡, 유튜브 수익화 시 Suno 유료 $10/월 필요)</p>
@@ -397,7 +409,7 @@ footer a:hover { color: var(--text); }
 <section class="cta-section">
     <h2>3개월 고민할 거,<br>5분이면 알 수 있습니다</h2>
     <p>지금 무료로 시작해보세요.</p>
-    <a href="/signup" class="cta-btn">무료로 시작하기</a>
+    <a href="/signup.html" class="cta-btn">무료로 시작하기</a>
 </section>
 
 <!-- FOOTER -->
