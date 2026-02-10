@@ -888,6 +888,7 @@
         async function loadDashboard() {
             try {
                 const { data: { user } } = await sb.auth.getUser();
+                console.log('[Dashboard] user:', user?.id, user?.email);
                 if (!user) {
                     window.location.href = '/login.html';
                     return;
@@ -898,7 +899,9 @@
                     p_user_id: user.id
                 });
 
+                console.log('[Dashboard] get_user_status result:', status);
                 if (status && status.success) {
+                    console.log('[Dashboard] updateUI with:', JSON.stringify(status));
                     updateUI(status);
                 } else {
                     // RPC 실패 시 profiles에서 직접 루나 잔액 읽기
@@ -915,17 +918,18 @@
                 }
 
                 // Get user profile
-                const { data: profile } = await supabase
+                const { data: profile } = await sb
                     .from('profiles')
                     .select('*')
                     .eq('id', user.id)
                     .single();
+                console.log('[Dashboard] profile data:', profile);
 
                 if (profile) {
                     // Google 로그인 시 이름 자동 저장 (name이 비어있으면)
                     if ((!profile.name || !profile.name.trim()) && user.user_metadata && user.user_metadata.full_name) {
                         const googleName = user.user_metadata.full_name;
-                        await supabase.from('profiles').update({ name: googleName }).eq('id', user.id);
+                        await sb.from('profiles').update({ name: googleName }).eq('id', user.id);
                         profile.name = googleName;
                     }
                     document.getElementById('userName').textContent = profile.name || user.email;
@@ -935,7 +939,7 @@
                 }
 
                 // Load devices
-                const { data: devices } = await supabase
+                const { data: devices } = await sb
                     .from('devices')
                     .select('*')
                     .eq('user_id', user.id)
@@ -946,7 +950,7 @@
                 }
 
                 // Load payments
-                const { data: payments } = await supabase
+                const { data: payments } = await sb
                     .from('payments')
                     .select('*')
                     .eq('user_id', user.id)
@@ -959,7 +963,7 @@
                 }
 
                 // Load notices
-                const { data: notices } = await supabase
+                const { data: notices } = await sb
                     .from('notices')
                     .select('*')
                     .eq('is_active', true)
@@ -972,7 +976,7 @@
 
                 // Load usage
                 const yearMonth = new Date().toISOString().slice(0, 7);
-                const { data: usage } = await supabase
+                const { data: usage } = await sb
                     .from('usage')
                     .select('*')
                     .eq('user_id', user.id)
