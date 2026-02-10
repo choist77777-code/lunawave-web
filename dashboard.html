@@ -894,27 +894,18 @@
                     return;
                 }
 
-                // Get user status
-                const { data: status } = await sb.rpc('get_user_status', {
-                    p_user_id: user.id
-                });
-
-                console.log('[Dashboard] get_user_status result:', status);
-                if (status && status.success) {
-                    console.log('[Dashboard] updateUI with:', JSON.stringify(status));
-                    updateUI(status);
-                } else {
-                    // RPC 실패 시 profiles에서 직접 루나 잔액 읽기
-                    const { data: p } = await sb.from('profiles').select('plan, tokens_balance, tokens_purchased').eq('id', user.id).single();
-                    if (p) {
-                        updateUI({
-                            success: true,
-                            plan: p.plan || 'free',
-                            tokens_balance: p.tokens_balance || 0,
-                            tokens_purchased: p.tokens_purchased || 0,
-                            tokens_total: (p.tokens_balance || 0) + (p.tokens_purchased || 0)
-                        });
-                    }
+                // profiles에서 직접 플랜/잔액 조회
+                const { data: p, error: pErr } = await sb.from('profiles').select('plan, tokens_balance, tokens_purchased, free_songs_remaining').eq('id', user.id).single();
+                console.log('[Dashboard] profiles 조회:', p, pErr);
+                if (p) {
+                    updateUI({
+                        success: true,
+                        plan: p.plan || 'free',
+                        tokens_balance: p.tokens_balance || 0,
+                        tokens_purchased: p.tokens_purchased || 0,
+                        tokens_total: (p.tokens_balance || 0) + (p.tokens_purchased || 0),
+                        free_songs_remaining: p.free_songs_remaining != null ? p.free_songs_remaining : 3
+                    });
                 }
 
                 // Get user profile
