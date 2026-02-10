@@ -33,6 +33,17 @@ document.addEventListener('DOMContentLoaded', () => {
 async function checkAuthAndRedirect() {
     const session = await LW.getSession();
     if (session) {
+        // Google 로그인 시 이름 자동 저장
+        const user = session.user;
+        if (user && user.user_metadata && user.user_metadata.full_name) {
+            try {
+                const supabase = LW.supabase;
+                const { data: profile } = await supabase.from('profiles').select('name').eq('id', user.id).single();
+                if (profile && (!profile.name || !profile.name.trim())) {
+                    await supabase.from('profiles').update({ name: user.user_metadata.full_name }).eq('id', user.id);
+                }
+            } catch (_) {}
+        }
         // Already logged in, redirect to dashboard
         const currentPath = window.location.pathname;
         if (currentPath.includes('login') || currentPath.includes('signup')) {

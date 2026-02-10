@@ -900,6 +900,18 @@
 
                 if (status && status.success) {
                     updateUI(status);
+                } else {
+                    // RPC 실패 시 profiles에서 직접 루나 잔액 읽기
+                    const { data: p } = await sb.from('profiles').select('plan, tokens_balance, tokens_purchased').eq('id', user.id).single();
+                    if (p) {
+                        updateUI({
+                            success: true,
+                            plan: p.plan || 'free',
+                            tokens_balance: p.tokens_balance || 0,
+                            tokens_purchased: p.tokens_purchased || 0,
+                            tokens_total: (p.tokens_balance || 0) + (p.tokens_purchased || 0)
+                        });
+                    }
                 }
 
                 // Get user profile
@@ -910,8 +922,16 @@
                     .single();
 
                 if (profile) {
-                    document.getElementById('userName').textContent = profile.name || user.email.split('@')[0];
+                    // Google 로그인 시 이름 자동 저장 (name이 비어있으면)
+                    if ((!profile.name || !profile.name.trim()) && user.user_metadata && user.user_metadata.full_name) {
+                        const googleName = user.user_metadata.full_name;
+                        await supabase.from('profiles').update({ name: googleName }).eq('id', user.id);
+                        profile.name = googleName;
+                    }
+                    document.getElementById('userName').textContent = profile.name || user.email;
                     document.getElementById('referralCode').textContent = profile.referral_code || 'XXXXXXXX';
+                } else {
+                    document.getElementById('userName').textContent = user.email;
                 }
 
                 // Load devices
@@ -1011,11 +1031,22 @@
                 planName.textContent = 'Free 플랜';
                 planDesc.textContent = '무료 체험 중 (3곡 제한)';
 
-                // Show free songs card, hide token card
-                document.getElementById('tokenCard').style.display = 'none';
+                // Free 플랜이라도 루나 잔액이 있으면 표시
+                var freeTotal = (status.tokens_balance || 0) + (status.tokens_purchased || 0);
+                if (freeTotal > 0) {
+                    document.getElementById('tokenCard').style.display = 'block';
+                    document.getElementById('headerTokens').style.display = 'flex';
+                    document.getElementById('headerTokenCount').textContent = freeTotal;
+                    document.getElementById('totalTokens').textContent = freeTotal;
+                    document.getElementById('monthlyTokens').textContent = status.tokens_balance || 0;
+                    document.getElementById('purchasedTokens').textContent = status.tokens_purchased || 0;
+                } else {
+                    document.getElementById('tokenCard').style.display = 'none';
+                    document.getElementById('headerTokens').style.display = 'none';
+                }
+
                 document.getElementById('freeSongsCard').style.display = 'block';
                 document.getElementById('upgradeBanner').style.display = 'flex';
-                document.getElementById('headerTokens').style.display = 'none';
 
                 // Free songs remaining
                 document.getElementById('freeSongsRemaining').textContent = status.free_songs_remaining || 0;
