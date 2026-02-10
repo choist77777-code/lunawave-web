@@ -1,0 +1,13 @@
+version: 5.0.0-beta.1
+files:
+  - url: LUNA-WAVE-Setup-5.0.0-beta.1.exe
+    sha512: 7cea8b926f3c22e5d7fb8367f5fb4b6c67b9696b2c6771a15c376e78a064c99ff07251c197bc798afdef1f96a353586d49d56630e561e4daf9f84aeda10bf4f6
+    size: 399783911
+path: LUNA-WAVE-Setup-5.0.0-beta.1.exe
+sha512: 7cea8b926f3c22e5d7fb8367f5fb4b6c67b9696b2c6771a15c376e78a064c99ff07251c197bc798afdef1f96a353586d49d56630e561e4daf9f84aeda10bf4f6
+releaseDate: 2026-02-10T00:00:00.000Z
+releaseNotes: |
+  - First beta release
+  - Luna Credit system
+  - Rendering speed optimization
+  - AI billing integration

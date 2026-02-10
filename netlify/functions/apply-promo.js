@@ -130,7 +130,7 @@ exports.handler = async (event) => {
             case 'bonus_lunas':
                 // 보너스 루나 지급 (결제 완료 후)
                 result.discount_type = 'bonus';
-                result.bonus_lunas = promo.value;
+                result.bonus_tokens = promo.value;
                 result.message = `결제 완료 시 ${promo.value} 루나가 추가 지급됩니다.`;
                 break;
 
@@ -138,16 +138,16 @@ exports.handler = async (event) => {
                 // 즉시 루나 지급
                 const { data: profile } = await supabase
                     .from('profiles')
-                    .select('lunas_purchased, lunas_balance')
+                    .select('tokens_purchased, tokens_balance')
                     .eq('id', user.id)
                     .single();
 
-                const newPurchased = (profile?.lunas_purchased || 0) + promo.value;
+                const newPurchased = (profile?.tokens_purchased || 0) + promo.value;
 
                 await supabase
                     .from('profiles')
                     .update({
-                        lunas_purchased: newPurchased,
+                        tokens_purchased: newPurchased,
                         updated_at: new Date().toISOString()
                     })
                     .eq('id', user.id);
@@ -160,17 +160,17 @@ exports.handler = async (event) => {
 
                 // 루나 로그
                 await supabase
-                    .from('lunas_log')
+                    .from('tokens_log')
                     .insert({
                         user_id: user.id,
                         action: 'promo',
                         amount: promo.value,
-                        balance_after: (profile?.lunas_balance || 0) + newPurchased,
+                        balance_after: (profile?.tokens_balance || 0) + newPurchased,
                         description: `프로모션 코드 적용: ${promo.code}`
                     });
 
-                result.lunas_granted = promo.value;
-                result.new_balance = (profile?.lunas_balance || 0) + newPurchased;
+                result.tokens_granted = promo.value;
+                result.new_balance = (profile?.tokens_balance || 0) + newPurchased;
                 result.message = `${promo.value} 루나가 지급되었습니다!`;
                 result.applied = true;
                 break;
@@ -188,9 +188,9 @@ exports.handler = async (event) => {
                         plan: 'pro',
                         plan_started_at: now.toISOString(),
                         plan_expires_at: plan_expires_at.toISOString(),
-                        lunas_balance: 50, // 일간 루나
-                        lunas_purchased: 1500, // 월 보너스
-                        daily_lunas_granted_at: today,
+                        tokens_balance: 50, // 일간 루나
+                        tokens_purchased: 1500, // 월 보너스
+                        daily_tokens_granted_at: today,
                         updated_at: now.toISOString()
                     })
                     .eq('id', user.id);
@@ -201,7 +201,7 @@ exports.handler = async (event) => {
                     .eq('id', promo.id);
 
                 await supabase
-                    .from('lunas_log')
+                    .from('tokens_log')
                     .insert({
                         user_id: user.id,
                         action: 'promo',
@@ -212,7 +212,7 @@ exports.handler = async (event) => {
 
                 result.plan = 'pro';
                 result.plan_expires_at = plan_expires_at.toISOString();
-                result.lunas_granted = 1550;
+                result.tokens_granted = 1550;
                 result.message = 'Pro 1개월 무료 이용이 시작되었습니다! (매일 50루나 + 월 1,500루나)';
                 result.applied = true;
                 break;

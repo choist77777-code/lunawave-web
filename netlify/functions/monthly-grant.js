@@ -26,7 +26,7 @@ exports.handler = async (event) => {
         // 활성 Pro 구독자 조회 (plan_expires_at이 현재 이후인 유저)
         const { data: proUsers, error: fetchError } = await supabase
             .from('profiles')
-            .select('id, email, lunas_balance, lunas_purchased')
+            .select('id, email, tokens_balance, tokens_purchased')
             .eq('plan', 'pro')
             .gt('plan_expires_at', now.toISOString());
 
@@ -42,7 +42,7 @@ exports.handler = async (event) => {
         for (const user of proUsers || []) {
             try {
                 // 구매 루나 이월 계산 (최대 3000루나까지)
-                const currentPurchased = user.lunas_purchased || 0;
+                const currentPurchased = user.tokens_purchased || 0;
                 const rollover = Math.min(currentPurchased, ROLLOVER_CAP);
                 const expired = currentPurchased - rollover;
                 const newPurchased = rollover + MONTHLY_BONUS_LUNAS;
@@ -51,7 +51,7 @@ exports.handler = async (event) => {
                 const { error: updateError } = await supabase
                     .from('profiles')
                     .update({
-                        lunas_purchased: newPurchased,
+                        tokens_purchased: newPurchased,
                         updated_at: now.toISOString()
                     })
                     .eq('id', user.id);
@@ -63,24 +63,24 @@ exports.handler = async (event) => {
                 // 소멸 루나 로그 (있는 경우)
                 if (expired > 0) {
                     await supabase
-                        .from('lunas_log')
+                        .from('tokens_log')
                         .insert({
                             user_id: user.id,
                             action: 'rollover_expire',
                             amount: -expired,
-                            balance_after: (user.lunas_balance || 0) + rollover,
+                            balance_after: (user.tokens_balance || 0) + rollover,
                             description: `이월 상한 초과 소멸 (${ROLLOVER_CAP}루나 초과분)`
                         });
                 }
 
                 // 월간 보너스 루나 지급 로그
                 await supabase
-                    .from('lunas_log')
+                    .from('tokens_log')
                     .insert({
                         user_id: user.id,
                         action: 'monthly_bonus',
                         amount: MONTHLY_BONUS_LUNAS,
-                        balance_after: (user.lunas_balance || 0) + newPurchased,
+                        balance_after: (user.tokens_balance || 0) + newPurchased,
                         description: '월간 Pro 보너스 루나 지급'
                     });
 
@@ -112,7 +112,7 @@ exports.handler = async (event) => {
                     .eq('id', user.id);
 
                 await supabase
-                    .from('lunas_log')
+                    .from('tokens_log')
                     .insert({
                         user_id: user.id,
                         action: 'plan_expire',
@@ -131,7 +131,7 @@ exports.handler = async (event) => {
             success: true,
             timestamp: now.toISOString(),
             pro_users_processed: proUsers?.length || 0,
-            lunas_granted: successCount,
+            tokens_granted: successCount,
             grant_failures: failCount,
             subscriptions_expired: expiredCount
         };

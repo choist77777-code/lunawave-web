@@ -147,7 +147,7 @@ exports.handler = async (event) => {
             // 첫 결제 완료 시 - 추천 보너스 지급
             const { data: referral, error: referralError } = await supabase
                 .from('referrals')
-                .select('*, referrer:referrer_id(id, lunas_purchased)')
+                .select('*, referrer:referrer_id(id, tokens_purchased)')
                 .eq('referred_id', user.id)
                 .eq('status', 'pending')
                 .single();
@@ -167,17 +167,17 @@ exports.handler = async (event) => {
             const now = new Date();
 
             // 추천인에게 보너스 지급
-            const referrerNewPurchased = (referral.referrer?.lunas_purchased || 0) + REFERRER_BONUS;
+            const referrerNewPurchased = (referral.referrer?.tokens_purchased || 0) + REFERRER_BONUS;
             await supabase
                 .from('profiles')
                 .update({
-                    lunas_purchased: referrerNewPurchased,
+                    tokens_purchased: referrerNewPurchased,
                     updated_at: now.toISOString()
                 })
                 .eq('id', referral.referrer_id);
 
             await supabase
-                .from('lunas_log')
+                .from('tokens_log')
                 .insert({
                     user_id: referral.referrer_id,
                     action: 'referral_bonus',
@@ -189,21 +189,21 @@ exports.handler = async (event) => {
             // 피추천인에게 보너스 지급
             const { data: referredProfile } = await supabase
                 .from('profiles')
-                .select('lunas_purchased')
+                .select('tokens_purchased')
                 .eq('id', user.id)
                 .single();
 
-            const referredNewPurchased = (referredProfile?.lunas_purchased || 0) + REFERRED_BONUS;
+            const referredNewPurchased = (referredProfile?.tokens_purchased || 0) + REFERRED_BONUS;
             await supabase
                 .from('profiles')
                 .update({
-                    lunas_purchased: referredNewPurchased,
+                    tokens_purchased: referredNewPurchased,
                     updated_at: now.toISOString()
                 })
                 .eq('id', user.id);
 
             await supabase
-                .from('lunas_log')
+                .from('tokens_log')
                 .insert({
                     user_id: user.id,
                     action: 'referral_bonus',

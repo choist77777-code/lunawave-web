@@ -80,10 +80,14 @@ exports.handler = async (event) => {
                     amount = Math.max(0, amount - promo_discount);
 
                     // 사용 횟수 증가
-                    await supabase
+                    const { error: promoUpdateError } = await supabase
                         .from('promo_codes')
                         .update({ used_count: promo.used_count + 1 })
                         .eq('id', promo.id);
+
+                    if (promoUpdateError) {
+                        console.error('Promo code update failed:', promoUpdateError);
+                    }
                 }
             }
         }
@@ -115,12 +119,12 @@ exports.handler = async (event) => {
         const today = now.toISOString().split('T')[0];
         const { data: currentProfile } = await supabase
             .from('profiles')
-            .select('lunas_purchased')
+            .select('tokens_purchased')
             .eq('id', user.id)
             .single();
 
         // Pro 첫 구독 시: 일간 50루나 + 월 보너스 1,500루나
-        const newPurchased = (currentProfile?.lunas_purchased || 0) + MONTHLY_BONUS_LUNAS;
+        const newPurchased = (currentProfile?.tokens_purchased || 0) + MONTHLY_BONUS_LUNAS;
 
         const { error: updateError } = await supabase
             .from('profiles')
@@ -128,9 +132,9 @@ exports.handler = async (event) => {
                 plan: 'pro',
                 plan_started_at: now.toISOString(),
                 plan_expires_at: plan_expires_at.toISOString(),
-                lunas_balance: DAILY_LUNAS_PRO, // 일간 루나 리셋 및 Pro 50 지급
-                lunas_purchased: newPurchased,
-                daily_lunas_granted_at: today,
+                tokens_balance: DAILY_LUNAS_PRO, // 일간 루나 리셋 및 Pro 50 지급
+                tokens_purchased: newPurchased,
+                daily_tokens_granted_at: today,
                 billing_key: billing_key || null,
                 updated_at: now.toISOString()
             })
@@ -157,7 +161,7 @@ exports.handler = async (event) => {
 
         // 루나 로그 기록
         await supabase
-            .from('lunas_log')
+            .from('tokens_log')
             .insert({
                 user_id: user.id,
                 action: 'subscription',
@@ -172,9 +176,9 @@ exports.handler = async (event) => {
             body: JSON.stringify({
                 success: true,
                 plan: 'pro',
-                lunas_balance: DAILY_LUNAS_PRO,
-                lunas_purchased: newPurchased,
-                lunas_total: DAILY_LUNAS_PRO + newPurchased,
+                tokens_balance: DAILY_LUNAS_PRO,
+                tokens_purchased: newPurchased,
+                tokens_total: DAILY_LUNAS_PRO + newPurchased,
                 plan_expires_at: plan_expires_at.toISOString()
             })
         };

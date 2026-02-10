@@ -7,7 +7,7 @@ const supabase = createClient(
 );
 
 // 일간 루나 지급량
-const DAILY_LUNAS = {
+const DAILY_TOKENS = {
     free: 20,
     pro: 50
 };
@@ -76,9 +76,9 @@ exports.handler = async (event) => {
                 email: user.email,
                 name: user.user_metadata?.name || null,
                 plan: 'free',
-                lunas_balance: DAILY_LUNAS.free, // 첫 가입 시 바로 20루나 지급
-                lunas_purchased: 0,
-                daily_lunas_granted_at: today,
+                tokens_balance: DAILY_TOKENS.free, // 첫 가입 시 바로 20루나 지급
+                tokens_purchased: 0,
+                daily_tokens_granted_at: today,
                 free_songs_used: 0,
                 referral_code: generateReferralCode()
             };
@@ -93,12 +93,12 @@ exports.handler = async (event) => {
 
             // 가입 루나 지급 로그
             await supabase
-                .from('lunas_log')
+                .from('tokens_log')
                 .insert({
                     user_id: user.id,
                     action: 'daily',
-                    amount: DAILY_LUNAS.free,
-                    balance_after: DAILY_LUNAS.free,
+                    amount: DAILY_TOKENS.free,
+                    balance_after: DAILY_TOKENS.free,
                     description: '첫 가입 - 일간 루나 지급 (Free 20)'
                 });
 
@@ -109,10 +109,10 @@ exports.handler = async (event) => {
                     success: true,
                     profile: {
                         plan: 'free',
-                        lunas_balance: DAILY_LUNAS.free,
-                        lunas_purchased: 0,
-                        lunas_total: DAILY_LUNAS.free,
-                        daily_lunas_granted_at: today,
+                        tokens_balance: DAILY_TOKENS.free,
+                        tokens_purchased: 0,
+                        tokens_total: DAILY_TOKENS.free,
+                        daily_tokens_granted_at: today,
                         referral_code: newProfile.referral_code,
                         device_limit: 2
                     },
@@ -123,30 +123,30 @@ exports.handler = async (event) => {
 
         // 일간 루나 자동 지급 체크
         const today = new Date().toISOString().split('T')[0];
-        if (profile.daily_lunas_granted_at !== today) {
-            const grantAmount = profile.plan === 'pro' ? DAILY_LUNAS.pro : DAILY_LUNAS.free;
+        if (profile.daily_tokens_granted_at !== today) {
+            const grantAmount = profile.plan === 'pro' ? DAILY_TOKENS.pro : DAILY_TOKENS.free;
 
             await supabase
                 .from('profiles')
                 .update({
-                    lunas_balance: grantAmount,
-                    daily_lunas_granted_at: today,
+                    tokens_balance: grantAmount,
+                    daily_tokens_granted_at: today,
                     updated_at: new Date().toISOString()
                 })
                 .eq('id', user.id);
 
             await supabase
-                .from('lunas_log')
+                .from('tokens_log')
                 .insert({
                     user_id: user.id,
                     action: 'daily',
                     amount: grantAmount,
-                    balance_after: grantAmount + (profile.lunas_purchased || 0),
+                    balance_after: grantAmount + (profile.tokens_purchased || 0),
                     description: profile.plan === 'pro' ? '일간 루나 지급 (Pro 50)' : '일간 루나 지급 (Free 20)'
                 });
 
-            profile.lunas_balance = grantAmount;
-            profile.daily_lunas_granted_at = today;
+            profile.tokens_balance = grantAmount;
+            profile.daily_tokens_granted_at = today;
         }
 
         // 기기 정보 처리
@@ -236,7 +236,7 @@ exports.handler = async (event) => {
             }
         }
 
-        const lunas_total = (profile.lunas_balance || 0) + (profile.lunas_purchased || 0);
+        const tokens_total = (profile.tokens_balance || 0) + (profile.tokens_purchased || 0);
 
         return {
             statusCode: 200,
@@ -248,10 +248,10 @@ exports.handler = async (event) => {
                     plan_status: planStatus,
                     plan_started_at: profile.plan_started_at,
                     plan_expires_at: profile.plan_expires_at,
-                    lunas_balance: profile.lunas_balance || 0,
-                    lunas_purchased: profile.lunas_purchased || 0,
-                    lunas_total: lunas_total,
-                    daily_lunas_granted_at: profile.daily_lunas_granted_at,
+                    tokens_balance: profile.tokens_balance || 0,
+                    tokens_purchased: profile.tokens_purchased || 0,
+                    tokens_total: tokens_total,
+                    daily_tokens_granted_at: profile.daily_tokens_granted_at,
                     referral_code: profile.referral_code,
                     device_limit: profile.device_limit || 2
                 },

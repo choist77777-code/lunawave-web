@@ -240,7 +240,7 @@ async function getUserStats(params) {
     // 유저 목록
     const { data: users, count } = await supabase
         .from('profiles')
-        .select('id, email, name, plan, lunas_balance, lunas_purchased, daily_lunas_granted_at, created_at', { count: 'exact' })
+        .select('id, email, name, plan, tokens_balance, tokens_purchased, daily_tokens_granted_at, created_at', { count: 'exact' })
         .order('created_at', { ascending: false })
         .range(offset, offset + limit - 1);
 
@@ -287,7 +287,7 @@ async function getUserStats(params) {
 async function getLunaStats() {
     // 총 발행량 (subscription + purchase + promo + referral_bonus + daily + monthly_bonus)
     const { data: grantedLogs } = await supabase
-        .from('lunas_log')
+        .from('tokens_log')
         .select('amount')
         .in('action', ['subscription', 'purchase', 'promo', 'referral_bonus', 'daily', 'monthly_bonus']);
 
@@ -295,7 +295,7 @@ async function getLunaStats() {
 
     // 총 사용량
     const { data: usedLogs } = await supabase
-        .from('lunas_log')
+        .from('tokens_log')
         .select('amount')
         .eq('action', 'use');
 
@@ -303,7 +303,7 @@ async function getLunaStats() {
 
     // 총 소멸량
     const { data: expiredLogs } = await supabase
-        .from('lunas_log')
+        .from('tokens_log')
         .select('amount')
         .eq('action', 'rollover_expire');
 
@@ -312,14 +312,14 @@ async function getLunaStats() {
     // 현재 잔액 총합
     const { data: balances } = await supabase
         .from('profiles')
-        .select('lunas_balance, lunas_purchased');
+        .select('tokens_balance, tokens_purchased');
 
     const totalBalance = balances?.reduce((sum, p) =>
-        sum + (p.lunas_balance || 0) + (p.lunas_purchased || 0), 0) || 0;
+        sum + (p.tokens_balance || 0) + (p.tokens_purchased || 0), 0) || 0;
 
     // 기능별 사용량
     const { data: featureUsage } = await supabase
-        .from('lunas_log')
+        .from('tokens_log')
         .select('feature, amount')
         .eq('action', 'use')
         .not('feature', 'is', null);
@@ -337,7 +337,7 @@ async function getLunaStats() {
     today.setHours(0, 0, 0, 0);
 
     const { data: todayUsage } = await supabase
-        .from('lunas_log')
+        .from('tokens_log')
         .select('user_id, amount')
         .eq('action', 'use')
         .gte('created_at', today.toISOString());

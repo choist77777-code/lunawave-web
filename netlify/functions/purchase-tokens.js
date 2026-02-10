@@ -92,10 +92,14 @@ exports.handler = async (event) => {
                         bonus_lunas = promo.value;
                     }
 
-                    await supabase
+                    const { error: promoUpdateError } = await supabase
                         .from('promo_codes')
                         .update({ used_count: promo.used_count + 1 })
                         .eq('id', promo.id);
+
+                    if (promoUpdateError) {
+                        console.error('Promo code update failed:', promoUpdateError);
+                    }
                 }
             }
         }
@@ -124,16 +128,16 @@ exports.handler = async (event) => {
         // 프로필 업데이트 - 구매 루나에 추가
         const { data: currentProfile } = await supabase
             .from('profiles')
-            .select('lunas_purchased')
+            .select('tokens_purchased')
             .eq('id', user.id)
             .single();
 
-        const newPurchased = (currentProfile?.lunas_purchased || 0) + total_lunas;
+        const newPurchased = (currentProfile?.tokens_purchased || 0) + total_lunas;
 
         const { error: updateError } = await supabase
             .from('profiles')
             .update({
-                lunas_purchased: newPurchased,
+                tokens_purchased: newPurchased,
                 updated_at: now.toISOString()
             })
             .eq('id', user.id);
@@ -159,7 +163,7 @@ exports.handler = async (event) => {
 
         // 루나 로그 기록
         await supabase
-            .from('lunas_log')
+            .from('tokens_log')
             .insert({
                 user_id: user.id,
                 action: 'purchase',
@@ -173,9 +177,9 @@ exports.handler = async (event) => {
             headers,
             body: JSON.stringify({
                 success: true,
-                lunas_granted: total_lunas,
-                lunas_purchased: newPurchased,
-                bonus_lunas: bonus_lunas
+                tokens_granted: total_lunas,
+                tokens_purchased: newPurchased,
+                bonus_tokens: bonus_lunas
             })
         };
 
