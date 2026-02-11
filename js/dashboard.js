@@ -1,19 +1,5 @@
 // LunaWave Dashboard Logic
 
-const PLAN_NAMES_DASH = {
-    free: 'Free',
-    crescent: '초승달',
-    half: '반달',
-    full: '보름달'
-};
-
-const PLAN_INFO_DASH = {
-    free:     { dailyLuna: 20,  monthlyLuna: 0 },
-    crescent: { dailyLuna: 50,  monthlyLuna: 1500 },
-    half:     { dailyLuna: 200, monthlyLuna: 3000 },
-    full:     { dailyLuna: -1,  monthlyLuna: -1 } // -1 = 무제한
-};
-
 document.addEventListener('DOMContentLoaded', async () => {
     // Check auth
     const session = await LW.getSession();
@@ -50,12 +36,11 @@ async function loadDashboard() {
             return;
         }
 
-        // Update plan badge (4단계: free/crescent/half/full)
-        const userPlan = profile.plan || 'free';
+        // Update plan badge
         const planBadge = document.getElementById('planBadge');
         if (planBadge) {
-            planBadge.textContent = PLAN_NAMES_DASH[userPlan] || 'Free';
-            planBadge.className = `badge badge-${userPlan}`;
+            planBadge.textContent = profile.plan === 'pro' ? 'Pro' : 'Free';
+            planBadge.className = `badge ${profile.plan === 'pro' ? 'badge-pro' : 'badge-free'}`;
         }
 
         // Update user email
@@ -64,8 +49,7 @@ async function loadDashboard() {
             userEmail.textContent = profile.email;
         }
 
-        // Update luna balance (4단계 모델)
-        const pInfo = PLAN_INFO_DASH[userPlan] || PLAN_INFO_DASH.free;
+        // Update luna balance
         const lunaSection = document.getElementById('lunaSection') || document.getElementById('tokenSection');
 
         if (lunaSection) {
@@ -80,35 +64,27 @@ async function loadDashboard() {
             // Daily luna info
             const dailyLunaInfo = document.getElementById('dailyLunaInfo');
             if (dailyLunaInfo) {
-                const dailyStr = pInfo.dailyLuna === -1 ? '무제한' : pInfo.dailyLuna;
-                dailyLunaInfo.textContent = `일간 ${dailyStr}루나`;
+                const dailyAmount = profile.plan === 'pro' ? 50 : 20;
+                dailyLunaInfo.textContent = `일간 ${dailyAmount}루나`;
             }
 
-            // Monthly luna info
-            const monthlyLunaInfo = document.getElementById('monthlyLunaInfo');
-            if (monthlyLunaInfo) {
-                const monthlyStr = pInfo.monthlyLuna === -1 ? '무제한' : pInfo.monthlyLuna.toLocaleString();
-                monthlyLunaInfo.textContent = `월간 ${monthlyStr}루나`;
-            }
-
-            // Luna progress bar
+            // Luna progress bar (일간 루나 기준)
             const lunaProgress = document.getElementById('lunaProgress') || document.getElementById('tokenProgress');
             if (lunaProgress) {
-                if (pInfo.dailyLuna === -1) {
-                    lunaProgress.style.width = '100%';
-                } else {
-                    const percent = Math.min(100, ((profile.lunas_balance || 0) / pInfo.dailyLuna) * 100);
-                    lunaProgress.style.width = `${percent}%`;
-                }
+                const dailyMax = profile.plan === 'pro' ? 50 : 20;
+                const percent = Math.min(100, ((profile.lunas_balance || 0) / dailyMax) * 100);
+                lunaProgress.style.width = `${percent}%`;
             }
         }
 
         // Plan info display
-        const planInfoEl = document.getElementById('planInfo');
-        if (planInfoEl) {
-            const dailyStr = pInfo.dailyLuna === -1 ? '무제한' : pInfo.dailyLuna;
-            const monthlyStr = pInfo.monthlyLuna === -1 ? '무제한' : pInfo.monthlyLuna.toLocaleString();
-            planInfoEl.textContent = `${PLAN_NAMES_DASH[userPlan]} (일간 ${dailyStr}루나 / 월간 ${monthlyStr}루나)`;
+        const planInfo = document.getElementById('planInfo');
+        if (planInfo) {
+            if (profile.plan === 'pro') {
+                planInfo.textContent = 'Pro (매일 50루나 + 월 1,500 보너스)';
+            } else {
+                planInfo.textContent = 'Free (매일 20루나)';
+            }
         }
 
         // Referral code
@@ -212,7 +188,7 @@ async function loadPayments() {
                     ${payments.map(p => `
                         <tr>
                             <td>${new Date(p.paid_at).toLocaleDateString('ko-KR')}</td>
-                            <td>${p.type === 'subscription' ? (PLAN_NAMES_DASH[p.plan_id] || '') + ' 구독' : '기타'}</td>
+                            <td>${p.type === 'subscription' ? 'Pro 구독' : '루나 구매'}</td>
                             <td>₩${p.amount.toLocaleString()}</td>
                         </tr>
                     `).join('')}

@@ -1,5 +1,4 @@
-// verify-payment.js - 구독 결제 검증 (프론트에서 호출)
-// 구독(subscription) 전용 - 루나 패키지 구매(token_purchase)는 폐지됨
+// verify-payment.js - 결제 검증 (프론트에서 호출)
 const { createClient } = require('@supabase/supabase-js');
 
 const supabase = createClient(
@@ -9,14 +8,6 @@ const supabase = createClient(
 
 const PORTONE_IMP_KEY = process.env.PORTONE_IMP_KEY;
 const PORTONE_API_SECRET = process.env.PORTONE_API_SECRET;
-
-// 유효한 플랜 목록
-const VALID_PLANS = ['crescent', 'half', 'full'];
-const PLAN_PRICES = {
-    crescent: 13900,
-    half: 33000,
-    full: 79000
-};
 
 exports.handler = async (event) => {
     const headers = {
@@ -60,7 +51,7 @@ exports.handler = async (event) => {
         }
 
         const body = JSON.parse(event.body);
-        const { imp_uid, merchant_uid, expected_amount, plan } = body;
+        const { imp_uid, merchant_uid, expected_amount } = body;
 
         if (!imp_uid) {
             return {
@@ -155,33 +146,12 @@ exports.handler = async (event) => {
             .eq('payment_id', imp_uid)
             .single();
 
-        // plan 파라미터가 있으면 유효성 검증
-        if (plan && !VALID_PLANS.includes(plan)) {
-            return {
-                statusCode: 400,
-                headers,
-                body: JSON.stringify({
-                    success: false,
-                    error: 'Invalid plan',
-                    message: 'plan must be crescent, half, or full'
-                })
-            };
-        }
-
-        // plan이 지정된 경우 예상 금액과 플랜 가격 교차 검증
-        if (plan && PLAN_PRICES[plan] && paymentInfo.amount !== PLAN_PRICES[plan]) {
-            // 프로모션 할인 등으로 금액이 다를 수 있으므로 경고만 로그
-            console.log(`Plan price mismatch: plan=${plan}, expected=${PLAN_PRICES[plan]}, actual=${paymentInfo.amount}`);
-        }
-
         // 사용자 현재 상태 조회
         const { data: profile } = await supabase
             .from('profiles')
             .select('plan, tokens_balance, tokens_purchased')
             .eq('id', user.id)
             .single();
-
-        const planNames = { crescent: '초승달', half: '반달', full: '보름달' };
 
         return {
             statusCode: 200,
@@ -199,8 +169,6 @@ exports.handler = async (event) => {
                 },
                 profile: {
                     plan: profile?.plan,
-                    plan_name: planNames[profile?.plan] || 'Free',
-                    is_unlimited: profile?.plan === 'full',
                     tokens_balance: profile?.tokens_balance || 0,
                     tokens_purchased: profile?.tokens_purchased || 0
                 }

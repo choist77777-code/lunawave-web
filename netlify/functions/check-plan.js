@@ -6,20 +6,10 @@ const supabase = createClient(
     process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-// 일간 루나 지급량 (4단계 플랜)
+// 일간 루나 지급량
 const DAILY_TOKENS = {
     free: 20,
-    crescent: 50,
-    half: 200,
-    full: 0 // 무제한 (차감 없음)
-};
-
-// 플랜별 설정
-const PLAN_CONFIG = {
-    free:     { daily_lunas: 20, monthly_lunas: 0, is_unlimited: false, name: 'Free' },
-    crescent: { daily_lunas: 50, monthly_lunas: 1500, is_unlimited: false, name: '초승달' },
-    half:     { daily_lunas: 200, monthly_lunas: 3000, is_unlimited: false, name: '반달' },
-    full:     { daily_lunas: 0, monthly_lunas: 0, is_unlimited: true, name: '보름달' }
+    pro: 50
 };
 
 exports.handler = async (event) => {
@@ -133,10 +123,8 @@ exports.handler = async (event) => {
 
         // 일간 루나 자동 지급 체크
         const today = new Date().toISOString().split('T')[0];
-        const currentPlanConfig = PLAN_CONFIG[profile.plan] || PLAN_CONFIG.free;
-
-        if (profile.daily_tokens_granted_at !== today && !currentPlanConfig.is_unlimited) {
-            const grantAmount = DAILY_TOKENS[profile.plan] || DAILY_TOKENS.free;
+        if (profile.daily_tokens_granted_at !== today) {
+            const grantAmount = profile.plan === 'pro' ? DAILY_TOKENS.pro : DAILY_TOKENS.free;
 
             await supabase
                 .from('profiles')
@@ -154,7 +142,7 @@ exports.handler = async (event) => {
                     action: 'daily',
                     amount: grantAmount,
                     balance_after: grantAmount + (profile.tokens_purchased || 0),
-                    description: `일간 루나 지급 (${currentPlanConfig.name} ${grantAmount})`
+                    description: profile.plan === 'pro' ? '일간 루나 지급 (Pro 50)' : '일간 루나 지급 (Free 20)'
                 });
 
             profile.tokens_balance = grantAmount;
@@ -213,8 +201,8 @@ exports.handler = async (event) => {
                 }
             }
 
-            // 유료 플랜 기기 수 제한 확인
-            if (['crescent', 'half', 'full'].includes(profile.plan)) {
+            // Pro 플랜 기기 수 제한 확인
+            if (profile.plan === 'pro') {
                 const { count } = await supabase
                     .from('devices')
                     .select('id', { count: 'exact' })
@@ -234,10 +222,9 @@ exports.handler = async (event) => {
             .order('last_active_at', { ascending: false })
             .limit(5);
 
-        // 구독 만료 확인 (유료 플랜: crescent, half, full)
+        // 구독 만료 확인
         let planStatus = 'active';
-        const paidPlans = ['crescent', 'half', 'full'];
-        if (paidPlans.includes(profile.plan) && profile.plan_expires_at) {
+        if (profile.plan === 'pro' && profile.plan_expires_at) {
             const expiresAt = new Date(profile.plan_expires_at);
             const now = new Date();
             const daysUntilExpiry = Math.ceil((expiresAt - now) / (1000 * 60 * 60 * 24));
@@ -249,7 +236,7 @@ exports.handler = async (event) => {
             }
         }
 
-        const tokens_total = currentPlanConfig.is_unlimited ? 0 : (profile.tokens_balance || 0) + (profile.tokens_purchased || 0);
+        const tokens_total = (profile.tokens_balance || 0) + (profile.tokens_purchased || 0);
 
         return {
             statusCode: 200,
@@ -258,15 +245,12 @@ exports.handler = async (event) => {
                 success: true,
                 profile: {
                     plan: profile.plan,
-                    plan_name: currentPlanConfig.name,
                     plan_status: planStatus,
                     plan_started_at: profile.plan_started_at,
                     plan_expires_at: profile.plan_expires_at,
-                    is_unlimited: currentPlanConfig.is_unlimited,
                     tokens_balance: profile.tokens_balance || 0,
                     tokens_purchased: profile.tokens_purchased || 0,
                     tokens_total: tokens_total,
-                    daily_lunas_max: currentPlanConfig.daily_lunas,
                     daily_tokens_granted_at: profile.daily_tokens_granted_at,
                     referral_code: profile.referral_code,
                     device_limit: profile.device_limit || 2
