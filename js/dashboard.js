@@ -39,8 +39,10 @@ async function loadDashboard() {
         // Update plan badge
         const planBadge = document.getElementById('planBadge');
         if (planBadge) {
-            planBadge.textContent = profile.plan === 'pro' ? 'Pro' : 'Free';
-            planBadge.className = `badge ${profile.plan === 'pro' ? 'badge-pro' : 'badge-free'}`;
+            const PLAN_NAMES = { free: 'Free', crescent: '초승달', halfmoon: '반달', fullmoon: '보름달' };
+            const plan = profile.plan || 'free';
+            planBadge.textContent = PLAN_NAMES[plan] || 'Free';
+            planBadge.className = `badge badge-${plan}`;
         }
 
         // Update user email
@@ -64,14 +66,20 @@ async function loadDashboard() {
             // Daily luna info
             const dailyLunaInfo = document.getElementById('dailyLunaInfo');
             if (dailyLunaInfo) {
-                const dailyAmount = profile.plan === 'pro' ? 50 : 20;
-                dailyLunaInfo.textContent = `일간 ${dailyAmount}루나`;
+                const DAILY_AMOUNTS = { free: 20, crescent: 50, halfmoon: 200, fullmoon: 999 };
+                const dailyAmt = DAILY_AMOUNTS[profile.plan] || 20;
+                if (profile.plan === 'fullmoon') {
+                    dailyLunaInfo.textContent = '무제한';
+                } else {
+                    dailyLunaInfo.textContent = `일간 ${dailyAmt}루나`;
+                }
             }
 
             // Luna progress bar (일간 루나 기준)
             const lunaProgress = document.getElementById('lunaProgress') || document.getElementById('tokenProgress');
             if (lunaProgress) {
-                const dailyMax = profile.plan === 'pro' ? 50 : 20;
+                const DAILY_MAX = { free: 20, crescent: 50, halfmoon: 200, fullmoon: 999 };
+                const dailyMax = DAILY_MAX[profile.plan] || 20;
                 const percent = Math.min(100, ((profile.lunas_balance || 0) / dailyMax) * 100);
                 lunaProgress.style.width = `${percent}%`;
             }
@@ -80,11 +88,13 @@ async function loadDashboard() {
         // Plan info display
         const planInfo = document.getElementById('planInfo');
         if (planInfo) {
-            if (profile.plan === 'pro') {
-                planInfo.textContent = 'Pro (매일 50루나 + 월 1,500 보너스)';
-            } else {
-                planInfo.textContent = 'Free (매일 20루나)';
-            }
+            const PLAN_DESCS = {
+                free: 'Free (매일 20루나)',
+                crescent: '초승달 (매일 50루나 + 월 1,500루나)',
+                halfmoon: '반달 (매일 200루나 + 월 3,000루나)',
+                fullmoon: '보름달 (무제한)'
+            };
+            planInfo.textContent = PLAN_DESCS[profile.plan] || PLAN_DESCS.free;
         }
 
         // Referral code
@@ -188,7 +198,7 @@ async function loadPayments() {
                     ${payments.map(p => `
                         <tr>
                             <td>${new Date(p.paid_at).toLocaleDateString('ko-KR')}</td>
-                            <td>${p.type === 'subscription' ? 'Pro 구독' : '루나 구매'}</td>
+                            <td>${p.type === 'subscription' ? (p.plan ? (p.plan === 'crescent' ? '초승달 구독' : p.plan === 'halfmoon' ? '반달 구독' : p.plan === 'fullmoon' ? '보름달 구독' : '구독') : '구독') : '루나 구매'}</td>
                             <td>₩${p.amount.toLocaleString()}</td>
                         </tr>
                     `).join('')}
