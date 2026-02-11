@@ -9,8 +9,17 @@ const supabase = createClient(
 // 일간 루나 지급량
 const DAILY_TOKENS = {
     free: 20,
-    pro: 50
+    crescent: 50,
+    halfmoon: 200,
+    fullmoon: 999
 };
+const MONTHLY_TOKENS = {
+    free: 0,
+    crescent: 1500,
+    halfmoon: 3000,
+    fullmoon: 0
+};
+const UNLIMITED_PLANS = ['fullmoon'];
 
 exports.handler = async (event) => {
     const headers = {
@@ -124,7 +133,7 @@ exports.handler = async (event) => {
         // 일간 루나 자동 지급 체크
         const today = new Date().toISOString().split('T')[0];
         if (profile.daily_tokens_granted_at !== today) {
-            const grantAmount = profile.plan === 'pro' ? DAILY_TOKENS.pro : DAILY_TOKENS.free;
+            const grantAmount = DAILY_TOKENS[profile.plan] || DAILY_TOKENS.free;
 
             await supabase
                 .from('profiles')
@@ -142,7 +151,7 @@ exports.handler = async (event) => {
                     action: 'daily',
                     amount: grantAmount,
                     balance_after: grantAmount + (profile.tokens_purchased || 0),
-                    description: profile.plan === 'pro' ? '일간 루나 지급 (Pro 50)' : '일간 루나 지급 (Free 20)'
+                    description: `일간 루나 지급 (${profile.plan} ${grantAmount})`
                 });
 
             profile.tokens_balance = grantAmount;
@@ -202,7 +211,7 @@ exports.handler = async (event) => {
             }
 
             // Pro 플랜 기기 수 제한 확인
-            if (profile.plan === 'pro') {
+            if (profile.plan !== 'free') {
                 const { count } = await supabase
                     .from('devices')
                     .select('id', { count: 'exact' })
@@ -224,7 +233,7 @@ exports.handler = async (event) => {
 
         // 구독 만료 확인
         let planStatus = 'active';
-        if (profile.plan === 'pro' && profile.plan_expires_at) {
+        if (profile.plan !== 'free' && profile.plan_expires_at) {
             const expiresAt = new Date(profile.plan_expires_at);
             const now = new Date();
             const daysUntilExpiry = Math.ceil((expiresAt - now) / (1000 * 60 * 60 * 24));
@@ -250,6 +259,8 @@ exports.handler = async (event) => {
                     plan_expires_at: profile.plan_expires_at,
                     tokens_balance: profile.tokens_balance || 0,
                     tokens_purchased: profile.tokens_purchased || 0,
+                    monthly_tokens: profile.tokens_purchased || 0,
+                    unlimited: UNLIMITED_PLANS.includes(profile.plan),
                     tokens_total: tokens_total,
                     daily_tokens_granted_at: profile.daily_tokens_granted_at,
                     referral_code: profile.referral_code,

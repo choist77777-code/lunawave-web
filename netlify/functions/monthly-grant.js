@@ -8,11 +8,16 @@ const supabase = createClient(
     process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-const MONTHLY_BONUS_LUNAS = 1500; // Pro 월 보너스
+const MONTHLY_BONUS = {
+    crescent: 1500,
+    halfmoon: 3000,
+    fullmoon: 0
+};
 const ROLLOVER_CAP = 3000;
+const PAID_PLANS = ['crescent', 'halfmoon', 'fullmoon'];
 
 // Netlify Scheduled Function 설정
-exports.schedule = '@monthly'; // 또는 '0 0 1 * *' (매월 1일)
+exports.schedule = '@daily';
 
 exports.handler = async (event) => {
     const headers = {
@@ -26,8 +31,8 @@ exports.handler = async (event) => {
         // 활성 Pro 구독자 조회 (plan_expires_at이 현재 이후인 유저)
         const { data: proUsers, error: fetchError } = await supabase
             .from('profiles')
-            .select('id, email, tokens_balance, tokens_purchased')
-            .eq('plan', 'pro')
+            .select('id, email, plan, tokens_balance, tokens_purchased, plan_started_at')
+            .in('plan', PAID_PLANS)
             .gt('plan_expires_at', now.toISOString());
 
         if (fetchError) {
@@ -41,11 +46,25 @@ exports.handler = async (event) => {
 
         for (const user of proUsers || []) {
             try {
+                const bonus = MONTHLY_BONUS[user.plan] || 0;
+                if (bonus === 0) {
+                    // fullmoon은 무제한이라 월간 보너스 불필요
+                    successCount++;
+                    continue;
+                }
+
+                // 결제일 기준 체크: plan_started_at의 day와 오늘 day 비교
+                const billingDay = user.plan_started_at ? new Date(user.plan_started_at).getDate() : 1;
+                const todayDay = now.getDate();
+                if (billingDay !== todayDay) {
+                    continue; // 오늘이 결제일이 아니면 스킵
+                }
+
                 // 구매 루나 이월 계산 (최대 3000루나까지)
                 const currentPurchased = user.tokens_purchased || 0;
                 const rollover = Math.min(currentPurchased, ROLLOVER_CAP);
                 const expired = currentPurchased - rollover;
-                const newPurchased = rollover + MONTHLY_BONUS_LUNAS;
+                const newPurchased = rollover + bonus;
 
                 // 프로필 업데이트 (lunas_purchased에 월 보너스 추가)
                 const { error: updateError } = await supabase
@@ -81,11 +100,11 @@ exports.handler = async (event) => {
                         action: 'monthly_bonus',
                         amount: MONTHLY_BONUS_LUNAS,
                         balance_after: (user.tokens_balance || 0) + newPurchased,
-                        description: '월간 Pro 보너스 루나 지급'
+                        description: `월간 ${user.plan} 보너스 루나 지급 (+${bonus})`
                     });
 
                 successCount++;
-                console.log(`Granted ${MONTHLY_BONUS_LUNAS} bonus lunas to ${user.email} (purchased: ${newPurchased})`);
+                console.log(`Granted ${bonus} bonus lunas to ${user.email} (purchased: ${newPurchased})`);
 
             } catch (userError) {
                 failCount++;
