@@ -98,7 +98,7 @@ exports.handler = async (event) => {
                     .insert({
                         user_id: user.id,
                         action: 'monthly_bonus',
-                        amount: MONTHLY_BONUS_LUNAS,
+                        amount: bonus,
                         balance_after: (user.tokens_balance || 0) + newPurchased,
                         description: `월간 ${user.plan} 보너스 루나 지급 (+${bonus})`
                     });
@@ -115,8 +115,8 @@ exports.handler = async (event) => {
         // 만료된 구독자 처리 (plan_expires_at이 현재 이전인 Pro 유저)
         const { data: expiredUsers } = await supabase
             .from('profiles')
-            .select('id, email')
-            .eq('plan', 'pro')
+            .select('id, email, plan')
+            .in('plan', PAID_PLANS)
             .lt('plan_expires_at', now.toISOString());
 
         let expiredCount = 0;
@@ -136,7 +136,7 @@ exports.handler = async (event) => {
                         user_id: user.id,
                         action: 'plan_expire',
                         amount: 0,
-                        description: 'Pro 구독 만료 - Free로 전환 (일간 20루나로 변경)'
+                        description: `${user.plan} 구독 만료 - Free로 전환`
                     });
 
                 expiredCount++;
