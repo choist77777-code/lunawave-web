@@ -15,11 +15,11 @@ const LUNA_COSTS = {
     metadata_gpt: 2,
     metadata_regen: 1,
     youtube_trend: 0.5,
-    cutout_standard: 0.5,
-    cutout_high: 1,
-    cutout_ultra: 2,
-    render_1img: 1,
-    render_2img: 5,
+    cutout_standard: 2,
+    cutout_high: 3,
+    cutout_ultra: 5,
+    render_1img: 20,
+    render_2img: 20,
     subtitle_sync: 2,
     halo_remove: 0.3,
     edge_blend: 0.2,
@@ -27,31 +27,37 @@ const LUNA_COSTS = {
     oneclick_auto: 10,
     youtube_upload: 10,
     batch_5: 8,
-    song_download: 0.5
+    song_download: 0.5,
+    preview_accurate: 3,
+    preview_canvas: 0,
+    text_behind: 2,
+    outline: 1
 };
 
 // 일간 루나 지급량
 const DAILY_LUNAS = {
     free: 20,
-    pro: 50
+    crescent: 50,
+    halfmoon: 200,
+    fullmoon: 999
 };
 
-// Pro 전용 기능
-const PRO_ONLY_FEATURES = [
-    'render_2img',
-    'cutout_standard',
-    'cutout_high',
-    'cutout_ultra',
-    'metadata_gemini',
-    'metadata_gpt',
-    'metadata_regen',
-    'subtitle_sync',
-    'halo_remove',
-    'edge_blend',
-    'color_temperature',
-    'youtube_upload',
-    'batch_5'
-];
+// 플랜별 최소 필요 플랜 레벨 (0=free, 1=crescent, 2=halfmoon, 3=fullmoon)
+const PLAN_LEVEL = { free: 0, crescent: 1, halfmoon: 2, fullmoon: 3 };
+
+// 기능별 최소 플랜 레벨
+const FEATURE_MIN_PLAN = {
+    song_generate: 0, auto_input: 0, render_1img: 0, render_2img: 0,
+    song_download: 0, preview_canvas: 0,
+    cutout_standard: 1, cutout_high: 1, cutout_ultra: 1,
+    metadata_gemini: 1, metadata_gpt: 1, metadata_regen: 1,
+    subtitle_sync: 1, preview_accurate: 1,
+    halo_remove: 1, edge_blend: 1, color_temperature: 1,
+    text_behind: 2, outline: 2,
+    youtube_trend: 2,
+    oneclick_auto: 2,
+    youtube_upload: 3, batch_5: 3
+};
 
 exports.handler = async (event) => {
     const headers = {
@@ -129,23 +135,69 @@ exports.handler = async (event) => {
         // 일간 루나 자동 지급 체크
         await checkDailyLunaGrant(user.id, profile);
 
-        // Free 플랜 처리 - 이제 루나 기반으로 동작
-        if (profile.plan === 'free' || profile.plan === null) {
-            // Pro 전용 기능 차단
-            if (PRO_ONLY_FEATURES.includes(feature)) {
-                return {
-                    statusCode: 403,
-                    headers,
-                    body: JSON.stringify({
-                        success: false,
-                        error: 'pro_required',
-                        message: 'Pro 플랜 전용 기능입니다.',
-                        feature: feature
-                    })
-                };
-            }
+        const userPlan = profile.plan || 'free';
+        const userLevel = PLAN_LEVEL[userPlan] || 0;
+        const requiredLevel = FEATURE_MIN_PLAN[feature] || 0;
 
-            // Free 플랜도 루나 차감 방식 사용 (매일 20루나 지급)
+        // 플랜 레벨 체크 - 기능 사용에 필요한 최소 플랜 미달
+        if (userLevel < requiredLevel) {
+            const requiredPlan = Object.keys(PLAN_LEVEL).find(k => PLAN_LEVEL[k] === requiredLevel) || 'crescent';
+            return {
+                statusCode: 403,
+                headers,
+                body: JSON.stringify({
+                    success: false,
+                    error: 'plan_required',
+                    message: `${requiredPlan} 플랜 이상에서 사용 가능합니다.`,
+                    feature: feature,
+                    required_plan: requiredPlan
+                })
+            };
+        }
+
+        // 무료 기능 (cost 0)은 바로 허용
+        if (cost === 0) {
+            return {
+                statusCode: 200,
+                headers,
+                body: JSON.stringify({
+                    success: true,
+                    plan: userPlan,
+                    feature: feature,
+                    cost: 0,
+                    tokens_remaining: (profile.tokens_balance || 0) + (profile.tokens_purchased || 0),
+                    watermark: userPlan === 'free'
+                })
+            };
+        }
+
+        // fullmoon(보름달) 무제한: 차감 없이 허용
+        if (userPlan === 'fullmoon') {
+            await supabase.from('tokens_log').insert({
+                user_id: user.id,
+                action: 'use',
+                amount: 0,
+                balance_after: (profile.tokens_balance || 0) + (profile.tokens_purchased || 0),
+                feature: feature,
+                description: getFeatureDescription(feature) + ' (무제한)'
+            });
+            return {
+                statusCode: 200,
+                headers,
+                body: JSON.stringify({
+                    success: true,
+                    plan: 'fullmoon',
+                    feature: feature,
+                    cost: 0,
+                    tokens_remaining: (profile.tokens_balance || 0) + (profile.tokens_purchased || 0),
+                    watermark: false,
+                    unlimited: true
+                })
+            };
+        }
+
+        // 루나 차감: 일간(tokens_balance) -> 월간(tokens_purchased) -> 부족시 차단
+        {
             const tokens_balance = profile.tokens_balance || 0;
             const tokens_purchased = profile.tokens_purchased || 0;
             const total_tokens = tokens_balance + tokens_purchased;
@@ -157,14 +209,15 @@ exports.handler = async (event) => {
                     body: JSON.stringify({
                         success: false,
                         error: 'insufficient_tokens',
-                        message: '루나가 부족합니다. 내일 다시 시도하거나 Pro로 업그레이드하세요.',
+                        message: '루나가 부족합니다. 플랜을 업그레이드하세요.',
                         cost: cost,
-                        current_balance: total_tokens
+                        current_balance: total_tokens,
+                        needed: cost - total_tokens
                     })
                 };
             }
 
-            // 루나 차감 (일간 먼저, 그 다음 구매)
+            // 차감: 일간(tokens_balance) 먼저, 월간(tokens_purchased) 다음
             let new_balance = tokens_balance;
             let new_purchased = tokens_purchased;
 
@@ -176,16 +229,17 @@ exports.handler = async (event) => {
                 new_purchased = tokens_purchased - remaining_cost;
             }
 
+            const now_ts = new Date();
+
             await supabase
                 .from('profiles')
                 .update({
                     tokens_balance: new_balance,
                     tokens_purchased: new_purchased,
-                    updated_at: new Date().toISOString()
+                    updated_at: now_ts.toISOString()
                 })
                 .eq('id', user.id);
 
-            // 루나 로그 기록
             await supabase
                 .from('tokens_log')
                 .insert({
@@ -197,115 +251,37 @@ exports.handler = async (event) => {
                     description: getFeatureDescription(feature)
                 });
 
+            // 사용량 통계
+            const yearMonth = `${now_ts.getFullYear()}-${String(now_ts.getMonth() + 1).padStart(2, '0')}`;
+            await updateUsageStats(user.id, yearMonth, feature, cost);
+
+            const new_total = new_balance + new_purchased;
+
+            let warning = null;
+            if (new_total <= 0) {
+                warning = 'tokens_depleted';
+            } else if (new_total <= total_tokens * 0.1) {
+                warning = 'tokens_low_10';
+            } else if (new_total <= total_tokens * 0.3) {
+                warning = 'tokens_low_30';
+            }
+
             return {
                 statusCode: 200,
                 headers,
                 body: JSON.stringify({
                     success: true,
-                    plan: 'free',
+                    plan: userPlan,
                     feature: feature,
                     cost: cost,
-                    tokens_remaining: new_balance + new_purchased,
+                    tokens_remaining: new_total,
                     tokens_balance: new_balance,
                     tokens_purchased: new_purchased,
-                    watermark: true // Free는 워터마크 필수
+                    warning: warning,
+                    watermark: userPlan === 'free'
                 })
             };
         }
-
-        // Pro 플랜 - 루나 차감
-        const tokens_balance = profile.tokens_balance || 0;
-        const tokens_purchased = profile.tokens_purchased || 0;
-        const total_tokens = tokens_balance + tokens_purchased;
-
-        if (total_tokens < cost) {
-            return {
-                statusCode: 402,
-                headers,
-                body: JSON.stringify({
-                    success: false,
-                    error: 'insufficient_tokens',
-                    message: '루나가 부족합니다.',
-                    cost: cost,
-                    current_balance: total_tokens,
-                    needed: cost - total_tokens
-                })
-            };
-        }
-
-        // 루나 차감 (일간 먼저, 그 다음 구매)
-        let new_balance = tokens_balance;
-        let new_purchased = tokens_purchased;
-
-        if (tokens_balance >= cost) {
-            new_balance = tokens_balance - cost;
-        } else {
-            const remaining_cost = cost - tokens_balance;
-            new_balance = 0;
-            new_purchased = tokens_purchased - remaining_cost;
-        }
-
-        const now = new Date();
-
-        // 프로필 업데이트
-        const { error: updateError } = await supabase
-            .from('profiles')
-            .update({
-                tokens_balance: new_balance,
-                tokens_purchased: new_purchased,
-                updated_at: now.toISOString()
-            })
-            .eq('id', user.id);
-
-        if (updateError) {
-            throw updateError;
-        }
-
-        // 루나 로그 기록
-        await supabase
-            .from('tokens_log')
-            .insert({
-                user_id: user.id,
-                action: 'use',
-                amount: -cost,
-                balance_after: new_balance + new_purchased,
-                feature: feature,
-                description: getFeatureDescription(feature)
-            });
-
-        // 사용량 통계 업데이트
-        const yearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-        await updateUsageStats(user.id, yearMonth, feature, cost);
-
-        const new_total = new_balance + new_purchased;
-
-        // 루나 잔액 경고
-        let warning = null;
-        const originalTotal = tokens_balance + tokens_purchased;
-
-        if (new_total <= 0) {
-            warning = 'tokens_depleted';
-        } else if (new_total <= originalTotal * 0.1) {
-            warning = 'tokens_low_10';
-        } else if (new_total <= originalTotal * 0.3) {
-            warning = 'tokens_low_30';
-        }
-
-        return {
-            statusCode: 200,
-            headers,
-            body: JSON.stringify({
-                success: true,
-                plan: 'pro',
-                feature: feature,
-                cost: cost,
-                tokens_remaining: new_total,
-                tokens_balance: new_balance,
-                tokens_purchased: new_purchased,
-                warning: warning,
-                watermark: false
-            })
-        };
 
     } catch (error) {
         console.error('Use luna error:', error);
@@ -327,7 +303,7 @@ async function checkDailyLunaGrant(userId, profile) {
         return;
     }
 
-    const grantAmount = profile.plan === 'pro' ? DAILY_LUNAS.pro : DAILY_LUNAS.free;
+    const grantAmount = DAILY_LUNAS[profile.plan] || DAILY_LUNAS.free;
 
     try {
         // 일간 루나 리셋하고 새로 지급
@@ -348,7 +324,7 @@ async function checkDailyLunaGrant(userId, profile) {
                 action: 'daily',
                 amount: grantAmount,
                 balance_after: grantAmount + (profile.tokens_purchased || 0),
-                description: profile.plan === 'pro' ? '일간 루나 지급 (Pro 50)' : '일간 루나 지급 (Free 20)'
+                description: `일간 루나 지급 (${profile.plan} ${grantAmount})`
             });
 
         // profile 객체 업데이트
@@ -380,7 +356,11 @@ function getFeatureDescription(feature) {
         oneclick_auto: '원클릭 자동 생성',
         youtube_upload: '유튜브 업로드',
         batch_5: '일괄 처리 (5곡)',
-        song_download: '노래 다운로드'
+        song_download: '노래 다운로드',
+        preview_accurate: '정밀 미리보기',
+        preview_canvas: '캔버스 미리보기',
+        text_behind: '텍스트 비하인드',
+        outline: '아웃라인'
     };
     return descriptions[feature] || feature;
 }

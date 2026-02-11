@@ -7,10 +7,21 @@ const supabase = createClient(
 );
 
 const PORTONE_API_SECRET = process.env.PORTONE_API_SECRET;
-const PRO_MONTHLY_PRICE = 17900;
-const PRO_FIRST_MONTH_PRICE = 8950; // 50% 할인
-const MONTHLY_BONUS_LUNAS = 1500; // 월 보너스 루나
-const DAILY_LUNAS_PRO = 50; // Pro 일간 루나
+const PLAN_PRICES = {
+    crescent: 13900,
+    halfmoon: 33000,
+    fullmoon: 79000
+};
+const PLAN_MONTHLY = {
+    crescent: 1500,
+    halfmoon: 3000,
+    fullmoon: 0
+};
+const PLAN_DAILY = {
+    crescent: 50,
+    halfmoon: 200,
+    fullmoon: 999
+};
 
 exports.handler = async (event) => {
     // CORS headers
@@ -55,10 +66,46 @@ exports.handler = async (event) => {
         }
 
         const body = JSON.parse(event.body);
-        const { imp_uid, merchant_uid, billing_key, is_first_payment, promo_code } = body;
+        const { imp_uid, merchant_uid, billing_key, is_first_payment, promo_code, plan, action } = body;
+
+        // 구독 해지 처리
+        if (action === 'cancel') {
+            await supabase
+                .from('profiles')
+                .update({
+                    billing_key: null,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', user.id);
+
+            await supabase.from('tokens_log').insert({
+                user_id: user.id,
+                action: 'cancel',
+                amount: 0,
+                description: '구독 해지 예약 (현재 기간 종료 후 Free 전환)'
+            });
+
+            return {
+                statusCode: 200,
+                headers,
+                body: JSON.stringify({
+                    success: true,
+                    message: '구독이 해지 예약되었습니다. 현재 구독 기간이 끝나면 Free로 전환됩니다.'
+                })
+            };
+        }
+
+        // 플랜 유효성 검증
+        if (!plan || !PLAN_PRICES[plan]) {
+            return {
+                statusCode: 400,
+                headers,
+                body: JSON.stringify({ error: 'Invalid plan. Use: crescent, halfmoon, fullmoon' })
+            };
+        }
 
         // 결제 금액 계산
-        let amount = is_first_payment ? PRO_FIRST_MONTH_PRICE : PRO_MONTHLY_PRICE;
+        let amount = PLAN_PRICES[plan];
         let promo_discount = 0;
 
         // 프로모션 코드 적용
@@ -123,16 +170,17 @@ exports.handler = async (event) => {
             .eq('id', user.id)
             .single();
 
-        // Pro 첫 구독 시: 일간 50루나 + 월 보너스 1,500루나
-        const newPurchased = (currentProfile?.tokens_purchased || 0) + MONTHLY_BONUS_LUNAS;
+        const monthlyBonus = PLAN_MONTHLY[plan] || 0;
+        const dailyAmount = PLAN_DAILY[plan] || 20;
+        const newPurchased = (currentProfile?.tokens_purchased || 0) + monthlyBonus;
 
         const { error: updateError } = await supabase
             .from('profiles')
             .update({
-                plan: 'pro',
+                plan: plan,
                 plan_started_at: now.toISOString(),
                 plan_expires_at: plan_expires_at.toISOString(),
-                tokens_balance: DAILY_LUNAS_PRO, // 일간 루나 리셋 및 Pro 50 지급
+                tokens_balance: dailyAmount,
                 tokens_purchased: newPurchased,
                 daily_tokens_granted_at: today,
                 billing_key: billing_key || null,
@@ -152,8 +200,8 @@ exports.handler = async (event) => {
                 payment_id: imp_uid,
                 merchant_uid: merchant_uid,
                 type: 'subscription',
-                plan: 'pro',
-                tokens_granted: MONTHLY_BONUS_LUNAS, // 컬럼명은 유지
+                plan: plan,
+                tokens_granted: monthlyBonus, // 컬럼명은 유지
                 amount: amount,
                 status: 'paid',
                 paid_at: now.toISOString()
@@ -165,9 +213,9 @@ exports.handler = async (event) => {
             .insert({
                 user_id: user.id,
                 action: 'subscription',
-                amount: MONTHLY_BONUS_LUNAS,
-                balance_after: DAILY_LUNAS_PRO + newPurchased,
-                description: 'Pro 구독 - 월간 보너스 루나 지급 (+ 일간 50루나)'
+                amount: monthlyBonus,
+                balance_after: dailyAmount + newPurchased,
+                description: `${plan} 구독 - 월간 보너스 ${monthlyBonus}루나 + 일간 ${dailyAmount}루나`
             });
 
         return {
@@ -175,10 +223,10 @@ exports.handler = async (event) => {
             headers,
             body: JSON.stringify({
                 success: true,
-                plan: 'pro',
-                tokens_balance: DAILY_LUNAS_PRO,
+                plan: plan,
+                tokens_balance: dailyAmount,
                 tokens_purchased: newPurchased,
-                tokens_total: DAILY_LUNAS_PRO + newPurchased,
+                tokens_total: dailyAmount + newPurchased,
                 plan_expires_at: plan_expires_at.toISOString()
             })
         };
