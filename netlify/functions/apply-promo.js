@@ -134,6 +134,14 @@ exports.handler = async (event) => {
                 result.message = `결제 완료 시 ${promo.value} 루나가 추가 지급됩니다.`;
                 break;
 
+            case 'subscription_discount':
+                // 구독 할인 (구독 결제 시 적용)
+                result.discount_type = 'subscription';
+                result.discount_percent = promo.value;
+                result.applicable_plans = promo.applicable_plans || ['crescent', 'half', 'full'];
+                result.message = `구독 결제 시 ${promo.value}% 할인이 적용됩니다.`;
+                break;
+
             case 'free_lunas':
                 // 즉시 루나 지급
                 const { data: profile } = await supabase
@@ -176,23 +184,39 @@ exports.handler = async (event) => {
                 break;
 
             case 'free_month':
-                // 1개월 무료 Pro (일간 50루나 + 월 1,500루나)
+                // 1개월 무료 구독 (프로모션에 target_plan이 있으면 해당 플랜, 없으면 crescent)
+                const promoPlan = promo.target_plan || 'crescent';
+                const promoPlanConfig = {
+                    crescent: { daily: 50, monthly: 1500, name: '초승달' },
+                    half: { daily: 200, monthly: 3000, name: '반달' },
+                    full: { daily: 0, monthly: 0, is_unlimited: true, name: '보름달' }
+                };
+                const targetConfig = promoPlanConfig[promoPlan] || promoPlanConfig.crescent;
+
                 const now = new Date();
                 const today = now.toISOString().split('T')[0];
                 const plan_expires_at = new Date(now);
                 plan_expires_at.setMonth(plan_expires_at.getMonth() + 1);
 
+                const updateData = {
+                    plan: promoPlan,
+                    plan_started_at: now.toISOString(),
+                    plan_expires_at: plan_expires_at.toISOString(),
+                    daily_tokens_granted_at: today,
+                    updated_at: now.toISOString()
+                };
+
+                if (targetConfig.is_unlimited) {
+                    updateData.tokens_balance = 0;
+                    updateData.tokens_purchased = 0;
+                } else {
+                    updateData.tokens_balance = targetConfig.daily;
+                    updateData.tokens_purchased = targetConfig.monthly;
+                }
+
                 await supabase
                     .from('profiles')
-                    .update({
-                        plan: 'pro',
-                        plan_started_at: now.toISOString(),
-                        plan_expires_at: plan_expires_at.toISOString(),
-                        tokens_balance: 50, // 일간 루나
-                        tokens_purchased: 1500, // 월 보너스
-                        daily_tokens_granted_at: today,
-                        updated_at: now.toISOString()
-                    })
+                    .update(updateData)
                     .eq('id', user.id);
 
                 await supabase
@@ -200,20 +224,26 @@ exports.handler = async (event) => {
                     .update({ used_count: promo.used_count + 1 })
                     .eq('id', promo.id);
 
+                const totalGranted = targetConfig.is_unlimited ? 0 : targetConfig.daily + targetConfig.monthly;
+
                 await supabase
                     .from('tokens_log')
                     .insert({
                         user_id: user.id,
                         action: 'promo',
-                        amount: 1550, // 50 + 1500
-                        balance_after: 1550,
-                        description: `프로모션 코드 적용: ${promo.code} (1개월 무료 Pro)`
+                        amount: totalGranted,
+                        balance_after: totalGranted,
+                        description: `프로모션 코드 적용: ${promo.code} (1개월 무료 ${targetConfig.name})`
                     });
 
-                result.plan = 'pro';
+                result.plan = promoPlan;
+                result.plan_name = targetConfig.name;
                 result.plan_expires_at = plan_expires_at.toISOString();
-                result.tokens_granted = 1550;
-                result.message = 'Pro 1개월 무료 이용이 시작되었습니다! (매일 50루나 + 월 1,500루나)';
+                result.is_unlimited = targetConfig.is_unlimited || false;
+                result.tokens_granted = totalGranted;
+                result.message = targetConfig.is_unlimited
+                    ? `${targetConfig.name} 1개월 무료 이용이 시작되었습니다! (무제한)`
+                    : `${targetConfig.name} 1개월 무료 이용이 시작되었습니다! (매일 ${targetConfig.daily}루나 + 월 ${targetConfig.monthly}루나)`;
                 result.applied = true;
                 break;
 

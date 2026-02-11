@@ -3,14 +3,11 @@
 const PORTONE_IMP_CODE = 'YOUR_PORTONE_IMP_CODE'; // Replace with actual code
 
 const PRICES = {
-    subscription: {
-        normal: 17900,
-        firstMonth: 8950
-    },
-    tokens: {
-        small: { tokens: 500, price: 7900 },
-        medium: { tokens: 1000, price: 12900 },
-        large: { tokens: 3000, price: 29900 }
+    plans: {
+        free:     { name: 'Free',   price: 0,     dailyLuna: 20,  monthlyLuna: 0 },
+        crescent: { name: '초승달', price: 13900, dailyLuna: 50,  monthlyLuna: 1500 },
+        half:     { name: '반달',   price: 33000, dailyLuna: 200, monthlyLuna: 3000 },
+        full:     { name: '보름달', price: 79000, dailyLuna: -1,  monthlyLuna: -1 } // -1 = 무제한
     }
 };
 
@@ -28,31 +25,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Load user info
     loadUserInfo();
 
-    // Token package selection
-    document.querySelectorAll('.token-package').forEach(el => {
-        el.addEventListener('click', () => selectTokenPackage(el.dataset.package));
+    // Subscribe buttons (각 플랜별)
+    document.querySelectorAll('[data-plan]').forEach(el => {
+        el.addEventListener('click', () => handleSubscribe(el.dataset.plan));
     });
-
-    // Subscribe button
-    document.getElementById('subscribeBtn')?.addEventListener('click', handleSubscribe);
-
-    // Purchase tokens button
-    document.getElementById('purchaseTokensBtn')?.addEventListener('click', handlePurchaseTokens);
 
     // Promo code
     document.getElementById('applyPromoBtn')?.addEventListener('click', applyPromoCode);
-
-    // Parse URL params
-    const params = new URLSearchParams(window.location.search);
-    const tab = params.get('tab');
-    if (tab === 'tokens') {
-        document.querySelector('[data-tab="tokens"]')?.click();
-    }
-
-    const pkg = params.get('package');
-    if (pkg) {
-        selectTokenPackage(pkg);
-    }
 });
 
 function initTabs() {
@@ -72,77 +51,64 @@ function initTabs() {
     });
 }
 
+const PLAN_NAMES = {
+    free: 'Free',
+    crescent: '초승달',
+    half: '반달',
+    full: '보름달'
+};
+
 async function loadUserInfo() {
     const profile = await LW.getProfile();
     if (!profile) return;
 
+    const userPlan = profile.plan || 'free';
+
     // Show current plan
     const currentPlan = document.getElementById('currentPlan');
     if (currentPlan) {
-        currentPlan.textContent = profile.plan === 'pro' ? 'Pro' : 'Free';
+        currentPlan.textContent = PLAN_NAMES[userPlan] || 'Free';
     }
 
-    // If already Pro, hide subscription tab content
-    if (profile.plan === 'pro') {
+    // If already subscribed, show current plan info
+    if (userPlan !== 'free') {
         const subInfo = document.getElementById('subscriptionInfo');
         if (subInfo) {
+            const planInfo = PRICES.plans[userPlan];
+            const expiresStr = profile.plan_expires_at
+                ? new Date(profile.plan_expires_at).toLocaleDateString('ko-KR')
+                : '-';
+            const dailyStr = planInfo.dailyLuna === -1 ? '무제한' : planInfo.dailyLuna;
+            const monthlyStr = planInfo.monthlyLuna === -1 ? '무제한' : planInfo.monthlyLuna.toLocaleString();
             subInfo.innerHTML = `
                 <div class="alert alert-success">
-                    이미 Pro 구독 중입니다. 만료일: ${new Date(profile.plan_expires_at).toLocaleDateString('ko-KR')}
+                    현재 ${planInfo.name} 플랜 구독 중입니다.<br>
+                    일간 루나: ${dailyStr} / 월간 루나: ${monthlyStr}<br>
+                    다음 결제일: ${expiresStr}
                 </div>
             `;
         }
     }
 
-    // Show current token balance
-    const currentTokens = document.getElementById('currentTokens');
-    if (currentTokens) {
-        const total = (profile.tokens_balance || 0) + (profile.tokens_purchased || 0);
-        currentTokens.textContent = Math.floor(total).toLocaleString();
-    }
-}
+    // Highlight current plan, disable lower/same plans
+    document.querySelectorAll('[data-plan]').forEach(btn => {
+        const btnPlan = btn.dataset.plan;
+        const planOrder = ['free', 'crescent', 'half', 'full'];
+        const currentIdx = planOrder.indexOf(userPlan);
+        const btnIdx = planOrder.indexOf(btnPlan);
 
-let selectedPackage = null;
-
-function selectTokenPackage(pkg) {
-    selectedPackage = pkg;
-
-    document.querySelectorAll('.token-package').forEach(el => {
-        el.classList.toggle('selected', el.dataset.package === pkg);
+        if (btnIdx <= currentIdx) {
+            btn.disabled = true;
+            if (btnIdx === currentIdx) {
+                btn.textContent = '현재 플랜';
+            } else {
+                btn.textContent = '하위 플랜';
+            }
+        }
     });
-
-    const purchaseBtn = document.getElementById('purchaseTokensBtn');
-    if (purchaseBtn) {
-        purchaseBtn.disabled = !pkg;
-    }
-
-    // Update summary
-    updateTokenSummary();
 }
 
-function updateTokenSummary() {
-    const summary = document.getElementById('tokenSummary');
-    if (!summary || !selectedPackage) return;
-
-    const pkg = PRICES.tokens[selectedPackage];
-    if (!pkg) return;
-
-    summary.innerHTML = `
-        <div class="flex justify-between" style="margin-bottom: 8px;">
-            <span>${pkg.tokens} 토큰</span>
-            <span>₩${pkg.price.toLocaleString()}</span>
-        </div>
-        <div id="promoDiscount" style="display: none;" class="flex justify-between text-success">
-            <span>할인</span>
-            <span id="discountAmount">-₩0</span>
-        </div>
-        <hr style="margin: 12px 0; border: none; border-top: 1px solid var(--border);">
-        <div class="flex justify-between" style="font-weight: 600; font-size: 18px;">
-            <span>총 결제 금액</span>
-            <span id="totalAmount">₩${pkg.price.toLocaleString()}</span>
-        </div>
-    `;
-}
+// (토큰 패키지 관련 코드 제거 - 4단계 구독 모델로 전환)
 
 async function applyPromoCode() {
     const codeInput = document.getElementById('promoCode');
@@ -190,10 +156,24 @@ function updatePriceWithDiscount(promo) {
     }
 }
 
-async function handleSubscribe() {
+async function handleSubscribe(planId) {
+    if (!planId || planId === 'free') {
+        alert('Free 플랜은 결제가 필요하지 않습니다.');
+        return;
+    }
+
+    const planInfo = PRICES.plans[planId];
+    if (!planInfo) {
+        alert('유효하지 않은 플랜입니다.');
+        return;
+    }
+
     const profile = await LW.getProfile();
-    if (profile?.plan === 'pro') {
-        alert('이미 Pro 구독 중입니다.');
+    const currentPlan = profile?.plan || 'free';
+    const planOrder = ['free', 'crescent', 'half', 'full'];
+
+    if (planOrder.indexOf(planId) <= planOrder.indexOf(currentPlan)) {
+        alert('현재 플랜과 동일하거나 하위 플랜입니다.');
         return;
     }
 
@@ -212,20 +192,19 @@ async function handleSubscribe() {
     IMP.init(PORTONE_IMP_CODE);
 
     const user = await LW.getUser();
-    const amount = profile?.payments?.length === 0 ? PRICES.subscription.firstMonth : PRICES.subscription.normal;
-    const merchantUid = `sub_${Date.now()}_${user.id.substring(0, 8)}`;
+    const amount = planInfo.price;
+    const merchantUid = `sub_${planId}_${Date.now()}_${user.id.substring(0, 8)}`;
 
     IMP.request_pay({
-        pg: 'kginicis',
+        pg: 'kcp_billing',
         pay_method: 'card',
         merchant_uid: merchantUid,
-        name: 'LunaWave Pro 구독',
+        name: `LunaWave ${planInfo.name} 구독`,
         amount: amount,
         buyer_email: user.email,
         buyer_name: profile?.name || ''
     }, async (response) => {
         if (response.success) {
-            // Verify and process payment
             try {
                 const session = await LW.getSession();
                 const verifyResponse = await fetch('/.netlify/functions/subscribe', {
@@ -237,14 +216,14 @@ async function handleSubscribe() {
                     body: JSON.stringify({
                         imp_uid: response.imp_uid,
                         merchant_uid: merchantUid,
-                        is_first_payment: profile?.payments?.length === 0
+                        plan_id: planId
                     })
                 });
 
                 const result = await verifyResponse.json();
 
                 if (result.success) {
-                    alert('Pro 구독이 완료되었습니다!');
+                    alert(`${planInfo.name} 구독이 완료되었습니다!`);
                     window.location.href = '/dashboard.html';
                 } else {
                     alert('결제 처리 중 오류가 발생했습니다.');
@@ -259,73 +238,4 @@ async function handleSubscribe() {
     });
 }
 
-async function handlePurchaseTokens() {
-    if (!selectedPackage) {
-        alert('토큰 패키지를 선택해주세요.');
-        return;
-    }
-
-    const pkg = PRICES.tokens[selectedPackage];
-    if (!pkg) return;
-
-    // Check if PortOne is configured
-    if (PORTONE_IMP_CODE === 'YOUR_PORTONE_IMP_CODE') {
-        alert('결제 시스템이 아직 설정되지 않았습니다. 관리자에게 문의하세요.');
-        return;
-    }
-
-    const IMP = window.IMP;
-    if (!IMP) {
-        alert('결제 모듈을 불러오지 못했습니다.');
-        return;
-    }
-
-    IMP.init(PORTONE_IMP_CODE);
-
-    const user = await LW.getUser();
-    const profile = await LW.getProfile();
-    const merchantUid = `token_${Date.now()}_${user.id.substring(0, 8)}`;
-
-    IMP.request_pay({
-        pg: 'kginicis',
-        pay_method: 'card',
-        merchant_uid: merchantUid,
-        name: `LunaWave 토큰 ${pkg.tokens}개`,
-        amount: pkg.price,
-        buyer_email: user.email,
-        buyer_name: profile?.name || ''
-    }, async (response) => {
-        if (response.success) {
-            try {
-                const session = await LW.getSession();
-                const verifyResponse = await fetch('/.netlify/functions/purchase-tokens', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${session.access_token}`
-                    },
-                    body: JSON.stringify({
-                        imp_uid: response.imp_uid,
-                        merchant_uid: merchantUid,
-                        package_type: selectedPackage,
-                        promo_code: window.appliedPromo?.code
-                    })
-                });
-
-                const result = await verifyResponse.json();
-
-                if (result.success) {
-                    alert(`${result.tokens_granted} 토큰이 충전되었습니다!`);
-                    window.location.href = '/dashboard.html';
-                } else {
-                    alert('결제 처리 중 오류가 발생했습니다.');
-                }
-            } catch (err) {
-                console.error('Purchase error:', err);
-                alert('결제 처리 중 오류가 발생했습니다.');
-            }
-        } else {
-            alert('결제가 취소되었습니다.');
-        }
-    });
-}
+// (handlePurchaseTokens 제거 - 4단계 구독 모델로 전환)

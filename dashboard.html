@@ -225,8 +225,18 @@
             color: var(--text-secondary);
         }
 
-        .plan-badge.pro {
+        .plan-badge.crescent {
+            background: linear-gradient(135deg, #7c8ec4, #5a6eb5);
+            color: white;
+        }
+
+        .plan-badge.half {
             background: linear-gradient(135deg, var(--accent), #e6951a);
+            color: white;
+        }
+
+        .plan-badge.full {
+            background: linear-gradient(135deg, #ff6b35, #ff4500);
             color: white;
         }
 
@@ -642,15 +652,15 @@
     <main class="main-container">
         <h1 class="page-title">대시보드</h1>
 
-        <!-- Free Plan Upgrade Banner (hidden for Pro) -->
+        <!-- Upgrade Banner (hidden for full plan) -->
         <div class="upgrade-banner" id="upgradeBanner">
             <div>
-                <h3>Pro로 업그레이드하고 모든 기능을 사용하세요</h3>
-                <p>2이미지 합성, 컷아웃, 메타데이터 생성 등 프리미엄 기능 이용 가능</p>
+                <h3>플랜을 업그레이드하고 더 많은 루나를 받으세요</h3>
+                <p>초승달 13,900원 / 반달 33,000원 / 보름달 79,000원 (무제한)</p>
             </div>
-            <a href="/payment.html?type=subscription" class="btn btn-primary">
+            <a href="/payment.html" class="btn btn-primary">
                 <i data-lucide="crown"></i>
-                Pro 업그레이드 ₩17,900/월
+                플랜 업그레이드
             </a>
         </div>
 
@@ -673,16 +683,16 @@
                 </div>
             </div>
 
-            <!-- Token Balance (Pro only) -->
-            <div class="card" id="tokenCard" style="display:none;">
+            <!-- Luna Balance -->
+            <div class="card" id="tokenCard">
                 <div class="card-header">
                     <div class="card-title">
                         <i data-lucide="coins"></i>
                         루나 잔액
                     </div>
-                    <a href="/payment.html?type=tokens" class="btn btn-primary btn-sm">
-                        <i data-lucide="plus"></i>
-                        루나 구매
+                    <a href="/payment.html" class="btn btn-primary btn-sm">
+                        <i data-lucide="arrow-up-circle"></i>
+                        플랜 업그레이드
                     </a>
                 </div>
                 <div class="token-display">
@@ -690,38 +700,49 @@
                     <div class="token-label">사용 가능한 루나</div>
                     <div class="token-breakdown">
                         <div class="token-item">
-                            <div class="token-item-value" id="monthlyTokens">0</div>
-                            <div class="token-item-label">월간 루나</div>
+                            <div class="token-item-value" id="dailyLunaDisplay">20</div>
+                            <div class="token-item-label">일간 루나</div>
                         </div>
                         <div class="token-item">
-                            <div class="token-item-value" id="purchasedTokens">0</div>
-                            <div class="token-item-label">구매 루나</div>
+                            <div class="token-item-value" id="monthlyLunaDisplay">0</div>
+                            <div class="token-item-label">월간 루나</div>
                         </div>
                     </div>
                 </div>
                 <div class="progress-bar">
                     <div class="progress-fill" id="tokenProgress" style="width: 100%;"></div>
                 </div>
-                <p style="font-size:12px; color:var(--text-muted); margin-top:8px; text-align:center;">
-                    월간 루나는 다음 달로 이월됩니다 (최대 3,000)
+                <p style="font-size:12px; color:var(--text-muted); margin-top:8px; text-align:center;" id="lunaNote">
+                    매일 자정에 일간 루나가 충전됩니다
                 </p>
             </div>
 
-            <!-- Free Songs (Free only) -->
-            <div class="card" id="freeSongsCard">
+            <!-- Subscription Management -->
+            <div class="card" id="subscriptionCard">
                 <div class="card-header">
                     <div class="card-title">
-                        <i data-lucide="music"></i>
-                        무료 노래
+                        <i data-lucide="settings"></i>
+                        구독 관리
                     </div>
                 </div>
-                <div class="free-limit">
-                    <div class="free-limit-count"><span id="freeSongsRemaining">3</span>/3</div>
-                    <div class="free-limit-label">남은 무료 노래</div>
+                <div style="padding: 12px 0;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
+                        <span style="color:var(--text-secondary);">현재 플랜</span>
+                        <span style="font-weight:600;" id="subPlanName">Free</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
+                        <span style="color:var(--text-secondary);">다음 결제일</span>
+                        <span style="font-weight:600;" id="subNextPayment">-</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:16px;">
+                        <span style="color:var(--text-secondary);">월 결제 금액</span>
+                        <span style="font-weight:600;" id="subPrice">0원</span>
+                    </div>
+                    <div style="display:flex; gap:8px;">
+                        <a href="/payment.html" class="btn btn-primary btn-sm" style="flex:1; text-align:center;">플랜 변경</a>
+                        <button class="btn btn-secondary btn-sm" id="cancelSubBtn" style="flex:1;" disabled>구독 해지</button>
+                    </div>
                 </div>
-                <p style="font-size:13px; color:var(--text-secondary); margin-top:16px; text-align:center;">
-                    Pro 업그레이드 시 무제한 노래 생성
-                </p>
             </div>
 
             <!-- Usage Stats -->
@@ -802,7 +823,7 @@
                     </button>
                 </div>
                 <p style="font-size:13px; color:var(--text-secondary); margin-bottom:16px;">
-                    친구가 Pro 결제 시 양쪽 모두 200루나 보너스!
+                    친구가 유료 플랜 결제 시 양쪽 모두 200루나 보너스!
                 </p>
                 <div class="referral-stats">
                     <div class="referral-stat">
@@ -854,6 +875,21 @@
 
     <script>
         lucide.createIcons();
+
+        // 4단계 플랜 정보
+        const PLAN_NAMES = {
+            free: 'Free',
+            crescent: '초승달',
+            half: '반달',
+            full: '보름달'
+        };
+
+        const PLAN_DETAIL = {
+            free:     { price: 0,     dailyLuna: 20,  monthlyLuna: 0 },
+            crescent: { price: 13900, dailyLuna: 50,  monthlyLuna: 1500 },
+            half:     { price: 33000, dailyLuna: 200, monthlyLuna: 3000 },
+            full:     { price: 79000, dailyLuna: -1,  monthlyLuna: -1 }
+        };
 
         // Supabase 초기화
         const sb = LW.supabase;
@@ -1013,65 +1049,81 @@
         }
 
         function updateUI(status) {
-            const isPro = status.plan === 'pro';
+            const plan = status.plan || 'free';
+            const pDetail = PLAN_DETAIL[plan] || PLAN_DETAIL.free;
+            const isFree = (plan === 'free');
+            const isFull = (plan === 'full');
 
             // Update header tokens
             document.getElementById('headerTokenCount').textContent = status.tokens_total || 0;
+            document.getElementById('headerTokens').style.display = 'flex';
 
             // Plan badge
             const planBadge = document.getElementById('planBadge');
             const planName = document.getElementById('planName');
             const planDesc = document.getElementById('planDesc');
 
-            if (isPro) {
-                planBadge.textContent = 'Pro';
-                planBadge.className = 'plan-badge pro';
-                planName.textContent = 'Pro 플랜';
-                planDesc.textContent = status.plan_expires_at
-                    ? `만료일: ${new Date(status.plan_expires_at).toLocaleDateString()}`
-                    : '월 1,500루나 + 모든 기능';
+            planBadge.textContent = PLAN_NAMES[plan] || 'Free';
+            planBadge.className = 'plan-badge ' + plan;
+            planName.textContent = (PLAN_NAMES[plan] || 'Free') + ' 플랜';
 
-                // Show token card, hide free songs card
-                document.getElementById('tokenCard').style.display = 'block';
-                document.getElementById('freeSongsCard').style.display = 'none';
-                document.getElementById('upgradeBanner').style.display = 'none';
-                document.getElementById('headerTokens').style.display = 'flex';
+            const dailyStr = pDetail.dailyLuna === -1 ? '무제한' : pDetail.dailyLuna;
+            const monthlyStr = pDetail.monthlyLuna === -1 ? '무제한' : pDetail.monthlyLuna.toLocaleString();
 
-                // Token display
-                document.getElementById('totalTokens').textContent = status.tokens_total || 0;
-                document.getElementById('monthlyTokens').textContent = status.tokens_balance || 0;
-                document.getElementById('purchasedTokens').textContent = status.tokens_purchased || 0;
-
-                // Progress bar (percentage of 1500)
-                const progress = Math.min(100, (status.tokens_balance / 1500) * 100);
-                document.getElementById('tokenProgress').style.width = progress + '%';
-
+            if (!isFree && status.plan_expires_at) {
+                planDesc.textContent = `일간 ${dailyStr}루나 / 월간 ${monthlyStr}루나 | 다음 결제일: ${new Date(status.plan_expires_at).toLocaleDateString()}`;
+            } else if (isFree) {
+                planDesc.textContent = `일간 ${dailyStr}루나 (무료)`;
             } else {
-                planBadge.textContent = 'Free';
-                planBadge.className = 'plan-badge free';
-                planName.textContent = 'Free 플랜';
-                planDesc.textContent = '무료 체험 중 (3곡 제한)';
-
-                // Free 플랜이라도 루나 잔액이 있으면 표시
-                var freeTotal = (status.tokens_balance || 0) + (status.tokens_purchased || 0);
-                if (freeTotal > 0) {
-                    document.getElementById('tokenCard').style.display = 'block';
-                    document.getElementById('headerTokens').style.display = 'flex';
-                    document.getElementById('headerTokenCount').textContent = freeTotal;
-                    document.getElementById('totalTokens').textContent = freeTotal;
-                    document.getElementById('monthlyTokens').textContent = status.tokens_balance || 0;
-                    document.getElementById('purchasedTokens').textContent = status.tokens_purchased || 0;
-                } else {
-                    document.getElementById('tokenCard').style.display = 'none';
-                    document.getElementById('headerTokens').style.display = 'none';
-                }
-
-                document.getElementById('freeSongsCard').style.display = 'block';
-                document.getElementById('upgradeBanner').style.display = 'flex';
-
-                // Free songs remaining
-                document.getElementById('freeSongsRemaining').textContent = status.free_songs_remaining || 0;
+                planDesc.textContent = `일간 ${dailyStr}루나 / 월간 ${monthlyStr}루나`;
             }
+
+            // Token card (always show)
+            document.getElementById('tokenCard').style.display = 'block';
+            document.getElementById('totalTokens').textContent = status.tokens_total || 0;
+
+            // Daily/Monthly luna display
+            var dailyEl = document.getElementById('dailyLunaDisplay');
+            var monthlyEl = document.getElementById('monthlyLunaDisplay');
+            if (dailyEl) dailyEl.textContent = pDetail.dailyLuna === -1 ? '무제한' : pDetail.dailyLuna;
+            if (monthlyEl) monthlyEl.textContent = pDetail.monthlyLuna === -1 ? '무제한' : pDetail.monthlyLuna.toLocaleString();
+
+            // Progress bar
+            if (isFull) {
+                document.getElementById('tokenProgress').style.width = '100%';
+            } else {
+                var maxLuna = pDetail.dailyLuna > 0 ? pDetail.dailyLuna : 20;
+                var progress = Math.min(100, ((status.tokens_balance || 0) / maxLuna) * 100);
+                document.getElementById('tokenProgress').style.width = progress + '%';
+            }
+
+            // Luna note
+            var lunaNote = document.getElementById('lunaNote');
+            if (lunaNote) {
+                if (isFull) {
+                    lunaNote.textContent = '보름달 플랜: 루나 무제한';
+                } else {
+                    lunaNote.textContent = '매일 자정에 일간 루나가 충전됩니다';
+                }
+            }
+
+            // Upgrade banner: hide for full plan
+            document.getElementById('upgradeBanner').style.display = isFull ? 'none' : 'flex';
+
+            // Subscription management card
+            var subPlanName = document.getElementById('subPlanName');
+            var subNextPayment = document.getElementById('subNextPayment');
+            var subPrice = document.getElementById('subPrice');
+            var cancelSubBtn = document.getElementById('cancelSubBtn');
+
+            if (subPlanName) subPlanName.textContent = PLAN_NAMES[plan] || 'Free';
+            if (subNextPayment) {
+                subNextPayment.textContent = status.plan_expires_at
+                    ? new Date(status.plan_expires_at).toLocaleDateString()
+                    : '-';
+            }
+            if (subPrice) subPrice.textContent = pDetail.price > 0 ? ('₩' + pDetail.price.toLocaleString()) : '0원';
+            if (cancelSubBtn) cancelSubBtn.disabled = isFree;
         }
 
 
@@ -1099,7 +1151,7 @@
             container.innerHTML = payments.map(p => `
                 <div class="payment-item">
                     <div class="payment-info">
-                        <div class="payment-type">${p.type === 'subscription' ? 'Pro 구독' : '루나 구매'}</div>
+                        <div class="payment-type">${p.type === 'subscription' ? (PLAN_NAMES[p.plan_id] || '') + ' 구독' : '기타'}</div>
                         <div class="payment-date">${new Date(p.paid_at).toLocaleDateString()}</div>
                     </div>
                     <div class="payment-amount">₩${p.amount.toLocaleString()}</div>
@@ -1123,6 +1175,32 @@
             await sb.from('devices').delete().eq('id', deviceId);
             loadDashboard();
         }
+
+        // 구독 해지 버튼
+        document.getElementById('cancelSubBtn')?.addEventListener('click', async () => {
+            if (!confirm('정말 구독을 해지하시겠습니까? 현재 결제 주기가 끝날 때까지 사용 가능합니다.')) return;
+            try {
+                let { data: { session } } = await sb.auth.getSession();
+                if (!session) { alert('로그인이 필요합니다.'); return; }
+                const res = await fetch('/.netlify/functions/cancel-subscription', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + session.access_token
+                    }
+                });
+                const result = await res.json();
+                if (result.success) {
+                    alert('구독 해지가 완료되었습니다.');
+                    loadDashboard();
+                } else {
+                    alert(result.message || '구독 해지에 실패했습니다.');
+                }
+            } catch (err) {
+                console.error('Cancel subscription error:', err);
+                alert('구독 해지 중 오류가 발생했습니다.');
+            }
+        });
 
         // Init
         loadDashboard();

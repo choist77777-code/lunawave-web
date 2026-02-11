@@ -1,4 +1,4 @@
-// subscribe.js - 월정액 Pro 구독 처리
+// subscribe.js - 월정액 구독 처리 (crescent/half/full 3단계)
 const { createClient } = require('@supabase/supabase-js');
 
 const supabase = createClient(
@@ -7,10 +7,13 @@ const supabase = createClient(
 );
 
 const PORTONE_API_SECRET = process.env.PORTONE_API_SECRET;
-const PRO_MONTHLY_PRICE = 17900;
-const PRO_FIRST_MONTH_PRICE = 8950; // 50% 할인
-const MONTHLY_BONUS_LUNAS = 1500; // 월 보너스 루나
-const DAILY_LUNAS_PRO = 50; // Pro 일간 루나
+
+// 플랜별 설정
+const PLAN_CONFIG = {
+    crescent: { price: 13900, daily_lunas: 50, monthly_lunas: 1500, name: '초승달' },
+    half:     { price: 33000, daily_lunas: 200, monthly_lunas: 3000, name: '반달' },
+    full:     { price: 79000, daily_lunas: 0, monthly_lunas: 0, is_unlimited: true, name: '보름달' }
+};
 
 exports.handler = async (event) => {
     // CORS headers
@@ -55,10 +58,21 @@ exports.handler = async (event) => {
         }
 
         const body = JSON.parse(event.body);
-        const { imp_uid, merchant_uid, billing_key, is_first_payment, promo_code } = body;
+        const { imp_uid, merchant_uid, billing_key, plan, promo_code } = body;
+
+        // 플랜 유효성 검사
+        if (!plan || !PLAN_CONFIG[plan]) {
+            return {
+                statusCode: 400,
+                headers,
+                body: JSON.stringify({ error: 'Invalid plan. Must be crescent, half, or full.' })
+            };
+        }
+
+        const planConfig = PLAN_CONFIG[plan];
 
         // 결제 금액 계산
-        let amount = is_first_payment ? PRO_FIRST_MONTH_PRICE : PRO_MONTHLY_PRICE;
+        let amount = planConfig.price;
         let promo_discount = 0;
 
         // 프로모션 코드 적용
@@ -115,7 +129,7 @@ exports.handler = async (event) => {
         const plan_expires_at = new Date(now);
         plan_expires_at.setMonth(plan_expires_at.getMonth() + 1);
 
-        // 프로필 업데이트 - Pro 플랜 활성화
+        // 프로필 업데이트 - 플랜 활성화
         const today = now.toISOString().split('T')[0];
         const { data: currentProfile } = await supabase
             .from('profiles')
@@ -123,21 +137,32 @@ exports.handler = async (event) => {
             .eq('id', user.id)
             .single();
 
-        // Pro 첫 구독 시: 일간 50루나 + 월 보너스 1,500루나
-        const newPurchased = (currentProfile?.tokens_purchased || 0) + MONTHLY_BONUS_LUNAS;
+        // 보름달(full)은 무제한이므로 월 루나 지급 불필요
+        const monthlyLunas = planConfig.monthly_lunas || 0;
+        const dailyLunas = planConfig.daily_lunas || 0;
+        const newPurchased = planConfig.is_unlimited ? 0 : (currentProfile?.tokens_purchased || 0) + monthlyLunas;
+
+        const updateData = {
+            plan: plan,
+            plan_started_at: now.toISOString(),
+            plan_expires_at: plan_expires_at.toISOString(),
+            daily_tokens_granted_at: today,
+            billing_key: billing_key || null,
+            updated_at: now.toISOString()
+        };
+
+        if (planConfig.is_unlimited) {
+            // 보름달: 무제한이므로 루나 수치는 의미 없음
+            updateData.tokens_balance = 0;
+            updateData.tokens_purchased = 0;
+        } else {
+            updateData.tokens_balance = dailyLunas;
+            updateData.tokens_purchased = newPurchased;
+        }
 
         const { error: updateError } = await supabase
             .from('profiles')
-            .update({
-                plan: 'pro',
-                plan_started_at: now.toISOString(),
-                plan_expires_at: plan_expires_at.toISOString(),
-                tokens_balance: DAILY_LUNAS_PRO, // 일간 루나 리셋 및 Pro 50 지급
-                tokens_purchased: newPurchased,
-                daily_tokens_granted_at: today,
-                billing_key: billing_key || null,
-                updated_at: now.toISOString()
-            })
+            .update(updateData)
             .eq('id', user.id);
 
         if (updateError) {
@@ -152,35 +177,47 @@ exports.handler = async (event) => {
                 payment_id: imp_uid,
                 merchant_uid: merchant_uid,
                 type: 'subscription',
-                plan: 'pro',
-                tokens_granted: MONTHLY_BONUS_LUNAS, // 컬럼명은 유지
+                plan: plan,
+                tokens_granted: monthlyLunas, // 컬럼명은 유지
                 amount: amount,
                 status: 'paid',
                 paid_at: now.toISOString()
             });
 
         // 루나 로그 기록
+        const logDescription = planConfig.is_unlimited
+            ? `${planConfig.name} 구독 - 무제한 플랜`
+            : `${planConfig.name} 구독 - 월간 ${monthlyLunas}루나 지급 (+ 일간 ${dailyLunas}루나)`;
+
         await supabase
             .from('tokens_log')
             .insert({
                 user_id: user.id,
                 action: 'subscription',
-                amount: MONTHLY_BONUS_LUNAS,
-                balance_after: DAILY_LUNAS_PRO + newPurchased,
-                description: 'Pro 구독 - 월간 보너스 루나 지급 (+ 일간 50루나)'
+                amount: monthlyLunas,
+                balance_after: planConfig.is_unlimited ? 0 : dailyLunas + newPurchased,
+                description: logDescription
             });
+
+        const responseData = {
+            success: true,
+            plan: plan,
+            plan_name: planConfig.name,
+            plan_expires_at: plan_expires_at.toISOString()
+        };
+
+        if (planConfig.is_unlimited) {
+            responseData.is_unlimited = true;
+        } else {
+            responseData.tokens_balance = dailyLunas;
+            responseData.tokens_purchased = newPurchased;
+            responseData.tokens_total = dailyLunas + newPurchased;
+        }
 
         return {
             statusCode: 200,
             headers,
-            body: JSON.stringify({
-                success: true,
-                plan: 'pro',
-                tokens_balance: DAILY_LUNAS_PRO,
-                tokens_purchased: newPurchased,
-                tokens_total: DAILY_LUNAS_PRO + newPurchased,
-                plan_expires_at: plan_expires_at.toISOString()
-            })
+            body: JSON.stringify(responseData)
         };
 
     } catch (error) {
