@@ -889,27 +889,37 @@
         // Load Dashboard Data
         async function loadDashboard() {
             try {
-                const { data: { user } } = await sb.auth.getUser();
-                console.log('[Dashboard] user:', user?.id, user?.email);
-                if (!user) {
-                    window.location.href = '/login.html';
-                    return;
-                }
+                // 세션 가져오기 (토큰 자동 갱신)
+                let { data: { session } } = await sb.auth.getSession();
 
-                // 세션 토큰으로 check-plan API 호출 (RLS 우회)
-                const { data: { session } } = await sb.auth.getSession();
+                // 세션 없으면 갱신 시도
+                if (!session) {
+                    const refreshResult = await sb.auth.refreshSession();
+                    session = refreshResult.data.session;
+                }
                 if (!session) {
                     window.location.href = '/login.html';
                     return;
                 }
 
-                const cpRes = await fetch('/api/check-plan', {
-                    headers: { 'Authorization': 'Bearer ' + session.access_token }
-                });
-                const cpData = await cpRes.json();
-                console.log('[Dashboard] check-plan:', cpData);
+                const user = session.user;
+                const token = session.access_token;
+                console.log('[Dashboard] user:', user?.id, user?.email);
+                console.log('[Dashboard] token exists:', !!token, 'length:', token?.length);
 
-                if (cpData.success && cpData.profile) {
+                // check-plan API 호출
+                let cpData = null;
+                try {
+                    const cpRes = await fetch('/api/check-plan', {
+                        headers: { 'Authorization': 'Bearer ' + token }
+                    });
+                    cpData = await cpRes.json();
+                    console.log('[Dashboard] check-plan:', cpRes.status, cpData);
+                } catch (e) {
+                    console.error('[Dashboard] check-plan fetch error:', e);
+                }
+
+                if (cpData && cpData.success && cpData.profile) {
                     const p = cpData.profile;
                     updateUI({
                         success: true,
@@ -921,19 +931,39 @@
                         plan_expires_at: p.plan_expires_at
                     });
 
-                    // 이름: user_metadata에서 가져오기
                     document.getElementById('userName').textContent =
                         user.user_metadata?.full_name || user.user_metadata?.name || user.email;
-
-                    // 추천코드
                     document.getElementById('referralCode').textContent = p.referral_code || 'XXXXXXXX';
 
-                    // 디바이스 (check-plan 응답에 포함)
                     if (cpData.devices && cpData.devices.length > 0) {
                         renderDevices(cpData.devices);
                     }
                 } else {
-                    document.getElementById('userName').textContent = user.email;
+                    // check-plan 실패 시 직접 조회 폴백
+                    console.log('[Dashboard] check-plan 실패, 직접 조회 시도');
+                    const { data: p, error: pErr } = await sb.from('profiles').select('*').eq('id', user.id).single();
+                    console.log('[Dashboard] profiles 직접 조회:', p, pErr);
+
+                    if (p) {
+                        updateUI({
+                            success: true,
+                            plan: p.plan || 'free',
+                            tokens_balance: p.tokens_balance || 0,
+                            tokens_purchased: p.tokens_purchased || 0,
+                            tokens_total: (p.tokens_balance || 0) + (p.tokens_purchased || 0),
+                            free_songs_remaining: 3
+                        });
+                        document.getElementById('userName').textContent = p.name || user.email;
+                        document.getElementById('referralCode').textContent = p.referral_code || 'XXXXXXXX';
+                    } else {
+                        document.getElementById('userName').textContent =
+                            user.user_metadata?.full_name || user.email;
+                    }
+
+                    // 디바이스 직접 조회
+                    const { data: devices } = await sb.from('devices').select('*')
+                        .eq('user_id', user.id).order('last_active_at', { ascending: false });
+                    if (devices && devices.length > 0) renderDevices(devices);
                 }
 
                 // Load payments
