@@ -166,34 +166,38 @@ section { padding: 100px 24px; }
 
 /* PRICING */
 .pricing { background: var(--bg2); }
-.pr-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; max-width: 620px; margin: 0 auto; }
+.pr-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; max-width: 1100px; margin: 0 auto; }
 .pr-card {
     background: var(--bg); border: 1px solid var(--line); border-radius: 12px;
-    padding: 40px 32px; text-align: center; position: relative; transition: transform .2s;
+    padding: 36px 24px; text-align: center; position: relative; transition: transform .2s;
 }
 .pr-card:hover { transform: translateY(-3px); }
-.pr-card.pop { border-color: var(--gold); }
+.pr-card.pop { border-color: var(--gold); border-width: 2px; }
 .pr-badge { position: absolute; top: -11px; left: 50%; transform: translateX(-50%); background: var(--gold); color: #fff; padding: 3px 14px; border-radius: 4px; font-size: 11px; font-weight: 700; letter-spacing: 1px; }
-.pr-name { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
-.pr-amt { font-family: 'Outfit'; font-size: 36px; font-weight: 800; margin-bottom: 4px; }
-.pr-amt small { font-size: 14px; font-weight: 400; color: var(--text2); }
-.pr-period { font-size: 12px; color: var(--text3); margin-bottom: 28px; }
-.pr-list { list-style: none; text-align: left; margin-bottom: 28px; }
-.pr-list li { font-size: 13px; padding: 8px 0; border-bottom: 1px solid var(--line); color: var(--text2); }
+.pr-name { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+.pr-amt { font-family: 'Outfit'; font-size: 32px; font-weight: 800; margin-bottom: 4px; }
+.pr-amt small { font-size: 13px; font-weight: 400; color: var(--text2); }
+.pr-period { font-size: 11px; color: var(--text3); margin-bottom: 24px; min-height: 32px; }
+.pr-list { list-style: none; text-align: left; margin-bottom: 24px; }
+.pr-list li { font-size: 12px; padding: 7px 0; border-bottom: 1px solid var(--line); color: var(--text2); }
 .pr-list li:last-child { border-bottom: none; }
-.pr-list li span { margin-right: 8px; font-size: 12px; }
+.pr-list li span { margin-right: 6px; font-size: 11px; }
 .on { color: var(--text); }
 .off { color: var(--text3); }
 .pr-btn {
-    display: block; width: 100%; padding: 13px; border-radius: 8px;
-    font-size: 14px; font-weight: 600; text-decoration: none; text-align: center;
+    display: block; width: 100%; padding: 12px; border-radius: 8px;
+    font-size: 13px; font-weight: 600; text-decoration: none; text-align: center;
     transition: all .2s; cursor: pointer; border: none; letter-spacing: .5px;
 }
 .btn-o { border: 1px solid var(--line); color: var(--text); background: transparent; }
 .btn-o:hover { border-color: var(--text); }
 .btn-g { background: var(--text); color: #fff; }
 .btn-g:hover { opacity: .85; }
-.pr-note { text-align: center; margin-top: 28px; font-size: 12px; color: var(--text3); max-width: 520px; margin-left: auto; margin-right: auto; line-height: 1.7; }
+.pr-note { text-align: center; margin-top: 36px; font-size: 12px; color: var(--text3); max-width: 900px; margin-left: auto; margin-right: auto; line-height: 1.7; }
+.pr-luna-table { margin-top: 20px; max-width: 900px; margin-left: auto; margin-right: auto; border-collapse: collapse; font-size: 12px; }
+.pr-luna-table th, .pr-luna-table td { padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--line); }
+.pr-luna-table th { font-weight: 600; color: var(--text); background: var(--bg); }
+.pr-luna-table td { color: var(--text2); }
 
 /* FAQ */
 .faq-list { max-width: 620px; margin: 0 auto; }
@@ -243,6 +247,8 @@ footer a:hover { color: var(--text); }
     .steps-grid, .feat-grid { grid-template-columns: 1fr; }
     .who-grid { grid-template-columns: 1fr; }
     .pr-grid { grid-template-columns: 1fr; max-width: 360px; }
+    .pr-luna-table { font-size: 11px; }
+    .pr-luna-table th, .pr-luna-table td { padding: 6px 8px; }
 }
 </style>
 </head>
@@ -367,30 +373,77 @@ footer a:hover { color: var(--text); }
             <div class="pr-amt">₩0</div>
             <div class="pr-period">무료</div>
             <ul class="pr-list">
-                <li class="on"><span>—</span>매일 20 루나 충전</li>
-                <li class="on"><span>—</span>1이미지 렌더링</li>
-                <li class="off"><span>—</span>비주얼라이저</li>
-                <li class="off"><span>—</span>컷아웃 / 메타데이터</li>
-                <li class="off"><span>—</span>워터마크 제거</li>
+                <li class="on"><span>—</span>일간 20루나 (매일 리셋)</li>
+                <li class="on"><span>—</span>1 Image 모드</li>
+                <li class="on"><span>—</span>Standard Cutout</li>
+                <li class="on"><span>—</span>BARS 비주얼라이저 1종</li>
+                <li class="on"><span>—</span>Canvas Preview</li>
+                <li class="off"><span>—</span>워터마크 있음 (720p)</li>
             </ul>
             <a href="/signup.html" class="pr-btn btn-o">무료로 시작</a>
         </div>
-        <div class="pr-card pop">
-            <div class="pr-badge">PRO</div>
-            <div class="pr-name">Pro</div>
-            <div class="pr-amt">₩17,900<small>/월</small></div>
-            <div class="pr-period">월 1,500 루나 + 매일 50 루나</div>
+        <div class="pr-card">
+            <div class="pr-name">초승달 Crescent</div>
+            <div class="pr-amt">₩13,900<small>/월</small></div>
+            <div class="pr-period">일간 50루나 + 월 1,500루나</div>
             <ul class="pr-list">
-                <li class="on"><span>—</span>모든 기능 해제</li>
-                <li class="on"><span>—</span>워터마크 없음</li>
-                <li class="on"><span>—</span>비주얼라이저 / 컷아웃</li>
-                <li class="on"><span>—</span>AI 메타데이터 생성</li>
-                <li class="on"><span>—</span>추가 루나 구매 가능</li>
+                <li class="on"><span>—</span>워터마크 없음 (1080p)</li>
+                <li class="on"><span>—</span>1 Image + 2 Images</li>
+                <li class="on"><span>—</span>16:9 + 9:16 + 1:1</li>
+                <li class="on"><span>—</span>Ultra Cutout (BiRefNet)</li>
+                <li class="on"><span>—</span>비주얼라이저 3종 + 프리셋</li>
+                <li class="on"><span>—</span>Accurate Preview</li>
+                <li class="on"><span>—</span>SRT 자막/가사</li>
             </ul>
-            <a href="/signup.html" class="pr-btn btn-g">Pro 시작하기</a>
+            <a href="/payment.html" class="pr-btn btn-g">구독하기</a>
+        </div>
+        <div class="pr-card pop">
+            <div class="pr-badge">POPULAR</div>
+            <div class="pr-name">반달 Half Moon</div>
+            <div class="pr-amt">₩33,000<small>/월</small></div>
+            <div class="pr-period">일간 200루나 + 월 3,000루나</div>
+            <ul class="pr-list">
+                <li class="on"><span>—</span>초승달 전체 기능 포함</li>
+                <li class="on"><span>—</span>Text Behind Person</li>
+                <li class="on"><span>—</span>Outline 효과</li>
+                <li class="on"><span>—</span>Visualizer Behind Person</li>
+                <li class="on"><span>—</span>AI 가사 생성</li>
+                <li class="on"><span>—</span>Suno 자동화 (Runner, Bulk)</li>
+                <li class="on"><span>—</span>우선 렌더링 + 신기능 조기 액세스</li>
+            </ul>
+            <a href="/payment.html" class="pr-btn btn-g">구독하기</a>
+        </div>
+        <div class="pr-card">
+            <div class="pr-name">보름달 Full Moon</div>
+            <div class="pr-amt">₩79,000<small>/월</small></div>
+            <div class="pr-period">무제한 루나</div>
+            <ul class="pr-list">
+                <li class="on"><span>—</span>반달 전체 기능 포함</li>
+                <li class="on"><span>—</span>YouTube 메타데이터 AI</li>
+                <li class="on"><span>—</span>Analytics (채널/경쟁자 분석)</li>
+                <li class="on"><span>—</span>AI 인사이트</li>
+                <li class="on"><span>—</span>커스텀 장르/무드</li>
+                <li class="on"><span>—</span>최우선 렌더링</li>
+                <li class="on"><span>—</span>1:1 이메일 지원</li>
+            </ul>
+            <a href="/payment.html" class="pr-btn btn-g">구독하기</a>
         </div>
     </div>
-    <p class="pr-note">※ LunaWave는 노래를 영상으로 만드는 도구입니다. 노래 생성은 Suno 등 외부 서비스를 이용해주세요. (Suno 무료 플랜: 하루 약 4–5곡, 유튜브 수익화 시 Suno 유료 $10/월 필요)</p>
+    <div class="pr-note">
+        <p style="margin-bottom: 16px;">※ LunaWave는 노래를 영상으로 만드는 도구입니다. 노래 생성은 Suno 등 외부 서비스를 이용해주세요. (Suno 무료 플랜: 하루 약 4–5곡, 유튜브 수익화 시 Suno 유료 $10/월 필요)</p>
+        <p style="font-weight: 600; margin-bottom: 12px; color: var(--text);">루나 소비량 안내</p>
+        <table class="pr-luna-table">
+            <tr><th>기능</th><th>소비 루나</th></tr>
+            <tr><td>영상 렌더링</td><td>20루나</td></tr>
+            <tr><td>Accurate Preview</td><td>3루나</td></tr>
+            <tr><td>Ultra Cutout (BiRefNet)</td><td>5루나</td></tr>
+            <tr><td>Standard Cutout (ISNet)</td><td>2루나</td></tr>
+            <tr><td>Behind Person / Outline</td><td>2루나 / 1루나</td></tr>
+            <tr><td>AI 가사 생성</td><td>1루나/곡</td></tr>
+            <tr><td>Canvas Preview, 텍스트 편집, 설정</td><td>무료</td></tr>
+        </table>
+        <p style="margin-top: 12px; font-size: 11px;">※ 루나 소비 순서: 일간 루나 먼저 소진 → 월 루나 차감</p>
+    </div>
 </section>
 
 <!-- FAQ -->
@@ -401,7 +454,7 @@ footer a:hover { color: var(--text); }
         <div class="faq-item"><div class="faq-q">LunaWave가 뭐예요?</div><div class="faq-a">AI 음원으로 만든 노래를 유튜브에 올릴 수 있는 영상으로 자동 변환해주는 프로그램입니다.</div></div>
         <div class="faq-item"><div class="faq-q">노래도 만들어주나요?</div><div class="faq-a">LunaWave는 노래를 만드는 도구가 아니라, 만든 노래를 영상으로 바꿔주는 도구입니다. 노래는 Suno에서 만드시면 됩니다 (별도 가입 필요). Suno에 제목, 가사, 프롬프트를 자동으로 입력하고 다운로드할 수 있게 지원합니다.</div></div>
         <div class="faq-item"><div class="faq-q">컴퓨터 잘 못해도 돼요?</div><div class="faq-a">네. 클릭만 할 줄 알면 됩니다.</div></div>
-        <div class="faq-item"><div class="faq-q">루나가 뭐예요?</div><div class="faq-a">LunaWave에서 사용하는 크레딧입니다. 기능 사용 시 소비됩니다. Free는 매일 20루나, Pro는 월 1,500 + 매일 50루나 충전.</div></div>
+        <div class="faq-item"><div class="faq-q">루나가 뭐예요?</div><div class="faq-a">LunaWave에서 사용하는 크레딧입니다. 기능 사용 시 소비됩니다. Free는 매일 20루나, 초승달은 일 50+월 1,500루나, 반달은 일 200+월 3,000루나, 보름달은 무제한입니다. 일간 루나가 먼저 소진되고 월 루나가 차감됩니다.</div></div>
         <div class="faq-item"><div class="faq-q">유튜브에 바로 올릴 수 있어요?</div><div class="faq-a">네. 렌더링 끝나면 바로 업로드할 수 있는 영상 파일이 나옵니다.</div></div>
         <div class="faq-item"><div class="faq-q">환불 돼요?</div><div class="faq-a">결제 후 7일 이내 환불 가능합니다.</div></div>
     </div>
