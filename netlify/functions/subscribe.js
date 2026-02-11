@@ -104,9 +104,34 @@ exports.handler = async (event) => {
             };
         }
 
-        // 결제 금액 계산
+        // 결제 금액 계산 (업그레이드 일할 계산 포함)
         let amount = PLAN_PRICES[plan];
         let promo_discount = 0;
+
+        // 업그레이드 일할 계산
+        if (body.is_upgrade) {
+            const { data: currentProfile } = await supabase
+                .from('profiles')
+                .select('plan, plan_expires_at')
+                .eq('id', user.id)
+                .single();
+
+            if (currentProfile && currentProfile.plan !== 'free' && currentProfile.plan_expires_at) {
+                const now = new Date();
+                const expires = new Date(currentProfile.plan_expires_at);
+                const remainingMs = expires - now;
+
+                if (remainingMs > 0) {
+                    const totalDays = 30;
+                    const remainingDays = Math.ceil(remainingMs / (1000 * 60 * 60 * 24));
+                    const ratio = Math.min(remainingDays / totalDays, 1);
+
+                    const currentCredit = Math.floor((PLAN_PRICES[currentProfile.plan] || 0) * ratio);
+                    const newCost = Math.floor(PLAN_PRICES[plan] * ratio);
+                    amount = Math.max(0, newCost - currentCredit);
+                }
+            }
+        }
 
         // 프로모션 코드 적용
         if (promo_code) {

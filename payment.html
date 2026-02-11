@@ -526,16 +526,46 @@
             lucide.createIcons();
         }
 
+        function calculateProration(plan) {
+            if (!currentPlan || currentPlan === 'free' || !planExpiresAt) return null;
+            const planLevel = { free: 0, crescent: 1, halfmoon: 2, fullmoon: 3 };
+            if ((planLevel[plan] || 0) <= (planLevel[currentPlan] || 0)) return null;
+
+            const now = new Date();
+            const expires = new Date(planExpiresAt);
+            const remainingMs = expires - now;
+            if (remainingMs <= 0) return null;
+
+            const totalDays = 30;
+            const remainingDays = Math.ceil(remainingMs / (1000 * 60 * 60 * 24));
+            const ratio = Math.min(remainingDays / totalDays, 1);
+
+            const currentCredit = Math.floor(planPrices[currentPlan] * ratio);
+            const newCost = Math.floor(planPrices[plan] * ratio);
+            const diff = Math.max(0, newCost - currentCredit);
+
+            return { diff, remainingDays, currentCredit, newCost };
+        }
+
         function updatePlanButton(plan) {
             let amount = planPrices[plan];
             const promo = appliedPromos[plan];
+            const proration = calculateProration(plan);
+
+            if (proration) {
+                amount = proration.diff;
+            }
 
             if (promo && promo.type === 'discount') {
                 amount -= Math.floor(amount * promo.value / 100);
             }
 
             const btnText = document.getElementById(`btnText${plan.charAt(0).toUpperCase() + plan.slice(1)}`);
-            btnText.textContent = `${amount.toLocaleString()}원 결제하기`;
+            if (proration) {
+                btnText.textContent = `${amount.toLocaleString()}원 차액 결제 (${proration.remainingDays}일)`;
+            } else {
+                btnText.textContent = `${amount.toLocaleString()}원 결제하기`;
+            }
         }
 
         async function paySubscription(plan) {
@@ -556,6 +586,11 @@
             try {
                 let amount = planPrices[plan];
                 const promo = appliedPromos[plan];
+                const proration = calculateProration(plan);
+
+                if (proration) {
+                    amount = proration.diff;
+                }
 
                 if (promo && promo.type === 'discount') {
                     amount -= Math.floor(amount * promo.value / 100);
@@ -592,7 +627,9 @@
                                     merchant_uid: merchantUid,
                                     billing_key: response.customer_uid || null,
                                     plan: plan,
-                                    promo_code: promo?.code
+                                    promo_code: promo?.code,
+                                    is_upgrade: !!proration,
+                                    prorated_amount: proration ? proration.diff : null
                                 })
                             });
 
@@ -623,6 +660,9 @@
             }
         }
 
+        let currentPlan = null;
+        let planExpiresAt = null;
+
         async function init() {
             const { data: { user: u } } = await sb.auth.getUser();
             if (!u) {
@@ -630,6 +670,18 @@
                 return;
             }
             user = u;
+
+            // 현재 플랜 정보 로드
+            const { data: profile } = await sb.from('profiles').select('plan, plan_expires_at').eq('id', u.id).single();
+            if (profile && profile.plan && profile.plan !== 'free') {
+                currentPlan = profile.plan;
+                planExpiresAt = profile.plan_expires_at;
+                updateAllPlanButtons();
+            }
+        }
+
+        function updateAllPlanButtons() {
+            ['crescent', 'halfmoon', 'fullmoon'].forEach(plan => updatePlanButton(plan));
         }
 
         init();
