@@ -15,6 +15,84 @@ const MONTHLY_BONUS = {
 };
 const ROLLOVER_CAP = 3000;
 const PAID_PLANS = ['crescent', 'halfmoon', 'fullmoon'];
+const PLAN_PRICES = {
+    crescent: 13900,
+    halfmoon: 33000,
+    fullmoon: 79000
+};
+const PLAN_MONTHLY = {
+    crescent: 1500,
+    halfmoon: 3000,
+    fullmoon: 0
+};
+const PLAN_DAILY = {
+    crescent: 50,
+    halfmoon: 200,
+    fullmoon: 999
+};
+
+// 포트원 V1 API 토큰 발급
+async function getPortOneToken() {
+    const impKey = process.env.PORTONE_IMP_KEY;
+    const impSecret = process.env.PORTONE_IMP_SECRET;
+    if (!impKey || !impSecret) return null;
+
+    try {
+        const res = await fetch('https://api.iamport.kr/users/getToken', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ imp_key: impKey, imp_secret: impSecret })
+        });
+        const data = await res.json();
+        if (data.code === 0 && data.response) {
+            return data.response.access_token;
+        }
+        console.error('PortOne token error:', data.message);
+        return null;
+    } catch (e) {
+        console.error('PortOne token fetch error:', e);
+        return null;
+    }
+}
+
+// 빌링키 자동 결제
+async function attemptAutoRenewal(user, portoneToken) {
+    if (!portoneToken || !user.billing_key) return { success: false, reason: 'no_token_or_key' };
+
+    const plan = user.plan;
+    const amount = PLAN_PRICES[plan];
+    if (!amount) return { success: false, reason: 'invalid_plan' };
+
+    const customerUid = `customer_${user.id.slice(0, 16)}`;
+    const merchantUid = `renew_${Date.now()}_${user.id.slice(0, 8)}`;
+    const PLAN_NAMES = { crescent: '초승달', halfmoon: '반달', fullmoon: '보름달' };
+
+    try {
+        const res = await fetch('https://api.iamport.kr/subscribe/payments/again', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${portoneToken}`
+            },
+            body: JSON.stringify({
+                customer_uid: customerUid,
+                merchant_uid: merchantUid,
+                amount: amount,
+                name: `LunaWave ${PLAN_NAMES[plan] || plan} 구독 갱신`
+            })
+        });
+        const data = await res.json();
+
+        if (data.code === 0 && data.response && data.response.status === 'paid') {
+            return { success: true, imp_uid: data.response.imp_uid, merchant_uid: merchantUid };
+        } else {
+            return { success: false, reason: data.message || 'payment_failed' };
+        }
+    } catch (e) {
+        console.error('Auto renewal error:', e);
+        return { success: false, reason: e.message };
+    }
+}
 
 // Netlify Scheduled Function 설정
 exports.schedule = '@daily';
@@ -31,7 +109,7 @@ exports.handler = async (event) => {
         // 활성 Pro 구독자 조회 (plan_expires_at이 현재 이후인 유저)
         const { data: proUsers, error: fetchError } = await supabase
             .from('profiles')
-            .select('id, email, plan, tokens_balance, tokens_purchased, plan_started_at')
+            .select('id, email, plan, tokens_balance, tokens_purchased, plan_started_at, billing_key, plan_expires_at')
             .in('plan', PAID_PLANS)
             .gt('plan_expires_at', now.toISOString());
 
@@ -58,6 +136,63 @@ exports.handler = async (event) => {
                 const todayDay = now.getDate();
                 if (billingDay !== todayDay) {
                     continue; // 오늘이 결제일이 아니면 스킵
+                }
+
+                // 자동 갱신 결제 시도
+                if (user.billing_key) {
+                    // 만료일이 3일 이내면 자동 갱신 시도
+                    const expiresAt = user.plan_expires_at ? new Date(user.plan_expires_at) : null;
+                    const daysUntilExpiry = expiresAt ? Math.ceil((expiresAt - now) / (1000 * 60 * 60 * 24)) : 0;
+
+                    if (daysUntilExpiry <= 3) {
+                        const portoneToken = await getPortOneToken();
+                        const renewResult = await attemptAutoRenewal(user, portoneToken);
+
+                        if (renewResult.success) {
+                            // 결제 성공 - 구독 갱신
+                            const newExpiry = new Date(now);
+                            newExpiry.setMonth(newExpiry.getMonth() + 1);
+                            const monthlyBonus = PLAN_MONTHLY[user.plan] || 0;
+                            const dailyAmount = PLAN_DAILY[user.plan] || 20;
+
+                            await supabase.from('profiles').update({
+                                plan_started_at: now.toISOString(),
+                                plan_expires_at: newExpiry.toISOString(),
+                                updated_at: now.toISOString()
+                            }).eq('id', user.id);
+
+                            await supabase.from('payments').insert({
+                                user_id: user.id,
+                                payment_id: renewResult.imp_uid,
+                                merchant_uid: renewResult.merchant_uid,
+                                type: 'subscription',
+                                plan: user.plan,
+                                tokens_granted: monthlyBonus,
+                                amount: PLAN_PRICES[user.plan],
+                                status: 'paid',
+                                paid_at: now.toISOString()
+                            });
+
+                            await supabase.from('tokens_log').insert({
+                                user_id: user.id,
+                                action: 'auto_renewal',
+                                amount: 0,
+                                balance_after: (user.tokens_balance || 0) + (user.tokens_purchased || 0),
+                                description: `${user.plan} 구독 자동 갱신 결제 완료`
+                            });
+
+                            console.log(`Auto renewal success: ${user.email} (${user.plan})`);
+                        } else {
+                            // 결제 실패 로그
+                            await supabase.from('tokens_log').insert({
+                                user_id: user.id,
+                                action: 'renewal_failed',
+                                amount: 0,
+                                description: `자동 갱신 실패: ${renewResult.reason}`
+                            });
+                            console.error(`Auto renewal failed: ${user.email} - ${renewResult.reason}`);
+                        }
+                    }
                 }
 
                 // 구매 루나 이월 계산 (최대 3000루나까지)
@@ -115,9 +250,10 @@ exports.handler = async (event) => {
         // 만료된 구독자 처리 (plan_expires_at이 현재 이전인 Pro 유저)
         const { data: expiredUsers } = await supabase
             .from('profiles')
-            .select('id, email, plan')
+            .select('id, email, plan, billing_key')
             .in('plan', PAID_PLANS)
-            .lt('plan_expires_at', now.toISOString());
+            .lt('plan_expires_at', now.toISOString())
+            .is('billing_key', null);
 
         let expiredCount = 0;
         for (const user of expiredUsers || []) {
