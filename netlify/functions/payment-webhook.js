@@ -7,7 +7,7 @@ const supabase = createClient(
     process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-const PORTONE_API_SECRET = process.env.PORTONE_API_SECRET;
+const PORTONE_V2_API_SECRET = process.env.PORTONE_V2_API_SECRET;
 const PORTONE_WEBHOOK_SECRET = process.env.PORTONE_WEBHOOK_SECRET;
 
 // 토큰 패키지 정의
@@ -35,55 +35,52 @@ exports.handler = async (event) => {
     try {
         // 웹훅 시그니처 검증 (선택적)
         if (PORTONE_WEBHOOK_SECRET) {
-            const signature = event.headers['x-portone-signature'];
-            const expectedSignature = crypto
-                .createHmac('sha256', PORTONE_WEBHOOK_SECRET)
-                .update(event.body)
-                .digest('hex');
+            const signature = event.headers['webhook-signature'];
+            if (signature) {
+                // Standard Webhooks: webhook-id + webhook-timestamp + body 를 HMAC-SHA256
+                const webhookId = event.headers['webhook-id'];
+                const webhookTimestamp = event.headers['webhook-timestamp'];
+                const signedContent = `${webhookId}.${webhookTimestamp}.${event.body}`;
+                const secretBytes = Buffer.from(PORTONE_WEBHOOK_SECRET.replace('whsec_', ''), 'base64');
+                const expectedSignature = crypto
+                    .createHmac('sha256', secretBytes)
+                    .update(signedContent)
+                    .digest('base64');
 
-            if (signature !== expectedSignature) {
-                console.error('Invalid webhook signature');
-                return {
-                    statusCode: 401,
-                    headers,
-                    body: JSON.stringify({ error: 'Invalid signature' })
-                };
+                const signatures = signature.split(' ').map(s => s.split(',')[1]);
+                if (!signatures.includes(expectedSignature)) {
+                    console.error('Invalid webhook signature');
+                    return {
+                        statusCode: 401,
+                        headers,
+                        body: JSON.stringify({ error: 'Invalid signature' })
+                    };
+                }
             }
         }
 
         const body = JSON.parse(event.body);
-        const { imp_uid, merchant_uid, status } = body;
+        const { type, data } = body;
+        const paymentId = data?.paymentId;
 
-        console.log('Webhook received:', { imp_uid, merchant_uid, status });
+        console.log('Webhook received:', { type, paymentId });
 
-        // 포트원 API로 결제 정보 조회
+        // 포트원 V2 API로 결제 정보 조회
         let paymentInfo;
-        if (PORTONE_API_SECRET) {
-            // 액세스 토큰 획득
-            const tokenResponse = await fetch('https://api.iamport.kr/users/getToken', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    imp_key: process.env.PORTONE_IMP_KEY,
-                    imp_secret: PORTONE_API_SECRET
-                })
+        if (PORTONE_V2_API_SECRET && paymentId) {
+            const paymentResponse = await fetch(`https://api.portone.io/payments/${encodeURIComponent(paymentId)}`, {
+                headers: { 'Authorization': `PortOne ${PORTONE_V2_API_SECRET}` }
             });
-            const tokenData = await tokenResponse.json();
-            const accessToken = tokenData.response.access_token;
-
-            // 결제 정보 조회
-            const paymentResponse = await fetch(`https://api.iamport.kr/payments/${imp_uid}`, {
-                headers: { 'Authorization': accessToken }
-            });
-            const paymentData = await paymentResponse.json();
-            paymentInfo = paymentData.response;
+            if (paymentResponse.ok) {
+                paymentInfo = await paymentResponse.json();
+            }
         }
 
         // 기존 결제 기록 조회
         const { data: existingPayment } = await supabase
             .from('payments')
             .select('*')
-            .eq('merchant_uid', merchant_uid)
+            .eq('payment_id', paymentId)
             .single();
 
         if (!existingPayment) {
@@ -92,13 +89,13 @@ exports.handler = async (event) => {
 
         const now = new Date();
 
-        if (status === 'paid') {
+        if (type === 'Transaction.Paid') {
             // 결제 성공 처리
             const updateData = {
-                payment_id: imp_uid,
+                payment_id: paymentId,
                 status: 'paid',
                 paid_at: now.toISOString(),
-                payment_method: paymentInfo?.pay_method || null
+                payment_method: paymentInfo?.method?.type || null
             };
 
             if (existingPayment) {
@@ -178,13 +175,13 @@ exports.handler = async (event) => {
                 }
             }
 
-        } else if (status === 'cancelled' || status === 'failed') {
+        } else if (type === 'Transaction.Cancelled' || type === 'Transaction.Failed') {
             // 결제 취소/실패 처리
             if (existingPayment) {
                 await supabase
                     .from('payments')
                     .update({
-                        status: status,
+                        status: type === 'Transaction.Cancelled' ? 'cancelled' : 'failed',
                         updated_at: now.toISOString()
                     })
                     .eq('id', existingPayment.id);
