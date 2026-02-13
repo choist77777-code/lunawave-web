@@ -60,53 +60,42 @@ exports.handler = async (event) => {
             };
         }
 
-        // 포트원 API로 결제 정보 조회
+        // 포트원 V2 API로 결제 정보 조회
         let paymentInfo = null;
 
-        if (PORTONE_API_SECRET) {
-            // 액세스 토큰 획득
-            const tokenResponse = await fetch('https://api.iamport.kr/users/getToken', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    imp_key: PORTONE_IMP_KEY,
-                    imp_secret: PORTONE_API_SECRET
-                })
+        if (PORTONE_V2_API_SECRET) {
+            const paymentResponse = await fetch(`https://api.portone.io/payments/${encodeURIComponent(payment_id)}`, {
+                headers: { 'Authorization': `PortOne ${PORTONE_V2_API_SECRET}` }
             });
-            const tokenData = await tokenResponse.json();
 
-            if (tokenData.code !== 0) {
-                throw new Error('Failed to get PortOne access token');
-            }
-
-            const accessToken = tokenData.response.access_token;
-
-            // 결제 정보 조회
-            const paymentResponse = await fetch(`https://api.iamport.kr/payments/${imp_uid}`, {
-                headers: { 'Authorization': accessToken }
-            });
-            const paymentData = await paymentResponse.json();
-
-            if (paymentData.code !== 0) {
+            if (!paymentResponse.ok) {
                 return {
                     statusCode: 400,
                     headers,
                     body: JSON.stringify({
                         success: false,
                         error: 'Payment not found',
-                        message: paymentData.message
+                        message: `HTTP ${paymentResponse.status}`
                     })
                 };
             }
 
-            paymentInfo = paymentData.response;
+            const paymentData = await paymentResponse.json();
+            paymentInfo = {
+                status: paymentData.status === 'PAID' ? 'paid' : paymentData.status,
+                amount: paymentData.amount?.total,
+                payment_id: paymentData.id,
+                merchant_uid: paymentData.merchantId,
+                pay_method: paymentData.method?.type,
+                paid_at: paymentData.paidAt
+            };
         } else {
-            // 데모 모드 - 포트원 설정 없이 테스트
+            // 데모 모드
             console.log('Demo mode: PortOne not configured');
             paymentInfo = {
                 status: 'paid',
                 amount: expected_amount,
-                imp_uid: imp_uid,
+                payment_id: payment_id,
                 merchant_uid: merchant_uid
             };
         }
@@ -142,7 +131,7 @@ exports.handler = async (event) => {
         const { data: payment } = await supabase
             .from('payments')
             .select('*')
-            .eq('payment_id', imp_uid)
+            .eq('payment_id', payment_id)
             .single();
 
         // 사용자 현재 상태 조회
@@ -159,7 +148,7 @@ exports.handler = async (event) => {
                 success: true,
                 verified: true,
                 payment: {
-                    imp_uid: paymentInfo.imp_uid,
+                    payment_id: paymentInfo.payment_id,
                     merchant_uid: paymentInfo.merchant_uid,
                     amount: paymentInfo.amount,
                     status: paymentInfo.status,
