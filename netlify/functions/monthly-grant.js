@@ -136,8 +136,7 @@ exports.handler = async (event) => {
                     const daysUntilExpiry = expiresAt ? Math.ceil((expiresAt - now) / (1000 * 60 * 60 * 24)) : 0;
 
                     if (daysUntilExpiry <= 3) {
-                        const portoneToken = await getPortOneToken();
-                        const renewResult = await attemptAutoRenewal(user, portoneToken);
+                        const renewResult = await attemptAutoRenewal(user);
 
                         if (renewResult.success) {
                             // 결제 성공 - 구독 갱신
