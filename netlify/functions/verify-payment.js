@@ -6,8 +6,7 @@ const supabase = createClient(
     process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-const PORTONE_IMP_KEY = process.env.PORTONE_IMP_KEY;
-const PORTONE_API_SECRET = process.env.PORTONE_API_SECRET;
+const PORTONE_V2_API_SECRET = process.env.PORTONE_V2_API_SECRET;
 
 exports.handler = async (event) => {
     const headers = {
@@ -51,13 +50,13 @@ exports.handler = async (event) => {
         }
 
         const body = JSON.parse(event.body);
-        const { imp_uid, merchant_uid, expected_amount } = body;
+        const { payment_id, merchant_uid, expected_amount } = body;
 
-        if (!imp_uid) {
+        if (!payment_id) {
             return {
                 statusCode: 400,
                 headers,
-                body: JSON.stringify({ error: 'imp_uid is required' })
+                body: JSON.stringify({ error: 'payment_id is required' })
             };
         }
 

@@ -13,7 +13,7 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="/js/supabase-client.js"></script>
-    <script src="https://cdn.iamport.kr/v1/iamport.js"></script>
+    <script src="https://cdn.portone.io/v2/browser-sdk.js"></script>
 
     <style>
         :root {
@@ -449,7 +449,8 @@
     <script>
         lucide.createIcons();
 
-        const PORTONE_IMP_KEY = 'imp52320115';
+        const PORTONE_STORE_ID = 'store-dfe58919-d41e-4223-b899-14140d31a86e';
+        const PORTONE_BILLING_CHANNEL_KEY = 'channel-key-45a58be5-2916-4d9e-ba69-56906170faed';
 
         const sb = LW.supabase;
         let user;
