@@ -153,7 +153,7 @@ exports.handler = async (event) => {
 
                             await supabase.from('payments').insert({
                                 user_id: user.id,
-                                payment_id: renewResult.imp_uid,
+                                payment_id: renewResult.payment_id,
                                 merchant_uid: renewResult.merchant_uid,
                                 type: 'subscription',
                                 plan: user.plan,
