@@ -7,7 +7,7 @@ const supabase = createClient(
     process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-const PORTONE_API_SECRET = process.env.PORTONE_API_SECRET;
+const PORTONE_V2_API_SECRET = process.env.PORTONE_V2_API_SECRET;
 
 // 루나 패키지 정의
 const LUNA_PACKAGES = {
@@ -58,7 +58,7 @@ exports.handler = async (event) => {
         }
 
         const body = JSON.parse(event.body);
-        const { imp_uid, merchant_uid, package_type, promo_code } = body;
+        const { payment_id, merchant_uid, package_type, promo_code } = body;
 
         // 패키지 확인
         const pkg = LUNA_PACKAGES[package_type];
@@ -105,15 +105,15 @@ exports.handler = async (event) => {
         }
 
         // 포트원 결제 검증
-        if (PORTONE_API_SECRET && imp_uid) {
-            const verifyResponse = await fetch(`https://api.iamport.kr/payments/${imp_uid}`, {
+        if (PORTONE_V2_API_SECRET && payment_id) {
+            const verifyResponse = await fetch(`https://api.portone.io/payments/${encodeURIComponent(payment_id)}`, {
                 headers: {
-                    'Authorization': `Bearer ${PORTONE_API_SECRET}`
+                    'Authorization': `PortOne ${PORTONE_V2_API_SECRET}`
                 }
             });
             const verifyData = await verifyResponse.json();
 
-            if (verifyData.response.status !== 'paid' || verifyData.response.amount !== amount) {
+            if (verifyData.status !== 'PAID' || verifyData.amount?.total !== amount) {
                 return {
                     statusCode: 400,
                     headers,
@@ -151,7 +151,7 @@ exports.handler = async (event) => {
             .from('payments')
             .insert({
                 user_id: user.id,
-                payment_id: imp_uid,
+                payment_id: payment_id || merchant_uid,
                 merchant_uid: merchant_uid,
                 type: 'luna_purchase',
                 token_package: package_type, // 컬럼명은 유지 (DB 호환성)
