@@ -29,9 +29,12 @@ th { background: #f9f9f7; font-weight: 600; color: var(--text); }
 td { color: var(--text2); }
 .highlight { background: rgba(245,166,35,0.08); border: 1px solid rgba(245,166,35,0.2); border-radius: 8px; padding: 16px 20px; margin: 16px 0; }
 .highlight p { margin-bottom: 0; }
+.highlight-red { background: rgba(220,38,38,0.06); border: 1px solid rgba(220,38,38,0.18); border-radius: 8px; padding: 16px 20px; margin: 16px 0; }
+.highlight-red p { margin-bottom: 0; }
 footer { padding: 36px 24px; text-align: center; font-size: 12px; color: var(--text3); border-top: 1px solid var(--line); }
 footer a { color: var(--text2); text-decoration: none; margin: 0 12px; }
 .f-biz { font-size: 12px; color: var(--text3); line-height: 1.8; margin-top: 16px; }
+.ko { color: var(--text3); font-size: 13px; }
 </style>
 </head>
 <body>
@@ -44,42 +47,116 @@ footer a { color: var(--text2); text-decoration: none; margin: 0 12px; }
 
 <div class="content">
     <h1>Refund Policy</h1>
-    <p class="updated">Last updated: February 10, 2026</p>
+    <p class="updated">Last updated: February 19, 2026</p>
 
-    <h2>1. Full Refund Guarantee</h2>
+    <!-- Section 1 -->
+    <h2>1. Subscription Plans / 구독 플랜</h2>
+    <p>LunaWave offers subscription-based plans only. There are no one-time luna purchases.</p>
+    <p class="ko">LunaWave는 구독제로만 운영됩니다. 단건 루나 충전은 없습니다.</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Plan</th>
+                <th>Name</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>Crescent</td><td>초승달</td></tr>
+            <tr><td>Half Moon</td><td>반달</td></tr>
+            <tr><td>Full Moon</td><td>보름달</td></tr>
+        </tbody>
+    </table>
+
+    <!-- Section 2 -->
+    <h2>2. Subscription Cancellation / 구독 해지</h2>
+    <ul>
+        <li>You can cancel your subscription at any time from your dashboard.<br>
+            <span class="ko">대시보드에서 언제든 구독을 해지할 수 있습니다.</span></li>
+        <li>After cancellation, no further charges will be made from the next billing cycle.<br>
+            <span class="ko">해지 후 다음 달부터 결제가 발생하지 않습니다.</span></li>
+        <li>Your remaining lunas are usable until the end of the current billing period.<br>
+            <span class="ko">현재 결제 기간이 끝날 때까지 남은 루나를 사용할 수 있습니다.</span></li>
+    </ul>
+
+    <!-- Section 3 -->
+    <h2>3. Refund Conditions / 환불 조건</h2>
 
     <div class="highlight">
-        <p><strong>Full refund available within 14 days of purchase. No conditions.</strong></p>
+        <p><strong>Refund is available ONLY when both conditions are met:</strong><br>
+        <span class="ko"><strong>아래 두 가지 조건을 모두 충족해야 환불이 가능합니다:</strong></span></p>
     </div>
 
-    <p>If you are not satisfied with LunaWave for any reason, you may request a full refund within 14 days of your purchase date. No questions asked.</p>
-
-    <h2>2. What This Covers</h2>
     <ul>
-        <li><strong>Pro Subscription:</strong> Full refund within 14 days of payment.</li>
-        <li><strong>Luna Credit Purchases:</strong> Full refund within 14 days of payment.</li>
-        <li><strong>Free Plan:</strong> No payment, no refund needed.</li>
+        <li><strong>Condition 1:</strong> Within 14 days of the payment date.<br>
+            <span class="ko">결제일로부터 14일 이내일 것.</span></li>
+        <li><strong>Condition 2:</strong> Zero luna usage since the payment. Not even one luna has been used.<br>
+            <span class="ko">결제 이후 루나를 1개도 사용하지 않았을 것.</span></li>
     </ul>
 
-    <h2>3. How Refunds Are Processed</h2>
-    <p>All payments are processed through <strong>Paddle</strong>, our authorized payment provider (Merchant of Record). Refunds are handled directly by Paddle and will be returned to your original payment method.</p>
+    <div class="highlight-red">
+        <p><strong>If even 1 luna has been used after payment, refund is NOT possible.</strong><br>
+        <span class="ko"><strong>결제 후 루나를 1개라도 사용했다면 환불이 불가합니다.</strong></span></p>
+    </div>
+
+    <!-- Section 4 -->
+    <h2>4. How Refunds Are Processed / 환불 처리 방법</h2>
+    <p>All payments are processed through <strong>PortOne (NHN KCP)</strong>, our authorized payment provider. Refunds are processed automatically via the PortOne API, and the admin team is notified upon each refund request.</p>
+    <p class="ko">모든 결제는 <strong>PortOne (NHN KCP)</strong>을 통해 처리됩니다. 환불은 PortOne API를 통해 자동으로 처리되며, 환불 요청 시 관리자에게 알림이 전송됩니다.</p>
     <ul>
-        <li>Refund processing time: typically 5-10 business days depending on your bank.</li>
-        <li>You will receive a confirmation email from Paddle once the refund is processed.</li>
+        <li>Refund processing time: <strong>3-7 business days</strong> depending on your bank or card issuer.<br>
+            <span class="ko">환불 처리 기간: 은행/카드사에 따라 <strong>영업일 기준 3~7일</strong> 소요됩니다.</span></li>
+        <li>The refund will be returned to your original payment method.<br>
+            <span class="ko">환불은 원래 결제 수단으로 반환됩니다.</span></li>
     </ul>
 
-    <h2>4. How to Request a Refund</h2>
+    <!-- Section 5 -->
+    <h2>5. How to Request a Refund / 환불 신청 방법</h2>
     <ul>
-        <li>Email: choist77777@gmail.com</li>
-        <li>Or contact Paddle directly through the receipt email you received at purchase.</li>
+        <li><strong>Email:</strong> <a href="mailto:choist77777@gmail.com" style="color:var(--gold);">choist77777@gmail.com</a><br>
+            <span class="ko">이메일로 환불을 요청할 수 있습니다.</span></li>
+        <li><strong>Dashboard refund button</strong> (coming soon)<br>
+            <span class="ko">대시보드 환불 버튼 (향후 추가 예정)</span></li>
     </ul>
+    <p>Please include your account email and payment date in your refund request.</p>
+    <p class="ko">환불 요청 시 계정 이메일과 결제일을 함께 알려주세요.</p>
 
-    <h2>5. Subscription Cancellation</h2>
-    <ul>
-        <li>You can cancel your Pro subscription at any time from your dashboard.</li>
-        <li>After cancellation, you will continue to have access until the end of the current billing period.</li>
-        <li>No further charges will be made after cancellation.</li>
-    </ul>
+    <!-- Section 6 -->
+    <h2>6. Summary Table / 요약</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Item / 항목</th>
+                <th>Details / 내용</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Refund period / 환불 기간</td>
+                <td>Within 14 days of payment / 결제일로부터 14일 이내</td>
+            </tr>
+            <tr>
+                <td>Usage requirement / 사용 조건</td>
+                <td>0 lunas used / 루나 사용 0개</td>
+            </tr>
+            <tr>
+                <td>If lunas used / 루나 사용 시</td>
+                <td>Refund NOT possible / 환불 불가</td>
+            </tr>
+            <tr>
+                <td>Processing time / 처리 기간</td>
+                <td>3-7 business days / 영업일 3~7일</td>
+            </tr>
+            <tr>
+                <td>Payment processor / 결제 대행</td>
+                <td>PortOne (NHN KCP)</td>
+            </tr>
+            <tr>
+                <td>Contact / 문의</td>
+                <td>choist77777@gmail.com</td>
+            </tr>
+        </tbody>
+    </table>
 </div>
 
 <footer>
@@ -89,7 +166,7 @@ footer a { color: var(--text2); text-decoration: none; margin: 0 12px; }
         통신판매업신고 제 2026-경기파주-0777 호 | 전화: 070-8019-1770 | 이메일: choist77777@gmail.com<br>
         주소: 경기도 파주시 경의로 1114, 4층 406호 (야당동, 에펠타워)
     </div>
-    <p style="margin-top:12px;">© 2026 LunaWave. All rights reserved.</p>
+    <p style="margin-top:12px;">&copy; 2026 LunaWave. All rights reserved.</p>
 </footer>
 </body>
 </html>

@@ -1,16 +1,13 @@
-// payment-webhook.js - 포트원 웹훅 수신 및 처리
+// payment-webhook.js - PortOne V1 (iamport) webhook handler
 const { createClient } = require('@supabase/supabase-js');
-const crypto = require('crypto');
+const { getPayment } = require('./portone-v1-helper');
 
 const supabase = createClient(
     process.env.SUPABASE_URL,
     process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-const PORTONE_V2_API_SECRET = process.env.PORTONE_V2_API_SECRET;
-const PORTONE_WEBHOOK_SECRET = process.env.PORTONE_WEBHOOK_SECRET;
-
-// 토큰 패키지 정의
+// Token packages
 const TOKEN_PACKAGES = {
     'small': { tokens: 500, price: 7900 },
     'medium': { tokens: 1000, price: 12900 },
@@ -33,55 +30,45 @@ exports.handler = async (event) => {
     }
 
     try {
-        // 웹훅 시그니처 검증 (선택적)
-        if (PORTONE_WEBHOOK_SECRET) {
-            const signature = event.headers['webhook-signature'];
-            if (signature) {
-                // Standard Webhooks: webhook-id + webhook-timestamp + body 를 HMAC-SHA256
-                const webhookId = event.headers['webhook-id'];
-                const webhookTimestamp = event.headers['webhook-timestamp'];
-                const signedContent = `${webhookId}.${webhookTimestamp}.${event.body}`;
-                const secretBytes = Buffer.from(PORTONE_WEBHOOK_SECRET.replace('whsec_', ''), 'base64');
-                const expectedSignature = crypto
-                    .createHmac('sha256', secretBytes)
-                    .update(signedContent)
-                    .digest('base64');
-
-                const signatures = signature.split(' ').map(s => s.split(',')[1]);
-                if (!signatures.includes(expectedSignature)) {
-                    console.error('Invalid webhook signature');
-                    return {
-                        statusCode: 401,
-                        headers,
-                        body: JSON.stringify({ error: 'Invalid signature' })
-                    };
-                }
-            }
-        }
-
         const body = JSON.parse(event.body);
-        const { type, data } = body;
-        const paymentId = data?.paymentId;
+        const { imp_uid, merchant_uid, status } = body;
 
-        console.log('Webhook received:', { type, paymentId });
+        console.log('Webhook received:', { imp_uid, merchant_uid, status });
 
-        // 포트원 V2 API로 결제 정보 조회
-        let paymentInfo;
-        if (PORTONE_V2_API_SECRET && paymentId) {
-            const paymentResponse = await fetch(`https://api.portone.io/payments/${encodeURIComponent(paymentId)}`, {
-                headers: { 'Authorization': `PortOne ${PORTONE_V2_API_SECRET}` }
-            });
-            if (paymentResponse.ok) {
-                paymentInfo = await paymentResponse.json();
-            }
+        if (!imp_uid) {
+            return {
+                statusCode: 400,
+                headers,
+                body: JSON.stringify({ error: 'imp_uid is required' })
+            };
         }
 
-        // 기존 결제 기록 조회
-        const { data: existingPayment } = await supabase
+        // PortOne V1 API payment lookup
+        const paymentInfo = await getPayment(imp_uid);
+
+        // Look up existing payment record
+        // First try by payment_id (imp_uid), then by merchant_uid
+        let existingPayment = null;
+
+        const { data: byPaymentId } = await supabase
             .from('payments')
             .select('*')
-            .eq('payment_id', paymentId)
+            .eq('payment_id', imp_uid)
             .single();
+
+        if (byPaymentId) {
+            existingPayment = byPaymentId;
+        } else if (merchant_uid) {
+            const { data: byMerchantUid } = await supabase
+                .from('payments')
+                .select('*')
+                .eq('merchant_uid', merchant_uid)
+                .single();
+
+            if (byMerchantUid) {
+                existingPayment = byMerchantUid;
+            }
+        }
 
         if (!existingPayment) {
             console.log('Payment record not found, creating new one');
@@ -89,13 +76,13 @@ exports.handler = async (event) => {
 
         const now = new Date();
 
-        if (type === 'Transaction.Paid') {
-            // 결제 성공 처리
+        if (status === 'paid') {
+            // Payment success
             const updateData = {
-                payment_id: paymentId,
+                payment_id: imp_uid,
                 status: 'paid',
                 paid_at: now.toISOString(),
-                payment_method: paymentInfo?.method?.type || null
+                payment_method: paymentInfo?.pay_method || null
             };
 
             if (existingPayment) {
@@ -104,12 +91,12 @@ exports.handler = async (event) => {
                     .update(updateData)
                     .eq('id', existingPayment.id);
 
-                // 토큰 지급 (아직 지급되지 않은 경우)
+                // Grant tokens (only if not already paid)
                 if (existingPayment.status !== 'paid') {
                     const userId = existingPayment.user_id;
 
                     if (existingPayment.type === 'subscription') {
-                        // 구독 결제 - Pro 플랜 활성화
+                        // Subscription - activate Pro plan
                         const plan_expires_at = new Date(now);
                         plan_expires_at.setMonth(plan_expires_at.getMonth() + 1);
 
@@ -143,7 +130,7 @@ exports.handler = async (event) => {
                             });
 
                     } else if (existingPayment.type === 'token_purchase') {
-                        // 토큰 구매
+                        // Token purchase
                         const tokens = existingPayment.tokens_granted || 0;
 
                         const { data: profile } = await supabase
@@ -175,13 +162,13 @@ exports.handler = async (event) => {
                 }
             }
 
-        } else if (type === 'Transaction.Cancelled' || type === 'Transaction.Failed') {
-            // 결제 취소/실패 처리
+        } else if (status === 'cancelled' || status === 'failed') {
+            // Payment cancelled or failed
             if (existingPayment) {
                 await supabase
                     .from('payments')
                     .update({
-                        status: type === 'Transaction.Cancelled' ? 'cancelled' : 'failed',
+                        status: status,
                         updated_at: now.toISOString()
                     })
                     .eq('id', existingPayment.id);

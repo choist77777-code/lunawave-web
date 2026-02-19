@@ -1,6 +1,6 @@
 // LunaWave Payment Logic
 
-const PORTONE_IMP_CODE = 'YOUR_PORTONE_IMP_CODE'; // Replace with actual code
+const PORTONE_IMP_CODE = 'imp52320115';
 
 const PRICES = {
     subscription: {

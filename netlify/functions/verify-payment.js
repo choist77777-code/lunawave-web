@@ -1,12 +1,11 @@
-// verify-payment.js - 결제 검증 (프론트에서 호출)
+// verify-payment.js - 결제 검증 (프론트에서 호출) - PortOne V1
 const { createClient } = require('@supabase/supabase-js');
+const { getPayment } = require('./portone-v1-helper');
 
 const supabase = createClient(
     process.env.SUPABASE_URL,
     process.env.SUPABASE_SERVICE_ROLE_KEY
 );
-
-const PORTONE_V2_API_SECRET = process.env.PORTONE_V2_API_SECRET;
 
 exports.handler = async (event) => {
     const headers = {
@@ -50,52 +49,54 @@ exports.handler = async (event) => {
         }
 
         const body = JSON.parse(event.body);
-        const { payment_id, merchant_uid, expected_amount } = body;
+        // V1: imp_uid 사용, 하위호환을 위해 payment_id도 수용
+        const imp_uid = body.imp_uid || body.payment_id;
+        const { merchant_uid, expected_amount } = body;
 
-        if (!payment_id) {
+        if (!imp_uid) {
             return {
                 statusCode: 400,
                 headers,
-                body: JSON.stringify({ error: 'payment_id is required' })
+                body: JSON.stringify({ error: 'imp_uid is required' })
             };
         }
 
-        // 포트원 V2 API로 결제 정보 조회
+        // 포트원 V1 API로 결제 정보 조회
         let paymentInfo = null;
 
-        if (PORTONE_V2_API_SECRET) {
-            const paymentResponse = await fetch(`https://api.portone.io/payments/${encodeURIComponent(payment_id)}`, {
-                headers: { 'Authorization': `PortOne ${PORTONE_V2_API_SECRET}` }
-            });
-
-            if (!paymentResponse.ok) {
+        if (process.env.IMP_REST_API_KEY) {
+            let paymentData;
+            try {
+                paymentData = await getPayment(imp_uid);
+            } catch (err) {
                 return {
                     statusCode: 400,
                     headers,
                     body: JSON.stringify({
                         success: false,
                         error: 'Payment not found',
-                        message: `HTTP ${paymentResponse.status}`
+                        message: err.message
                     })
                 };
             }
 
-            const paymentData = await paymentResponse.json();
             paymentInfo = {
-                status: paymentData.status === 'PAID' ? 'paid' : paymentData.status,
-                amount: paymentData.amount?.total,
-                payment_id: paymentData.id,
-                merchant_uid: paymentData.merchantId,
-                pay_method: paymentData.method?.type,
-                paid_at: paymentData.paidAt
+                status: paymentData.status,
+                amount: paymentData.amount,
+                imp_uid: paymentData.imp_uid,
+                payment_id: paymentData.imp_uid,
+                merchant_uid: paymentData.merchant_uid,
+                pay_method: paymentData.pay_method,
+                paid_at: paymentData.paid_at
             };
         } else {
             // 데모 모드
-            console.log('Demo mode: PortOne not configured');
+            console.log('Demo mode: PortOne V1 not configured');
             paymentInfo = {
                 status: 'paid',
                 amount: expected_amount,
-                payment_id: payment_id,
+                imp_uid: imp_uid,
+                payment_id: imp_uid,
                 merchant_uid: merchant_uid
             };
         }
@@ -127,12 +128,24 @@ exports.handler = async (event) => {
             };
         }
 
-        // DB에서 결제 기록 조회
-        const { data: payment } = await supabase
+        // DB에서 결제 기록 조회 (imp_uid 또는 payment_id로 검색)
+        let payment = null;
+        const { data: byImpUid } = await supabase
             .from('payments')
             .select('*')
-            .eq('payment_id', payment_id)
+            .eq('imp_uid', imp_uid)
             .single();
+
+        if (byImpUid) {
+            payment = byImpUid;
+        } else {
+            const { data: byPaymentId } = await supabase
+                .from('payments')
+                .select('*')
+                .eq('payment_id', imp_uid)
+                .single();
+            payment = byPaymentId;
+        }
 
         // 사용자 현재 상태 조회
         const { data: profile } = await supabase
@@ -148,6 +161,7 @@ exports.handler = async (event) => {
                 success: true,
                 verified: true,
                 payment: {
+                    imp_uid: paymentInfo.imp_uid,
                     payment_id: paymentInfo.payment_id,
                     merchant_uid: paymentInfo.merchant_uid,
                     amount: paymentInfo.amount,

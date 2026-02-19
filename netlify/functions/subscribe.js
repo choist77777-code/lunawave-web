@@ -1,13 +1,12 @@
-// subscribe.js - 월정액 Pro 구독 처리
+// subscribe.js - 월정액 Pro 구독 처리 (PortOne V1)
 const { createClient } = require('@supabase/supabase-js');
+const { getPayment } = require('./portone-v1-helper');
 
 const supabase = createClient(
     process.env.SUPABASE_URL,
     process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-const PORTONE_V2_API_SECRET = process.env.PORTONE_V2_API_SECRET;
-const PORTONE_V2_STORE_ID = process.env.PORTONE_V2_STORE_ID;
 const PLAN_PRICES = {
     crescent: 13900,
     halfmoon: 33000,
@@ -67,7 +66,7 @@ exports.handler = async (event) => {
         }
 
         const body = JSON.parse(event.body);
-        const { billing_key, merchant_uid, payment_id, promo_code, plan, action } = body;
+        const { imp_uid, merchant_uid, customer_uid, promo_code, plan, action } = body;
 
         // 구독 해지 처리
         if (action === 'cancel') {
@@ -165,53 +164,31 @@ exports.handler = async (event) => {
             }
         }
 
-        // 포트원 V2 빌링키 결제 실행
-        const PORTONE_V2_SECRET = process.env.PORTONE_V2_API_SECRET;
-        if (PORTONE_V2_SECRET && billing_key) {
-            // V2: 빌링키로 첫 결제 실행
-            const paymentId = payment_id || `sub_${plan}_${Date.now()}_${user.id.slice(0, 8)}`;
-            const payResponse = await fetch(`https://api.portone.io/payments/${encodeURIComponent(paymentId)}/billing-key`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `PortOne ${PORTONE_V2_SECRET}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    billingKey: billing_key,
-                    orderName: `LunaWave ${plan} 구독`,
-                    customer: {
-                        id: user.id
-                    },
-                    amount: {
-                        total: amount,
-                        currency: 'KRW'
-                    }
-                })
-            });
+        // 포트원 V1 결제 검증
+        if (amount > 0 && imp_uid) {
+            const paymentData = await getPayment(imp_uid);
 
-            if (!payResponse.ok) {
-                const errData = await payResponse.json().catch(() => ({}));
+            if (paymentData.status !== 'paid') {
                 return {
                     statusCode: 400,
                     headers,
-                    body: JSON.stringify({ error: 'Billing key payment failed', detail: errData.message || payResponse.statusText })
+                    body: JSON.stringify({ error: 'Payment verification failed', status: paymentData.status })
                 };
             }
 
-            // 결제 상태 확인
-            const verifyRes = await fetch(`https://api.portone.io/payments/${encodeURIComponent(paymentId)}`, {
-                headers: { 'Authorization': `PortOne ${PORTONE_V2_SECRET}` }
-            });
-            const verifyData = await verifyRes.json();
-
-            if (verifyData.status !== 'PAID' || verifyData.amount?.total !== amount) {
+            if (paymentData.amount !== amount) {
                 return {
                     statusCode: 400,
                     headers,
-                    body: JSON.stringify({ error: 'Payment verification failed', status: verifyData.status })
+                    body: JSON.stringify({
+                        error: 'Payment amount mismatch',
+                        expected: amount,
+                        actual: paymentData.amount
+                    })
                 };
             }
         }
+        // amount === 0 인 경우 (업그레이드 차액 0원): 결제 검증 생략
 
         // 현재 시간
         const now = new Date();
@@ -239,7 +216,7 @@ exports.handler = async (event) => {
                 tokens_balance: dailyAmount,
                 tokens_purchased: newPurchased,
                 daily_tokens_granted_at: today,
-                billing_key: billing_key || null,
+                billing_key: customer_uid || null,
                 updated_at: now.toISOString()
             })
             .eq('id', user.id);
@@ -253,7 +230,7 @@ exports.handler = async (event) => {
             .from('payments')
             .insert({
                 user_id: user.id,
-                payment_id: payment_id || merchant_uid,
+                payment_id: imp_uid || merchant_uid,
                 merchant_uid: merchant_uid,
                 type: 'subscription',
                 plan: plan,

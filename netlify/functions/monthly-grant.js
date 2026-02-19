@@ -2,6 +2,7 @@
 // 매월 1일 00:00 UTC에 실행
 // 참고: 일간 루나는 use-token.js와 check-plan.js에서 자동 지급됨
 const { createClient } = require('@supabase/supabase-js');
+const { payAgain } = require('./portone-v1-helper');
 
 const supabase = createClient(
     process.env.SUPABASE_URL,
@@ -31,54 +32,25 @@ const PLAN_DAILY = {
     fullmoon: 999
 };
 
-// V2 빌링키 자동 결제
+// V1 빌링키(customer_uid) 자동 결제
 async function attemptAutoRenewal(user) {
-    const PORTONE_V2_SECRET = process.env.PORTONE_V2_API_SECRET;
-    if (!PORTONE_V2_SECRET || !user.billing_key) return { success: false, reason: 'no_secret_or_key' };
+    if (!process.env.IMP_REST_API_KEY || !user.billing_key) return { success: false, reason: 'no_secret_or_key' };
 
     const plan = user.plan;
     const amount = PLAN_PRICES[plan];
     if (!amount) return { success: false, reason: 'invalid_plan' };
 
-    const paymentId = `renew_${Date.now()}_${user.id.slice(0, 8)}`;
     const PLAN_NAMES = { crescent: '초승달', halfmoon: '반달', fullmoon: '보름달' };
 
     try {
-        const res = await fetch(`https://api.portone.io/payments/${encodeURIComponent(paymentId)}/billing-key`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `PortOne ${PORTONE_V2_SECRET}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                billingKey: user.billing_key,
-                orderName: `LunaWave ${PLAN_NAMES[plan] || plan} 구독 갱신`,
-                customer: {
-                    id: user.id
-                },
-                amount: {
-                    total: amount,
-                    currency: 'KRW'
-                }
-            })
+        const result = await payAgain({
+            customer_uid: user.billing_key,
+            merchant_uid: `renew_${Date.now()}_${user.id.slice(0, 8)}`,
+            amount: amount,
+            name: `LunaWave ${PLAN_NAMES[plan] || plan} 구독 갱신`
         });
 
-        if (!res.ok) {
-            const errData = await res.json().catch(() => ({}));
-            return { success: false, reason: errData.message || `HTTP ${res.status}` };
-        }
-
-        // 결제 상태 확인
-        const verifyRes = await fetch(`https://api.portone.io/payments/${encodeURIComponent(paymentId)}`, {
-            headers: { 'Authorization': `PortOne ${PORTONE_V2_SECRET}` }
-        });
-        const verifyData = await verifyRes.json();
-
-        if (verifyData.status === 'PAID') {
-            return { success: true, payment_id: paymentId, merchant_uid: paymentId };
-        } else {
-            return { success: false, reason: `status: ${verifyData.status}` };
-        }
+        return { success: true, payment_id: result.imp_uid, merchant_uid: result.merchant_uid };
     } catch (e) {
         console.error('Auto renewal error:', e);
         return { success: false, reason: e.message };
