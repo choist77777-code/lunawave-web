@@ -533,16 +533,22 @@
 
             const now = new Date();
             const expires = new Date(planExpiresAt);
+            if (isNaN(expires.getTime())) return null;
+
             const remainingMs = expires - now;
             if (remainingMs <= 0) return null;
 
+            if (planPrices[currentPlan] == null || planPrices[plan] == null) return null;
+
             const totalDays = 30;
-            const remainingDays = Math.ceil(remainingMs / (1000 * 60 * 60 * 24));
+            const remainingDays = Math.min(Math.ceil(remainingMs / (1000 * 60 * 60 * 24)), 365);
             const ratio = Math.min(remainingDays / totalDays, 1);
 
             const currentCredit = Math.floor(planPrices[currentPlan] * ratio);
             const newCost = Math.floor(planPrices[plan] * ratio);
             const diff = Math.max(0, newCost - currentCredit);
+
+            if (isNaN(diff)) return null;
 
             return { diff, remainingDays, currentCredit, newCost };
         }
@@ -561,6 +567,15 @@
             }
 
             const btnText = document.getElementById(`btnText${plan.charAt(0).toUpperCase() + plan.slice(1)}`);
+            const btn = btnText?.parentElement;
+
+            if (isNaN(amount) || amount < 0) {
+                if (btnText) btnText.textContent = '금액 계산 오류';
+                if (btn) btn.disabled = true;
+                return;
+            }
+
+            if (btn) btn.disabled = false;
             if (proration) {
                 btnText.textContent = `${amount.toLocaleString()}원 차액 결제 (${proration.remainingDays}일)`;
             } else {
@@ -638,6 +653,14 @@
                 const IMP = window.IMP;
                 if (!IMP) {
                     alert('결제 모듈을 불러오지 못했습니다. 페이지를 새로고침해주세요.');
+                    btn.disabled = false;
+                    btnText.style.display = 'block';
+                    spinner.style.display = 'none';
+                    return;
+                }
+
+                if (isNaN(amount) || amount < 0) {
+                    alert('결제 금액 계산 오류가 발생했습니다. 페이지를 새로고침해주세요.');
                     btn.disabled = false;
                     btnText.style.display = 'block';
                     spinner.style.display = 'none';
