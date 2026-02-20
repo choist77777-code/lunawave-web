@@ -19,8 +19,8 @@ async function getAccessToken() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-            imp_key: process.env.IMP_REST_API_KEY,
-            imp_secret: process.env.IMP_REST_API_SECRET
+            imp_key: (process.env.IMP_REST_API_KEY || '').trim(),
+            imp_secret: (process.env.IMP_REST_API_SECRET || '').trim()
         })
     });
 
