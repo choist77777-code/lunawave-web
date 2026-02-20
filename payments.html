@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>결제 내역 - LunaWave</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="/js/supabase-client.js"></script>
+
+    <style>
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f9f9fb;
+            --text-primary: #1a1a2e;
+            --text-secondary: #64648c;
+            --text-muted: #9999b3;
+            --accent: #f5a623;
+            --accent-light: rgba(245, 166, 35, 0.1);
+            --border: #e8e8f0;
+            --shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.1);
+            --radius: 12px;
+            --radius-sm: 8px;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --error: #ef4444;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Noto Sans KR', 'Outfit', sans-serif;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        header {
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 24px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header-inner {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 24px;
+            font-weight: 700;
+            text-decoration: none;
+            color: var(--text-primary);
+        }
+        .logo span {
+            background: linear-gradient(135deg, var(--accent), #ff8c00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            padding: 8px 16px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            transition: all 0.2s;
+        }
+        .back-btn:hover {
+            color: var(--text-primary);
+            border-color: var(--text-muted);
+        }
+
+        .main-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 32px 24px;
+        }
+        .page-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .page-subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px 0;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 0;
+            color: var(--text-muted);
+        }
+        .empty-state i { margin-bottom: 16px; }
+        .empty-state p { font-size: 15px; }
+
+        .payments-table {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        thead {
+            background: var(--bg-secondary);
+        }
+        th {
+            padding: 14px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+        }
+        td {
+            padding: 14px 16px;
+            font-size: 14px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: middle;
+        }
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background: var(--bg-secondary); }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 100px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status-paid {
+            background: rgba(34, 197, 94, 0.1);
+            color: var(--success);
+        }
+        .status-cancelled {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+        }
+        .status-failed {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+        }
+        .status-pending {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+
+        .type-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 100px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .type-subscription {
+            background: var(--accent-light);
+            color: var(--accent);
+        }
+        .type-token {
+            background: rgba(139, 92, 246, 0.1);
+            color: #8b5cf6;
+        }
+
+        .amount { font-weight: 600; font-variant-numeric: tabular-nums; }
+        .date { color: var(--text-secondary); font-size: 13px; white-space: nowrap; }
+        .plan-name { font-weight: 500; text-transform: capitalize; }
+
+        @media (max-width: 768px) {
+            .main-container { padding: 20px 16px; }
+            .page-title { font-size: 22px; }
+            .payments-table { overflow-x: auto; }
+            table { min-width: 600px; }
+            th, td { padding: 10px 12px; font-size: 13px; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-inner">
+            <a href="/dashboard.html" class="logo">
+                <i data-lucide="moon" style="width:28px;height:28px;color:var(--accent)"></i>
+                <span>LunaWave</span>
+            </a>
+            <div class="header-right">
+                <a href="/dashboard.html" class="back-btn">
+                    <i data-lucide="arrow-left" style="width:16px;height:16px"></i>
+                    대시보드로 돌아가기
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <h1 class="page-title">결제 내역</h1>
+        <p class="page-subtitle">구독 및 토큰 구매 내역을 확인할 수 있습니다.</p>
+
+        <div id="loadingState" class="loading">
+            결제 내역을 불러오는 중...
+        </div>
+
+        <div id="emptyState" class="empty-state" style="display:none;">
+            <i data-lucide="receipt" style="width:48px;height:48px;color:var(--text-muted)"></i>
+            <p>결제 내역이 없습니다.</p>
+        </div>
+
+        <div id="tableContainer" class="payments-table" style="display:none;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>날짜</th>
+                        <th>유형</th>
+                        <th>플랜</th>
+                        <th>금액</th>
+                        <th>상태</th>
+                        <th>결제 ID</th>
+                    </tr>
+                </thead>
+                <tbody id="paymentsBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const sb = LW.supabase;
+
+        const STATUS_MAP = {
+            paid: { label: '결제 완료', cls: 'status-paid' },
+            cancelled: { label: '취소됨', cls: 'status-cancelled' },
+            failed: { label: '실패', cls: 'status-failed' },
+            pending: { label: '대기중', cls: 'status-pending' }
+        };
+
+        const TYPE_MAP = {
+            subscription: { label: '구독', cls: 'type-subscription' },
+            token_purchase: { label: '토큰 구매', cls: 'type-token' }
+        };
+
+        const PLAN_NAMES = {
+            crescent: 'Crescent',
+            halfmoon: 'Half Moon',
+            fullmoon: 'Full Moon',
+            free: 'Free'
+        };
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '-';
+            const d = new Date(dateStr);
+            if (isNaN(d.getTime())) return '-';
+            return d.toLocaleDateString('ko-KR', {
+                year: 'numeric', month: '2-digit', day: '2-digit',
+                hour: '2-digit', minute: '2-digit'
+            });
+        }
+
+        function formatAmount(amount) {
+            if (amount == null || isNaN(amount)) return '-';
+            return amount.toLocaleString() + '원';
+        }
+
+        async function loadPayments() {
+            const { data: { user } } = await sb.auth.getUser();
+            if (!user) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            const { data: payments, error } = await sb
+                .from('payments')
+                .select('*')
+                .eq('user_id', user.id)
+                .order('created_at', { ascending: false });
+
+            document.getElementById('loadingState').style.display = 'none';
+
+            if (error) {
+                console.error('결제 내역 조회 오류:', error);
+                document.getElementById('emptyState').style.display = 'block';
+                document.getElementById('emptyState').querySelector('p').textContent = '결제 내역을 불러오지 못했습니다.';
+                return;
+            }
+
+            if (!payments || payments.length === 0) {
+                document.getElementById('emptyState').style.display = 'block';
+                return;
+            }
+
+            const tbody = document.getElementById('paymentsBody');
+            payments.forEach(p => {
+                const tr = document.createElement('tr');
+
+                const status = STATUS_MAP[p.status] || { label: p.status || '-', cls: 'status-pending' };
+                const type = TYPE_MAP[p.type] || { label: p.type || '-', cls: 'type-subscription' };
+                const planName = PLAN_NAMES[p.plan] || p.plan || '-';
+                const paymentId = p.payment_id || p.merchant_uid || '-';
+                const shortId = paymentId.length > 20 ? paymentId.slice(0, 20) + '...' : paymentId;
+
+                tr.innerHTML = `
+                    <td class="date">${formatDate(p.paid_at || p.created_at)}</td>
+                    <td><span class="type-badge ${type.cls}">${type.label}</span></td>
+                    <td class="plan-name">${planName}</td>
+                    <td class="amount">${formatAmount(p.amount)}</td>
+                    <td><span class="status-badge ${status.cls}">${status.label}</span></td>
+                    <td class="date" title="${paymentId}">${shortId}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('tableContainer').style.display = 'block';
+        }
+
+        loadPayments();
+        lucide.createIcons();
+    </script>
+</body>
+</html>
