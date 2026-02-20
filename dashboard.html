@@ -675,7 +675,7 @@
                         <i data-lucide="credit-card"></i>
                         내 플랜
                     </div>
-                    <a href="/payment.html" class="btn btn-secondary btn-sm">플랜 관리</a>
+                    <button class="btn btn-secondary btn-sm" onclick="openSubscriptionModal()">플랜 관리</button>
                 </div>
                 <div class="plan-info">
                     <div class="plan-badge" id="planBadge">Free</div>
@@ -861,6 +861,48 @@
         </div>
     </main>
 
+    <!-- 구독 관리 모달 -->
+    <div id="subscriptionModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;">
+        <div style="background:var(--bg-primary);border-radius:var(--radius);padding:32px;max-width:520px;width:90%;max-height:90vh;overflow-y:auto;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+                <h3 style="font-size:20px;font-weight:700;">구독 관리</h3>
+                <button onclick="closeSubscriptionModal()" style="background:none;border:none;cursor:pointer;font-size:24px;color:var(--text-muted);">&times;</button>
+            </div>
+
+            <div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:16px;margin-bottom:20px;">
+                <p style="font-size:14px;color:var(--text-secondary);margin-bottom:8px;">현재 플랜</p>
+                <p style="font-size:18px;font-weight:700;" id="modalPlanName">-</p>
+                <p style="font-size:14px;color:var(--text-secondary);margin-top:8px;">다음 결제일: <strong id="modalNextBilling">-</strong></p>
+                <p style="font-size:14px;color:var(--text-secondary);">월 결제 금액: <strong id="modalBillingAmount">-</strong></p>
+            </div>
+
+            <div style="background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.3);border-radius:var(--radius-sm);padding:16px;margin-bottom:20px;">
+                <h4 style="font-size:14px;font-weight:600;margin-bottom:8px;">환불 정책</h4>
+                <p style="font-size:13px;color:var(--text-secondary);line-height:1.8;">
+                    • 결제일로부터 <strong>14일 이내</strong> + 루나 <strong>1개도 미사용</strong> 시 전액 환불<br>
+                    • 루나를 1개라도 사용하신 경우 환불이 불가합니다<br>
+                    • 환불 요청: support@lunawaveapp.com
+                </p>
+            </div>
+
+            <div style="background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.2);border-radius:var(--radius-sm);padding:16px;margin-bottom:24px;">
+                <h4 style="font-size:14px;font-weight:600;margin-bottom:8px;">구독 취소 안내</h4>
+                <p style="font-size:13px;color:var(--text-secondary);line-height:1.8;">
+                    • 구독 취소 시 <strong>다음 달부터</strong> 결제가 중단됩니다<br>
+                    • 취소 후에도 <strong>이번 달 말까지</strong> 루나를 계속 사용할 수 있습니다
+                </p>
+            </div>
+
+            <div style="display:flex;gap:12px;">
+                <button class="btn btn-secondary" style="flex:1;" onclick="requestRefund()">환불 요청</button>
+                <button class="btn btn-danger" style="flex:1;background:rgba(239,68,68,0.1);color:var(--error);border:1px solid var(--error);padding:12px 24px;border-radius:var(--radius-sm);font-weight:600;font-size:14px;cursor:pointer;font-family:inherit;" onclick="cancelSubscription()">구독 취소</button>
+            </div>
+            <div style="text-align:center;margin-top:16px;">
+                <a href="/payment.html" style="font-size:14px;color:var(--accent);text-decoration:none;">플랜 업그레이드 &rarr;</a>
+            </div>
+        </div>
+    </div>
+
     <script>
         lucide.createIcons();
 
@@ -930,6 +972,7 @@
 
                 if (cpData && cpData.success && cpData.profile) {
                     const p = cpData.profile;
+                    _dashboardProfile = p;
                     updateUI({
                         success: true,
                         plan: p.plan || 'free',
@@ -954,6 +997,7 @@
                     console.log('[Dashboard] profiles 직접 조회:', p, pErr);
 
                     if (p) {
+                        _dashboardProfile = p;
                         updateUI({
                             success: true,
                             plan: p.plan || 'free',
@@ -1142,6 +1186,101 @@
 
             await sb.from('devices').delete().eq('id', deviceId);
             loadDashboard();
+        }
+
+        // 구독 관리 모달
+        let _dashboardProfile = null;
+
+        function openSubscriptionModal() {
+            const modal = document.getElementById('subscriptionModal');
+            modal.style.display = 'flex';
+
+            const PLAN_NAMES = { free: 'Free', crescent: '초승달 (Crescent)', halfmoon: '반달 (Half Moon)', fullmoon: '보름달 (Full Moon)' };
+            const PLAN_PRICES = { crescent: 13900, halfmoon: 33000, fullmoon: 79000 };
+
+            const plan = _dashboardProfile?.plan || 'free';
+            document.getElementById('modalPlanName').textContent = PLAN_NAMES[plan] || 'Free';
+            document.getElementById('modalBillingAmount').textContent = PLAN_PRICES[plan] ? PLAN_PRICES[plan].toLocaleString() + '원' : '-';
+
+            if (_dashboardProfile?.plan_expires_at) {
+                document.getElementById('modalNextBilling').textContent = new Date(_dashboardProfile.plan_expires_at).toLocaleDateString();
+            } else {
+                document.getElementById('modalNextBilling').textContent = '-';
+            }
+        }
+
+        function closeSubscriptionModal() {
+            document.getElementById('subscriptionModal').style.display = 'none';
+        }
+
+        document.getElementById('subscriptionModal').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) closeSubscriptionModal();
+        });
+
+        async function requestRefund() {
+            const confirmed = confirm(
+                '환불을 요청하시겠습니까?\n\n' +
+                '• 결제일로부터 14일 이내, 루나 미사용 시에만 환불 가능합니다.\n' +
+                '• 환불 처리까지 영업일 기준 3~5일 소요됩니다.'
+            );
+            if (!confirmed) return;
+
+            try {
+                const { data: { session } } = await sb.auth.getSession();
+                if (!session) { alert('로그인이 필요합니다.'); return; }
+
+                const res = await fetch('/.netlify/functions/request-refund', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + session.access_token
+                    },
+                    body: JSON.stringify({ userId: session.user.id })
+                });
+                const data = await res.json();
+                if (data.ok || data.success) {
+                    alert('환불 요청이 완료됐습니다. 처리까지 3~5 영업일이 소요됩니다.');
+                    closeSubscriptionModal();
+                    loadDashboard();
+                } else {
+                    alert('환불 요청 실패: ' + (data.message || data.error || '환불 조건을 확인해주세요.'));
+                }
+            } catch (e) {
+                alert('오류가 발생했습니다. support@lunawaveapp.com으로 문의해주세요.');
+            }
+        }
+
+        async function cancelSubscription() {
+            const confirmed = confirm(
+                '구독을 취소하시겠습니까?\n\n' +
+                '• 취소 후에도 이번 달 말까지는 계속 이용 가능합니다.\n' +
+                '• 다음 달부터 결제가 중단됩니다.'
+            );
+            if (!confirmed) return;
+
+            try {
+                const { data: { session } } = await sb.auth.getSession();
+                if (!session) { alert('로그인이 필요합니다.'); return; }
+
+                const res = await fetch('/.netlify/functions/payment-cancel', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + session.access_token
+                    },
+                    body: JSON.stringify({ userId: session.user.id })
+                });
+                const data = await res.json();
+                if (data.ok || data.success) {
+                    alert('구독이 취소됐습니다. 이번 달 말까지 계속 이용하실 수 있습니다.');
+                    closeSubscriptionModal();
+                    loadDashboard();
+                } else {
+                    alert('취소 실패: ' + (data.message || data.error || '다시 시도해주세요.'));
+                }
+            } catch (e) {
+                alert('오류가 발생했습니다. support@lunawaveapp.com으로 문의해주세요.');
+            }
         }
 
         // Init

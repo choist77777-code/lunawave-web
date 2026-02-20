@@ -444,10 +444,56 @@
                 <p class="fine-print">구독은 매월 자동 갱신됩니다. 언제든 해지 가능합니다.</p>
             </div>
         </div>
+
+        <!-- 동의 체크박스 -->
+        <div class="agreement-section" style="max-width:640px;margin:0 auto 48px;background:var(--bg-primary);border:1px solid var(--border);border-radius:var(--radius);padding:24px;">
+            <h3 style="font-size:16px;font-weight:600;margin-bottom:16px;">결제 동의</h3>
+            <label style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;font-size:14px;cursor:pointer;">
+                <input type="checkbox" id="agree1" style="margin-top:3px;"> 이용약관 동의 (필수) <a href="/terms.html" target="_blank" style="color:var(--accent);margin-left:4px;">보기</a>
+            </label>
+            <label style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;font-size:14px;cursor:pointer;">
+                <input type="checkbox" id="agree2" style="margin-top:3px;"> 개인정보 수집 및 이용 동의 (필수) <a href="/privacy.html" target="_blank" style="color:var(--accent);margin-left:4px;">보기</a>
+            </label>
+            <label style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;font-size:14px;cursor:pointer;">
+                <input type="checkbox" id="agree3" style="margin-top:3px;"> 개인정보 제3자 제공 동의 - NHN KCP (필수)
+            </label>
+            <label style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;font-size:14px;cursor:pointer;">
+                <input type="checkbox" id="agree4" style="margin-top:3px;"> 디지털 콘텐츠 이용 개시 후 청약철회 제한 동의 (필수)
+            </label>
+            <label style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;font-size:14px;cursor:pointer;">
+                <input type="checkbox" id="agree5" style="margin-top:3px;"> 정기결제(자동 갱신) 동의 (필수)
+            </label>
+            <label style="display:flex;align-items:center;gap:10px;padding:12px 0 0;font-size:14px;font-weight:600;cursor:pointer;border-top:1px solid var(--border);margin-top:8px;">
+                <input type="checkbox" id="agreeAll"> 전체 동의
+            </label>
+        </div>
     </div>
 
     <script>
         lucide.createIcons();
+
+        // 동의 체크박스 로직
+        const agreeIds = ['agree1','agree2','agree3','agree4','agree5'];
+        const agreeAllEl = document.getElementById('agreeAll');
+
+        function checkAllAgreed() {
+            const allChecked = agreeIds.every(id => document.getElementById(id).checked);
+            document.querySelectorAll('.btn-primary').forEach(btn => {
+                btn.disabled = !allChecked;
+            });
+            agreeAllEl.checked = allChecked;
+        }
+
+        agreeIds.forEach(id => document.getElementById(id).addEventListener('change', checkAllAgreed));
+
+        agreeAllEl.addEventListener('change', () => {
+            const checked = agreeAllEl.checked;
+            agreeIds.forEach(id => document.getElementById(id).checked = checked);
+            checkAllAgreed();
+        });
+
+        // 초기 비활성화
+        checkAllAgreed();
 
         const IMP_CODE = 'imp52320115';
 
