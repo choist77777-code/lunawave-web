@@ -445,55 +445,10 @@
             </div>
         </div>
 
-        <!-- 동의 체크박스 -->
-        <div class="agreement-section" style="max-width:640px;margin:0 auto 48px;background:var(--bg-primary);border:1px solid var(--border);border-radius:var(--radius);padding:24px;">
-            <h3 style="font-size:16px;font-weight:600;margin-bottom:16px;">결제 동의</h3>
-            <label style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;font-size:14px;cursor:pointer;">
-                <input type="checkbox" id="agree1" style="margin-top:3px;"> 이용약관 동의 (필수) <a href="/terms.html" target="_blank" style="color:var(--accent);margin-left:4px;">보기</a>
-            </label>
-            <label style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;font-size:14px;cursor:pointer;">
-                <input type="checkbox" id="agree2" style="margin-top:3px;"> 개인정보 수집 및 이용 동의 (필수) <a href="/privacy.html" target="_blank" style="color:var(--accent);margin-left:4px;">보기</a>
-            </label>
-            <label style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;font-size:14px;cursor:pointer;">
-                <input type="checkbox" id="agree3" style="margin-top:3px;"> 개인정보 제3자 제공 동의 - NHN KCP (필수)
-            </label>
-            <label style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;font-size:14px;cursor:pointer;">
-                <input type="checkbox" id="agree4" style="margin-top:3px;"> 디지털 콘텐츠 이용 개시 후 청약철회 제한 동의 (필수)
-            </label>
-            <label style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;font-size:14px;cursor:pointer;">
-                <input type="checkbox" id="agree5" style="margin-top:3px;"> 정기결제(자동 갱신) 동의 (필수)
-            </label>
-            <label style="display:flex;align-items:center;gap:10px;padding:12px 0 0;font-size:14px;font-weight:600;cursor:pointer;border-top:1px solid var(--border);margin-top:8px;">
-                <input type="checkbox" id="agreeAll"> 전체 동의
-            </label>
-        </div>
     </div>
 
     <script>
         lucide.createIcons();
-
-        // 동의 체크박스 로직
-        const agreeIds = ['agree1','agree2','agree3','agree4','agree5'];
-        const agreeAllEl = document.getElementById('agreeAll');
-
-        function checkAllAgreed() {
-            const allChecked = agreeIds.every(id => document.getElementById(id).checked);
-            document.querySelectorAll('.btn-primary').forEach(btn => {
-                btn.disabled = !allChecked;
-            });
-            agreeAllEl.checked = allChecked;
-        }
-
-        agreeIds.forEach(id => document.getElementById(id).addEventListener('change', checkAllAgreed));
-
-        agreeAllEl.addEventListener('change', () => {
-            const checked = agreeAllEl.checked;
-            agreeIds.forEach(id => document.getElementById(id).checked = checked);
-            checkAllAgreed();
-        });
-
-        // 초기 비활성화
-        checkAllAgreed();
 
         const IMP_CODE = 'imp52320115';
 
@@ -630,6 +585,13 @@
         }
 
         async function paySubscription(plan) {
+            window._showAgreementModal(async function(agreedAt) {
+                window._agreedAt = agreedAt;
+                await _doPaySubscription(plan);
+            });
+        }
+
+        async function _doPaySubscription(plan) {
             const { data: { user: u } } = await sb.auth.getUser();
             if (!u) {
                 window.location.href = '/login.html';
@@ -678,7 +640,8 @@
                             plan: plan,
                             promo_code: promo?.code,
                             is_upgrade: !!proration,
-                            prorated_amount: 0
+                            prorated_amount: 0,
+                            agreed_at: window._agreedAt
                         })
                     });
 
@@ -747,7 +710,8 @@
                                     plan: plan,
                                     promo_code: promo?.code,
                                     is_upgrade: !!proration,
-                                    prorated_amount: proration ? proration.diff : null
+                                    prorated_amount: proration ? proration.diff : null,
+                                    agreed_at: window._agreedAt
                                 })
                             });
 
@@ -806,5 +770,89 @@
 
         init();
     </script>
+
+<!-- 결제 동의 팝업 -->
+<div id="agreementModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:9999; justify-content:center; align-items:center;">
+  <div style="background:#1a1a1a; border-radius:12px; padding:32px; max-width:480px; width:90%; max-height:80vh; overflow-y:auto;">
+    <h3 style="color:#fff; margin-bottom:20px; font-size:18px;">결제 전 동의 사항</h3>
+
+    <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:24px;">
+      <label style="color:#ccc; font-size:14px; display:flex; align-items:flex-start; gap:8px; cursor:pointer;">
+        <input type="checkbox" id="agree1" style="margin-top:2px; flex-shrink:0;">
+        <span><strong style="color:#fff">[필수]</strong> 이용약관 동의 <a href="/terms.html" target="_blank" style="color:#f59e0b;">보기</a></span>
+      </label>
+      <label style="color:#ccc; font-size:14px; display:flex; align-items:flex-start; gap:8px; cursor:pointer;">
+        <input type="checkbox" id="agree2" style="margin-top:2px; flex-shrink:0;">
+        <span><strong style="color:#fff">[필수]</strong> 개인정보 수집 및 이용 동의 <a href="/privacy.html" target="_blank" style="color:#f59e0b;">보기</a></span>
+      </label>
+      <label style="color:#ccc; font-size:14px; display:flex; align-items:flex-start; gap:8px; cursor:pointer;">
+        <input type="checkbox" id="agree3" style="margin-top:2px; flex-shrink:0;">
+        <span><strong style="color:#fff">[필수]</strong> 개인정보 제3자 제공 동의 (NHN KCP)</span>
+      </label>
+      <label style="color:#ccc; font-size:14px; display:flex; align-items:flex-start; gap:8px; cursor:pointer;">
+        <input type="checkbox" id="agree4" style="margin-top:2px; flex-shrink:0;">
+        <span><strong style="color:#fff">[필수]</strong> 디지털 콘텐츠 이용 개시 후 청약철회 제한 동의</span>
+      </label>
+      <label style="color:#ccc; font-size:14px; display:flex; align-items:flex-start; gap:8px; cursor:pointer;">
+        <input type="checkbox" id="agree5" style="margin-top:2px; flex-shrink:0;">
+        <span><strong style="color:#fff">[필수]</strong> 정기결제(자동 갱신) 동의 — 매월 자동 결제되며 언제든 해지 가능합니다</span>
+      </label>
+      <label style="color:#ccc; font-size:14px; display:flex; align-items:flex-start; gap:8px; cursor:pointer; border-top:1px solid #333; padding-top:12px; margin-top:4px;">
+        <input type="checkbox" id="agreeAll" style="margin-top:2px; flex-shrink:0;">
+        <span><strong style="color:#fff">전체 동의</strong></span>
+      </label>
+    </div>
+
+    <div style="display:flex; gap:12px;">
+      <button id="agreeCancelBtn" style="flex:1; padding:12px; border-radius:8px; border:1px solid #444; background:transparent; color:#ccc; cursor:pointer; font-size:14px;">취소</button>
+      <button id="agreeConfirmBtn" style="flex:2; padding:12px; border-radius:8px; border:none; background:#f59e0b; color:#000; cursor:pointer; font-size:14px; font-weight:bold;" disabled>동의하고 결제하기</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// 동의 팝업 로직
+(function() {
+  const agreeIds = ['agree1','agree2','agree3','agree4','agree5'];
+
+  function updateAgreeBtn() {
+    const allChecked = agreeIds.every(id => document.getElementById(id).checked);
+    document.getElementById('agreeConfirmBtn').disabled = !allChecked;
+    document.getElementById('agreeAll').checked = allChecked;
+  }
+
+  // 개별 체크박스 변경 시
+  agreeIds.forEach(id => {
+    document.getElementById(id).addEventListener('change', updateAgreeBtn);
+  });
+
+  // 전체 동의
+  document.getElementById('agreeAll').addEventListener('change', function() {
+    agreeIds.forEach(id => {
+      document.getElementById(id).checked = this.checked;
+    });
+    updateAgreeBtn();
+  });
+
+  // 취소 버튼
+  document.getElementById('agreeCancelBtn').addEventListener('click', function() {
+    document.getElementById('agreementModal').style.display = 'none';
+    // 체크박스 초기화
+    agreeIds.forEach(id => document.getElementById(id).checked = false);
+    document.getElementById('agreeAll').checked = false;
+    updateAgreeBtn();
+  });
+
+  // 전역으로 노출
+  window._showAgreementModal = function(onConfirm) {
+    document.getElementById('agreementModal').style.display = 'flex';
+    document.getElementById('agreeConfirmBtn').onclick = function() {
+      document.getElementById('agreementModal').style.display = 'none';
+      const agreedAt = new Date().toISOString();
+      onConfirm(agreedAt);
+    };
+  };
+})();
+</script>
 </body>
 </html>

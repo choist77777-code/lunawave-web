@@ -66,7 +66,7 @@ exports.handler = async (event) => {
         }
 
         const body = JSON.parse(event.body);
-        const { imp_uid, merchant_uid, customer_uid, promo_code, plan, action } = body;
+        const { imp_uid, merchant_uid, customer_uid, promo_code, plan, action, agreed_at } = body;
 
         // 구독 해지 처리
         if (action === 'cancel') {
@@ -237,7 +237,15 @@ exports.handler = async (event) => {
                 tokens_granted: monthlyBonus, // 컬럼명은 유지
                 amount: amount,
                 status: 'paid',
-                paid_at: now.toISOString()
+                paid_at: now.toISOString(),
+                agreed_at: agreed_at || new Date().toISOString(),
+                agreements: {
+                    terms: true,
+                    privacy: true,
+                    third_party: true,
+                    digital_content: true,
+                    auto_renewal: true
+                }
             });
 
         // 루나 로그 기록
