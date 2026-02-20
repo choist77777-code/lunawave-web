@@ -665,6 +665,7 @@
                     const session = await sb.auth.getSession();
                     const accessToken = session.data?.session?.access_token;
 
+                    console.log('subscribe 호출 시작', {imp_uid: null, customer_uid: customerUid, plan});
                     const res = await fetch('/.netlify/functions/subscribe', {
                         method: 'POST',
                         headers: {
@@ -682,6 +683,7 @@
                     });
 
                     const result = await res.json();
+                    console.log('subscribe 응답', result);
                     if (result.success) {
                         alert(`${planNames[plan]} 구독이 시작되었습니다!`);
                         window.location.href = '/dashboard.html';
@@ -731,6 +733,7 @@
                             const session = await sb.auth.getSession();
                             const accessToken = session.data?.session?.access_token;
 
+                            console.log('subscribe 호출 시작', {imp_uid: rsp.imp_uid, customer_uid: customerUid, plan});
                             const res = await fetch('/.netlify/functions/subscribe', {
                                 method: 'POST',
                                 headers: {
@@ -749,6 +752,7 @@
                             });
 
                             const result = await res.json();
+                            console.log('subscribe 응답', result);
 
                             if (result.success) {
                                 alert(`${planNames[plan]} 구독이 시작되었습니다!`);
