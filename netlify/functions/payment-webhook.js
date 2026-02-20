@@ -14,7 +14,16 @@ const TOKEN_PACKAGES = {
     'large': { tokens: 3000, price: 29900 }
 };
 
-const MONTHLY_TOKENS = 1500;
+const PLAN_MONTHLY = {
+    crescent: 1500,
+    halfmoon: 3000,
+    fullmoon: 0
+};
+const PLAN_DAILY = {
+    crescent: 50,
+    halfmoon: 200,
+    fullmoon: 999
+};
 
 exports.handler = async (event) => {
     const headers = {
@@ -96,25 +105,32 @@ exports.handler = async (event) => {
                     const userId = existingPayment.user_id;
 
                     if (existingPayment.type === 'subscription') {
-                        // Subscription - activate Pro plan
+                        // Subscription - activate plan (4플랜: crescent/halfmoon/fullmoon)
+                        const subPlan = existingPayment.plan || 'crescent';
                         const plan_expires_at = new Date(now);
                         plan_expires_at.setMonth(plan_expires_at.getMonth() + 1);
 
+                        const monthlyBonus = PLAN_MONTHLY[subPlan] || 0;
+                        const dailyAmount = PLAN_DAILY[subPlan] || 20;
+
                         const { data: profile } = await supabase
                             .from('profiles')
-                            .select('tokens_balance')
+                            .select('tokens_purchased')
                             .eq('id', userId)
                             .single();
 
-                        const newBalance = (profile?.tokens_balance || 0) + MONTHLY_TOKENS;
+                        const newPurchased = (profile?.tokens_purchased || 0) + monthlyBonus;
+                        const today = now.toISOString().split('T')[0];
 
                         await supabase
                             .from('profiles')
                             .update({
-                                plan: 'pro',
+                                plan: subPlan,
                                 plan_started_at: now.toISOString(),
                                 plan_expires_at: plan_expires_at.toISOString(),
-                                tokens_balance: newBalance,
+                                tokens_balance: dailyAmount,
+                                tokens_purchased: newPurchased,
+                                daily_tokens_granted_at: today,
                                 updated_at: now.toISOString()
                             })
                             .eq('id', userId);
@@ -124,9 +140,9 @@ exports.handler = async (event) => {
                             .insert({
                                 user_id: userId,
                                 action: 'subscription',
-                                amount: MONTHLY_TOKENS,
-                                balance_after: newBalance,
-                                description: 'Pro 구독 - 월간 토큰 지급 (웹훅)'
+                                amount: monthlyBonus,
+                                balance_after: newPurchased,
+                                description: `${subPlan} 구독 - 월간 토큰 지급 (웹훅)`
                             });
 
                     } else if (existingPayment.type === 'token_purchase') {
