@@ -135,6 +135,8 @@ exports.handler = async (event) => {
             .update({
                 plan: 'free',
                 billing_key: null,
+                tokens_balance: 0,
+                tokens_purchased: 0,
                 updated_at: new Date().toISOString()
             })
             .eq('id', user.id);
