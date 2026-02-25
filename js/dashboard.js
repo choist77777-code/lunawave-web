@@ -59,7 +59,7 @@ async function loadDashboard() {
 
             const lunaBalance = document.getElementById('lunaBalance') || document.getElementById('tokenBalance');
             if (lunaBalance) {
-                const total = (profile.lunas_balance || 0) + (profile.lunas_purchased || 0);
+                const total = (profile.lunas_free || 0) + (profile.lunas_monthly || 0) + (profile.lunas_bonus || 0) + (profile.tokens_purchased || 0);
                 lunaBalance.textContent = Math.floor(total).toLocaleString();
             }
 
@@ -80,7 +80,7 @@ async function loadDashboard() {
             if (lunaProgress) {
                 const DAILY_MAX = { free: 20, crescent: 50, halfmoon: 200, fullmoon: 999 };
                 const dailyMax = DAILY_MAX[profile.plan] || 20;
-                const percent = Math.min(100, ((profile.lunas_balance || 0) / dailyMax) * 100);
+                const percent = Math.min(100, ((profile.lunas_free || 0) / dailyMax) * 100);
                 lunaProgress.style.width = `${percent}%`;
             }
         }
@@ -118,7 +118,7 @@ async function loadDashboard() {
                         // Update luna display
                         const lunaBalance = document.getElementById('lunaBalance') || document.getElementById('tokenBalance');
                         if (lunaBalance) {
-                            const total = (profile.lunas_balance || 0) + (profile.lunas_purchased || 0) + 300;
+                            const total = (profile.lunas_free || 0) + (profile.lunas_monthly || 0) + (profile.lunas_bonus || 0) + (profile.tokens_purchased || 0) + 300;
                             lunaBalance.textContent = Math.floor(total).toLocaleString();
                         }
                     }

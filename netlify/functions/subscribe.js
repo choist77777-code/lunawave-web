@@ -199,13 +199,13 @@ exports.handler = async (event) => {
         const today = now.toISOString().split('T')[0];
         const { data: currentProfile } = await supabase
             .from('profiles')
-            .select('tokens_purchased')
+            .select('lunas_monthly, tokens_purchased')
             .eq('id', user.id)
             .single();
 
         const monthlyBonus = PLAN_MONTHLY[plan] || 0;
         const dailyAmount = PLAN_DAILY[plan] || 20;
-        const newPurchased = (currentProfile?.tokens_purchased || 0) + monthlyBonus;
+        const newMonthly = (currentProfile?.lunas_monthly || 0) + monthlyBonus;
 
         const { error: updateError } = await supabase
             .from('profiles')
@@ -213,9 +213,9 @@ exports.handler = async (event) => {
                 plan: plan,
                 plan_started_at: now.toISOString(),
                 plan_expires_at: plan_expires_at.toISOString(),
-                tokens_balance: dailyAmount,
-                tokens_purchased: newPurchased,
-                daily_tokens_granted_at: today,
+                lunas_free: dailyAmount,
+                lunas_monthly: newMonthly,
+                daily_lunas_granted_at: today,
                 billing_key: customer_uid || null,
                 updated_at: now.toISOString()
             })
@@ -255,7 +255,7 @@ exports.handler = async (event) => {
                 user_id: user.id,
                 action: 'subscription',
                 amount: monthlyBonus,
-                balance_after: dailyAmount + newPurchased,
+                balance_after: dailyAmount + newMonthly + (currentProfile?.tokens_purchased || 0),
                 description: `${plan} 구독 - 월간 보너스 ${monthlyBonus}루나 + 일간 ${dailyAmount}루나`
             });
 
@@ -265,9 +265,10 @@ exports.handler = async (event) => {
             body: JSON.stringify({
                 success: true,
                 plan: plan,
-                tokens_balance: dailyAmount,
-                tokens_purchased: newPurchased,
-                tokens_total: dailyAmount + newPurchased,
+                lunas_free: dailyAmount,
+                lunas_monthly: newMonthly,
+                tokens_purchased: currentProfile?.tokens_purchased || 0,
+                tokens_total: dailyAmount + newMonthly + (currentProfile?.tokens_purchased || 0),
                 plan_expires_at: plan_expires_at.toISOString()
             })
         };

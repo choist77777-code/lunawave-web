@@ -97,7 +97,7 @@ async function loadUserInfo() {
     // Show current token balance
     const currentTokens = document.getElementById('currentTokens');
     if (currentTokens) {
-        const total = (profile.tokens_balance || 0) + (profile.tokens_purchased || 0);
+        const total = (profile.lunas_free || 0) + (profile.lunas_monthly || 0) + (profile.lunas_bonus || 0) + (profile.tokens_purchased || 0);
         currentTokens.textContent = Math.floor(total).toLocaleString();
     }
 }

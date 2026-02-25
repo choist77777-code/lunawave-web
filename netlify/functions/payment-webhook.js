@@ -115,11 +115,11 @@ exports.handler = async (event) => {
 
                         const { data: profile } = await supabase
                             .from('profiles')
-                            .select('tokens_purchased')
+                            .select('lunas_monthly, tokens_purchased')
                             .eq('id', userId)
                             .single();
 
-                        const newPurchased = (profile?.tokens_purchased || 0) + monthlyBonus;
+                        const newMonthly = (profile?.lunas_monthly || 0) + monthlyBonus;
                         const today = now.toISOString().split('T')[0];
 
                         await supabase
@@ -128,9 +128,9 @@ exports.handler = async (event) => {
                                 plan: subPlan,
                                 plan_started_at: now.toISOString(),
                                 plan_expires_at: plan_expires_at.toISOString(),
-                                tokens_balance: dailyAmount,
-                                tokens_purchased: newPurchased,
-                                daily_tokens_granted_at: today,
+                                lunas_free: dailyAmount,
+                                lunas_monthly: newMonthly,
+                                daily_lunas_granted_at: today,
                                 updated_at: now.toISOString()
                             })
                             .eq('id', userId);
@@ -141,8 +141,8 @@ exports.handler = async (event) => {
                                 user_id: userId,
                                 action: 'subscription',
                                 amount: monthlyBonus,
-                                balance_after: newPurchased,
-                                description: `${subPlan} 구독 - 월간 토큰 지급 (웹훅)`
+                                balance_after: dailyAmount + newMonthly + (profile?.tokens_purchased || 0),
+                                description: `${subPlan} 구독 - 월간 루나 지급 (웹훅)`
                             });
 
                     } else if (existingPayment.type === 'token_purchase') {

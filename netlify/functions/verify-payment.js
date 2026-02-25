@@ -150,7 +150,7 @@ exports.handler = async (event) => {
         // 사용자 현재 상태 조회
         const { data: profile } = await supabase
             .from('profiles')
-            .select('plan, tokens_balance, tokens_purchased')
+            .select('plan, lunas_free, lunas_monthly, lunas_bonus, tokens_purchased')
             .eq('id', user.id)
             .single();
 
@@ -171,7 +171,9 @@ exports.handler = async (event) => {
                 },
                 profile: {
                     plan: profile?.plan,
-                    tokens_balance: profile?.tokens_balance || 0,
+                    lunas_free: profile?.lunas_free || 0,
+                    lunas_monthly: profile?.lunas_monthly || 0,
+                    lunas_bonus: profile?.lunas_bonus || 0,
                     tokens_purchased: profile?.tokens_purchased || 0
                 }
             })

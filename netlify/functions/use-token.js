@@ -165,7 +165,7 @@ exports.handler = async (event) => {
                     plan: userPlan,
                     feature: feature,
                     cost: 0,
-                    tokens_remaining: (profile.tokens_balance || 0) + (profile.tokens_purchased || 0),
+                    tokens_remaining: (profile.lunas_free || 0) + (profile.lunas_monthly || 0) + (profile.lunas_bonus || 0) + (profile.tokens_purchased || 0),
                     watermark: userPlan === 'free'
                 })
             };
@@ -173,11 +173,12 @@ exports.handler = async (event) => {
 
         // fullmoon(보름달) 무제한: 차감 없이 허용
         if (userPlan === 'fullmoon') {
+            const fullmoonTotal = (profile.lunas_free || 0) + (profile.lunas_monthly || 0) + (profile.lunas_bonus || 0) + (profile.tokens_purchased || 0);
             await supabase.from('tokens_log').insert({
                 user_id: user.id,
                 action: 'use',
                 amount: 0,
-                balance_after: (profile.tokens_balance || 0) + (profile.tokens_purchased || 0),
+                balance_after: fullmoonTotal,
                 feature: feature,
                 description: getFeatureDescription(feature) + ' (무제한)'
             });
@@ -189,18 +190,20 @@ exports.handler = async (event) => {
                     plan: 'fullmoon',
                     feature: feature,
                     cost: 0,
-                    tokens_remaining: (profile.tokens_balance || 0) + (profile.tokens_purchased || 0),
+                    tokens_remaining: fullmoonTotal,
                     watermark: false,
                     unlimited: true
                 })
             };
         }
 
-        // 루나 차감: 일간(tokens_balance) -> 월간(tokens_purchased) -> 부족시 차단
+        // 루나 차감: lunas_free → lunas_monthly → lunas_bonus → tokens_purchased 순서
         {
-            const tokens_balance = profile.tokens_balance || 0;
+            const lunas_free = profile.lunas_free || 0;
+            const lunas_monthly = profile.lunas_monthly || 0;
+            const lunas_bonus = profile.lunas_bonus || 0;
             const tokens_purchased = profile.tokens_purchased || 0;
-            const total_tokens = tokens_balance + tokens_purchased;
+            const total_tokens = lunas_free + lunas_monthly + lunas_bonus + tokens_purchased;
 
             if (total_tokens < cost) {
                 return {
@@ -217,16 +220,28 @@ exports.handler = async (event) => {
                 };
             }
 
-            // 차감: 일간(tokens_balance) 먼저, 월간(tokens_purchased) 다음
-            let new_balance = tokens_balance;
+            // 4단계 차감: free → monthly → bonus → purchased
+            let remaining = cost;
+            let new_free = lunas_free;
+            let new_monthly = lunas_monthly;
+            let new_bonus = lunas_bonus;
             let new_purchased = tokens_purchased;
 
-            if (tokens_balance >= cost) {
-                new_balance = tokens_balance - cost;
-            } else {
-                const remaining_cost = cost - tokens_balance;
-                new_balance = 0;
-                new_purchased = tokens_purchased - remaining_cost;
+            if (remaining > 0 && new_free > 0) {
+                const take = Math.min(remaining, new_free);
+                new_free -= take; remaining -= take;
+            }
+            if (remaining > 0 && new_monthly > 0) {
+                const take = Math.min(remaining, new_monthly);
+                new_monthly -= take; remaining -= take;
+            }
+            if (remaining > 0 && new_bonus > 0) {
+                const take = Math.min(remaining, new_bonus);
+                new_bonus -= take; remaining -= take;
+            }
+            if (remaining > 0 && new_purchased > 0) {
+                const take = Math.min(remaining, new_purchased);
+                new_purchased -= take; remaining -= take;
             }
 
             const now_ts = new Date();
@@ -234,11 +249,15 @@ exports.handler = async (event) => {
             await supabase
                 .from('profiles')
                 .update({
-                    tokens_balance: new_balance,
+                    lunas_free: new_free,
+                    lunas_monthly: new_monthly,
+                    lunas_bonus: new_bonus,
                     tokens_purchased: new_purchased,
                     updated_at: now_ts.toISOString()
                 })
                 .eq('id', user.id);
+
+            const new_total = new_free + new_monthly + new_bonus + new_purchased;
 
             await supabase
                 .from('tokens_log')
@@ -246,7 +265,7 @@ exports.handler = async (event) => {
                     user_id: user.id,
                     action: 'use',
                     amount: -cost,
-                    balance_after: new_balance + new_purchased,
+                    balance_after: new_total,
                     feature: feature,
                     description: getFeatureDescription(feature)
                 });
@@ -254,8 +273,6 @@ exports.handler = async (event) => {
             // 사용량 통계
             const yearMonth = `${now_ts.getFullYear()}-${String(now_ts.getMonth() + 1).padStart(2, '0')}`;
             await updateUsageStats(user.id, yearMonth, feature, cost);
-
-            const new_total = new_balance + new_purchased;
 
             let warning = null;
             if (new_total <= 0) {
@@ -275,7 +292,9 @@ exports.handler = async (event) => {
                     feature: feature,
                     cost: cost,
                     tokens_remaining: new_total,
-                    tokens_balance: new_balance,
+                    lunas_free: new_free,
+                    lunas_monthly: new_monthly,
+                    lunas_bonus: new_bonus,
                     tokens_purchased: new_purchased,
                     warning: warning,
                     watermark: userPlan === 'free'
@@ -296,7 +315,7 @@ exports.handler = async (event) => {
 // 일간 루나 자동 지급 체크
 async function checkDailyLunaGrant(userId, profile) {
     const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-    const lastGranted = profile.daily_tokens_granted_at;
+    const lastGranted = profile.daily_lunas_granted_at;
 
     // 오늘 이미 지급받았으면 패스
     if (lastGranted === today) {
@@ -310,8 +329,8 @@ async function checkDailyLunaGrant(userId, profile) {
         await supabase
             .from('profiles')
             .update({
-                tokens_balance: grantAmount,
-                daily_tokens_granted_at: today,
+                lunas_free: grantAmount,
+                daily_lunas_granted_at: today,
                 updated_at: new Date().toISOString()
             })
             .eq('id', userId);
@@ -323,13 +342,13 @@ async function checkDailyLunaGrant(userId, profile) {
                 user_id: userId,
                 action: 'daily',
                 amount: grantAmount,
-                balance_after: grantAmount + (profile.tokens_purchased || 0),
+                balance_after: grantAmount + (profile.lunas_monthly || 0) + (profile.lunas_bonus || 0) + (profile.tokens_purchased || 0),
                 description: `일간 루나 지급 (${profile.plan} ${grantAmount})`
             });
 
         // profile 객체 업데이트
-        profile.tokens_balance = grantAmount;
-        profile.daily_tokens_granted_at = today;
+        profile.lunas_free = grantAmount;
+        profile.daily_lunas_granted_at = today;
     } catch (error) {
         console.error('Daily luna grant error:', error);
     }

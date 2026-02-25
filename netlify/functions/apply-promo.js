@@ -138,7 +138,7 @@ exports.handler = async (event) => {
                 // 즉시 루나 지급
                 const { data: profile } = await supabase
                     .from('profiles')
-                    .select('tokens_purchased, tokens_balance')
+                    .select('lunas_free, lunas_monthly, lunas_bonus, tokens_purchased')
                     .eq('id', user.id)
                     .single();
 
@@ -159,18 +159,19 @@ exports.handler = async (event) => {
                     .eq('id', promo.id);
 
                 // 루나 로그
+                const promoBalanceAfter = (profile?.lunas_free || 0) + (profile?.lunas_monthly || 0) + (profile?.lunas_bonus || 0) + newPurchased;
                 await supabase
                     .from('tokens_log')
                     .insert({
                         user_id: user.id,
                         action: 'promo',
                         amount: promo.value,
-                        balance_after: (profile?.tokens_balance || 0) + newPurchased,
+                        balance_after: promoBalanceAfter,
                         description: `프로모션 코드 적용: ${promo.code}`
                     });
 
                 result.tokens_granted = promo.value;
-                result.new_balance = (profile?.tokens_balance || 0) + newPurchased;
+                result.new_balance = promoBalanceAfter;
                 result.message = `${promo.value} 루나가 지급되었습니다!`;
                 result.applied = true;
                 break;
@@ -185,12 +186,12 @@ exports.handler = async (event) => {
                 await supabase
                     .from('profiles')
                     .update({
-                        plan: 'pro',
+                        plan: 'crescent',
                         plan_started_at: now.toISOString(),
                         plan_expires_at: plan_expires_at.toISOString(),
-                        tokens_balance: 50, // 일간 루나
-                        tokens_purchased: 1500, // 월 보너스
-                        daily_tokens_granted_at: today,
+                        lunas_free: 50, // 일간 루나
+                        lunas_monthly: 1500, // 월 보너스
+                        daily_lunas_granted_at: today,
                         updated_at: now.toISOString()
                     })
                     .eq('id', user.id);
@@ -207,13 +208,13 @@ exports.handler = async (event) => {
                         action: 'promo',
                         amount: 1550, // 50 + 1500
                         balance_after: 1550,
-                        description: `프로모션 코드 적용: ${promo.code} (1개월 무료 Pro)`
+                        description: `프로모션 코드 적용: ${promo.code} (1개월 무료 초승달)`
                     });
 
-                result.plan = 'pro';
+                result.plan = 'crescent';
                 result.plan_expires_at = plan_expires_at.toISOString();
                 result.tokens_granted = 1550;
-                result.message = 'Pro 1개월 무료 이용이 시작되었습니다! (매일 50루나 + 월 1,500루나)';
+                result.message = '초승달 1개월 무료 이용이 시작되었습니다! (매일 50루나 + 월 1,500루나)';
                 result.applied = true;
                 break;
 

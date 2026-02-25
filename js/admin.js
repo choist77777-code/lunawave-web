@@ -240,7 +240,7 @@ async function loadUsers(page = 1) {
                 <td>${user.email}</td>
                 <td>${user.name || '-'}</td>
                 <td><span class="badge ${user.plan === 'pro' ? 'badge-pro' : 'badge-free'}">${user.plan || 'free'}</span></td>
-                <td>${Math.floor((user.tokens_balance || 0) + (user.tokens_purchased || 0))}</td>
+                <td>${Math.floor((user.lunas_free || 0) + (user.lunas_monthly || 0) + (user.lunas_bonus || 0) + (user.tokens_purchased || 0))}</td>
                 <td>${new Date(user.created_at).toLocaleDateString('ko-KR')}</td>
                 <td>
                     <button class="btn btn-sm btn-secondary" onclick="showUserDetail('${user.id}')">상세</button>
@@ -287,11 +287,11 @@ async function showUserDetail(userId) {
                 </select>
             </div>
             <div class="form-group">
-                <label>월간 토큰</label>
-                <input type="number" class="form-input" value="${user.tokens_balance || 0}" readonly>
+                <label>일간/월간/보너스 루나</label>
+                <input type="number" class="form-input" value="${(user.lunas_free || 0) + (user.lunas_monthly || 0) + (user.lunas_bonus || 0)}" readonly>
             </div>
             <div class="form-group">
-                <label>구매 토큰</label>
+                <label>구매 루나</label>
                 <input type="number" class="form-input" value="${user.tokens_purchased || 0}" readonly>
             </div>
             <hr style="margin: 20px 0;">

@@ -72,7 +72,7 @@ exports.handler = async (event) => {
         // 활성 Pro 구독자 조회 (plan_expires_at이 현재 이후인 유저)
         const { data: proUsers, error: fetchError } = await supabase
             .from('profiles')
-            .select('id, email, plan, tokens_balance, tokens_purchased, plan_started_at, billing_key, plan_expires_at')
+            .select('id, email, plan, lunas_free, lunas_monthly, lunas_bonus, tokens_purchased, plan_started_at, billing_key, plan_expires_at')
             .in('plan', PAID_PLANS)
             .gt('plan_expires_at', now.toISOString());
 
@@ -139,7 +139,7 @@ exports.handler = async (event) => {
                                 user_id: user.id,
                                 action: 'auto_renewal',
                                 amount: 0,
-                                balance_after: (user.tokens_balance || 0) + (user.tokens_purchased || 0),
+                                balance_after: (user.lunas_free || 0) + (user.lunas_monthly || 0) + (user.lunas_bonus || 0) + (user.tokens_purchased || 0),
                                 description: `${user.plan} 구독 자동 갱신 결제 완료`
                             });
 
@@ -157,17 +157,17 @@ exports.handler = async (event) => {
                     }
                 }
 
-                // 구매 루나 이월 계산 (최대 3000루나까지)
-                const currentPurchased = user.tokens_purchased || 0;
-                const rollover = Math.min(currentPurchased, ROLLOVER_CAP);
-                const expired = currentPurchased - rollover;
-                const newPurchased = rollover + bonus;
+                // 월간 루나 이월 계산 (최대 3000루나까지)
+                const currentMonthly = user.lunas_monthly || 0;
+                const rollover = Math.min(currentMonthly, ROLLOVER_CAP);
+                const expired = currentMonthly - rollover;
+                const newMonthly = rollover + bonus;
 
-                // 프로필 업데이트 (lunas_purchased에 월 보너스 추가)
+                // 프로필 업데이트 (lunas_monthly에 월 보너스 추가)
                 const { error: updateError } = await supabase
                     .from('profiles')
                     .update({
-                        tokens_purchased: newPurchased,
+                        lunas_monthly: newMonthly,
                         updated_at: now.toISOString()
                     })
                     .eq('id', user.id);
@@ -184,7 +184,7 @@ exports.handler = async (event) => {
                             user_id: user.id,
                             action: 'rollover_expire',
                             amount: -expired,
-                            balance_after: (user.tokens_balance || 0) + rollover,
+                            balance_after: (user.lunas_free || 0) + rollover + (user.lunas_bonus || 0) + (user.tokens_purchased || 0),
                             description: `이월 상한 초과 소멸 (${ROLLOVER_CAP}루나 초과분)`
                         });
                 }
@@ -196,12 +196,12 @@ exports.handler = async (event) => {
                         user_id: user.id,
                         action: 'monthly_bonus',
                         amount: bonus,
-                        balance_after: (user.tokens_balance || 0) + newPurchased,
+                        balance_after: (user.lunas_free || 0) + newMonthly + (user.lunas_bonus || 0) + (user.tokens_purchased || 0),
                         description: `월간 ${user.plan} 보너스 루나 지급 (+${bonus})`
                     });
 
                 successCount++;
-                console.log(`Granted ${bonus} bonus lunas to ${user.email} (purchased: ${newPurchased})`);
+                console.log(`Granted ${bonus} bonus lunas to ${user.email} (monthly: ${newMonthly})`);
 
             } catch (userError) {
                 failCount++;

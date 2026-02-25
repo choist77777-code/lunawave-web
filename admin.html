@@ -741,11 +741,22 @@ async function submitLunaAction() {
     if (!amount || amount <= 0) { alert('수량을 입력하세요'); return; }
 
     const field = 'tokens_purchased';
-    const { data: profile } = await sb.from('profiles').select(field).eq('id', lunaTargetUser).single();
+    const { data: profile } = await sb.from('profiles').select('lunas_free, lunas_monthly, lunas_bonus, tokens_purchased').eq('id', lunaTargetUser).single();
     const current = profile?.[field] || 0;
     const newVal = type === 'grant' ? current + amount : Math.max(0, current - amount);
 
-    await sb.from('profiles').update({ [field]: newVal }).eq('id', lunaTargetUser);
+    await sb.from('profiles').update({ [field]: newVal, updated_at: new Date().toISOString() }).eq('id', lunaTargetUser);
+
+    // tokens_log 기록
+    const balanceAfter = (profile?.lunas_free || 0) + (profile?.lunas_monthly || 0) + (profile?.lunas_bonus || 0) + newVal;
+    await sb.from('tokens_log').insert({
+        user_id: lunaTargetUser,
+        action: type === 'grant' ? 'admin_grant' : 'admin_deduct',
+        amount: type === 'grant' ? amount : -amount,
+        balance_after: balanceAfter,
+        description: '관리자 ' + (type === 'grant' ? '지급' : '차감') + ': ' + reason
+    });
+
     alert(`${type === 'grant' ? '지급' : '차감'} 완료: ${amount} 루나 (${reason})`);
     closeLunaModal();
     loadUsers();
@@ -812,8 +823,7 @@ async function submitRefund() {
     if (pay && pay.user_id) {
         await sb.from('profiles').update({
             plan: 'free', billing_key: null,
-            tokens_balance: 0, tokens_purchased: 0,
-            lunas_monthly: 0,
+            lunas_free: 0, lunas_monthly: 0, lunas_bonus: 0, tokens_purchased: 0,
             updated_at: new Date().toISOString()
         }).eq('id', pay.user_id);
         await sb.from('tokens_log').insert({

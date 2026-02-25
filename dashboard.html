@@ -976,9 +976,9 @@
                     updateUI({
                         success: true,
                         plan: p.plan || 'free',
-                        tokens_balance: p.tokens_balance || 0,
+                        tokens_balance: (p.lunas_free || 0) + (p.lunas_monthly || 0) + (p.lunas_bonus || 0),
                         tokens_purchased: p.tokens_purchased || 0,
-                        tokens_total: p.tokens_total || 0,
+                        tokens_total: p.tokens_total || (p.lunas_free || 0) + (p.lunas_monthly || 0) + (p.lunas_bonus || 0) + (p.tokens_purchased || 0),
                         free_songs_remaining: p.free_songs_remaining != null ? p.free_songs_remaining : 3,
                         plan_expires_at: p.plan_expires_at
                     });
@@ -1001,9 +1001,9 @@
                         updateUI({
                             success: true,
                             plan: p.plan || 'free',
-                            tokens_balance: p.tokens_balance || 0,
+                            tokens_balance: (p.lunas_free || 0) + (p.lunas_monthly || 0) + (p.lunas_bonus || 0),
                             tokens_purchased: p.tokens_purchased || 0,
-                            tokens_total: (p.tokens_balance || 0) + (p.tokens_purchased || 0),
+                            tokens_total: (p.lunas_free || 0) + (p.lunas_monthly || 0) + (p.lunas_bonus || 0) + (p.tokens_purchased || 0),
                             free_songs_remaining: 3
                         });
                         document.getElementById('userName').textContent = p.name || user.email;

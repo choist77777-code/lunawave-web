@@ -129,13 +129,15 @@ exports.handler = async (event) => {
             throw paymentUpdateError;
         }
 
-        // 6. 프로필 업데이트: free 플랜으로 전환, billing_key 제거
+        // 6. 프로필 업데이트: free 플랜으로 전환, billing_key 제거, 루나 전부 리셋
         const { error: profileUpdateError } = await supabase
             .from('profiles')
             .update({
                 plan: 'free',
                 billing_key: null,
-                tokens_balance: 0,
+                lunas_free: 0,
+                lunas_monthly: 0,
+                lunas_bonus: 0,
                 tokens_purchased: 0,
                 updated_at: new Date().toISOString()
             })

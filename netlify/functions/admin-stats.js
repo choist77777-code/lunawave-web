@@ -240,7 +240,7 @@ async function getUserStats(params) {
     // 유저 목록
     const { data: users, count } = await supabase
         .from('profiles')
-        .select('id, email, name, plan, tokens_balance, tokens_purchased, daily_tokens_granted_at, created_at', { count: 'exact' })
+        .select('id, email, name, plan, lunas_free, lunas_monthly, lunas_bonus, tokens_purchased, daily_lunas_granted_at, created_at', { count: 'exact' })
         .order('created_at', { ascending: false })
         .range(offset, offset + limit - 1);
 
@@ -312,10 +312,10 @@ async function getLunaStats() {
     // 현재 잔액 총합
     const { data: balances } = await supabase
         .from('profiles')
-        .select('tokens_balance, tokens_purchased');
+        .select('lunas_free, lunas_monthly, lunas_bonus, tokens_purchased');
 
     const totalBalance = balances?.reduce((sum, p) =>
-        sum + (p.tokens_balance || 0) + (p.tokens_purchased || 0), 0) || 0;
+        sum + (p.lunas_free || 0) + (p.lunas_monthly || 0) + (p.lunas_bonus || 0) + (p.tokens_purchased || 0), 0) || 0;
 
     // 기능별 사용량
     const { data: featureUsage } = await supabase
