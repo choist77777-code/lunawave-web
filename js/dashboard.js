@@ -103,6 +103,29 @@ async function loadDashboard() {
             referralCode.textContent = profile.referral_code;
         }
 
+        // Grant signup bonus if not yet received
+        if (!profile.lunas_bonus || profile.lunas_bonus === 0) {
+            try {
+                const session = await LW.getSession();
+                if (session) {
+                    const res = await fetch('/api/grant-signup-bonus', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token }
+                    });
+                    const result = await res.json();
+                    if (result.granted) {
+                        profile.lunas_bonus = 300;
+                        // Update luna display
+                        const lunaBalance = document.getElementById('lunaBalance') || document.getElementById('tokenBalance');
+                        if (lunaBalance) {
+                            const total = (profile.lunas_balance || 0) + (profile.lunas_purchased || 0) + 300;
+                            lunaBalance.textContent = Math.floor(total).toLocaleString();
+                        }
+                    }
+                }
+            } catch (_) {}
+        }
+
         // Load additional data
         await Promise.all([
             loadDevices(),
