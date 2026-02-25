@@ -572,7 +572,52 @@ tr:last-child td { border-bottom:none; }
 <script>
 lucide.createIcons();
 
-const sb = LW.supabase;
+const _realSb = LW.supabase;
+
+// ========== ADMIN PROXY (service_role via Netlify Function) ==========
+class _AdminQuery {
+    constructor(table) {
+        this._t = table; this._action = 'select'; this._sel = '*'; this._selOpts = {};
+        this._data = null; this._filters = []; this._orders = []; this._limit = null;
+        this._single = false; this._range = null;
+    }
+    select(c, o) { this._sel = c || '*'; this._selOpts = o || {}; return this; }
+    insert(d) { this._action = 'insert'; this._data = d; return this; }
+    update(d) { this._action = 'update'; this._data = d; return this; }
+    delete() { this._action = 'delete'; return this; }
+    eq(c, v) { this._filters.push({op:'eq',col:c,val:v}); return this; }
+    neq(c, v) { this._filters.push({op:'neq',col:c,val:v}); return this; }
+    gte(c, v) { this._filters.push({op:'gte',col:c,val:v}); return this; }
+    lte(c, v) { this._filters.push({op:'lte',col:c,val:v}); return this; }
+    gt(c, v) { this._filters.push({op:'gt',col:c,val:v}); return this; }
+    lt(c, v) { this._filters.push({op:'lt',col:c,val:v}); return this; }
+    in(c, v) { this._filters.push({op:'in',col:c,val:v}); return this; }
+    is(c, v) { this._filters.push({op:'is',col:c,val:v}); return this; }
+    not(c, op, v) { this._filters.push({op:'not',col:c,innerOp:op,val:v}); return this; }
+    order(c, o) { this._orders.push({column:c,...(o||{})}); return this; }
+    limit(n) { this._limit = n; return this; }
+    range(f, t) { this._range = [f, t]; return this; }
+    single() { this._single = true; return this; }
+    then(resolve, reject) { return this._exec().then(resolve, reject); }
+    async _exec() {
+        try {
+            const { data: { session } } = await _realSb.auth.getSession();
+            if (!session) return { data: null, error: { message: 'No session' }, count: null };
+            const res = await fetch('/api/admin-db', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+                body: JSON.stringify({
+                    table: this._t, action: this._action, data: this._data,
+                    select: this._sel, selectOpts: this._selOpts, filters: this._filters,
+                    order: this._orders.length ? this._orders : undefined,
+                    limit: this._limit, single: this._single, range: this._range
+                })
+            });
+            return await res.json();
+        } catch (e) { return { data: null, error: { message: e.message }, count: null }; }
+    }
+}
+const sb = { from: (t) => new _AdminQuery(t), auth: _realSb.auth };
 
 // ========== TAB NAVIGATION ==========
 document.querySelectorAll('.nav-item').forEach(item => {
@@ -587,7 +632,7 @@ document.querySelectorAll('.nav-item').forEach(item => {
 
 // ========== AUTH CHECK ==========
 async function checkAdmin() {
-    const { data: { user } } = await sb.auth.getUser();
+    const { data: { user } } = await _realSb.auth.getUser();
     if (!user) { window.location.href = '/login.html'; return; }
     const { data: profile } = await sb.from('profiles').select('role').eq('id', user.id).single();
     if (!profile || profile.role !== 'admin') {
@@ -717,7 +762,18 @@ async function toggleBan(userId, isBanned) {
 // ========== PAYMENTS ==========
 async function loadPayments() {
     try {
-        const { data: payments } = await sb.from('payments').select('*, profiles(email)').order('created_at', { ascending: false }).limit(50);
+        let { data: payments, error } = await sb.from('payments').select('*, profiles(email)').order('created_at', { ascending: false }).limit(50);
+        if (error || !payments) {
+            // Fallback: load without join, then manually add emails
+            const r = await sb.from('payments').select('*').order('created_at', { ascending: false }).limit(50);
+            payments = r.data || [];
+            const uids = [...new Set(payments.map(p => p.user_id).filter(Boolean))];
+            if (uids.length) {
+                const { data: users } = await sb.from('profiles').select('id, email').in('id', uids);
+                const m = {}; (users || []).forEach(u => m[u.id] = u.email);
+                payments.forEach(p => p.profiles = { email: m[p.user_id] || '-' });
+            }
+        }
         renderPayments(payments || []);
     } catch (e) { console.error('Payments error:', e); }
 }
