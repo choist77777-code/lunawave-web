@@ -1118,16 +1118,17 @@
                 planName.textContent = 'Free 플랜';
                 planDesc.textContent = '무료 플랜 (매일 20루나)';
 
-                // Free 플랜: 월간 루나(tokens_purchased)는 0으로 강제 (환불 악용 방지)
+                // Free 플랜: 총 루나 = tokens_balance(일간+월간+보너스) + tokens_purchased(구매)
                 var freeDaily = status.tokens_balance || 0;
-                var freeTotal = freeDaily;
+                var freePurchased = status.tokens_purchased || 0;
+                var freeTotal = status.tokens_total || (freeDaily + freePurchased);
                 if (freeTotal > 0) {
                     document.getElementById('tokenCard').style.display = 'block';
                     document.getElementById('headerTokens').style.display = 'flex';
                     document.getElementById('headerTokenCount').textContent = freeTotal;
                     document.getElementById('totalTokens').textContent = freeTotal;
                     document.getElementById('monthlyTokens').textContent = freeDaily;
-                    document.getElementById('purchasedTokens').textContent = 0;
+                    document.getElementById('purchasedTokens').textContent = freePurchased;
                 } else {
                     document.getElementById('tokenCard').style.display = 'none';
                     document.getElementById('headerTokens').style.display = 'none';
