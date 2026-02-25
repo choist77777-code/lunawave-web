@@ -708,7 +708,7 @@ function renderUsers(users) {
             <td>${u.email || '-'}</td>
             <td>${u.name || '-'}</td>
             <td><span class="badge badge-${u.plan === 'pro' ? 'pro' : 'free'}">${u.plan === 'pro' ? 'Pro' : 'Free'}</span></td>
-            <td>${(u.tokens_balance || 0) + (u.tokens_purchased || 0)}</td>
+            <td>${(u.lunas_free || 0) + (u.lunas_monthly || 0) + (u.lunas_bonus || 0) + (u.tokens_purchased || 0)}</td>
             <td>${u.created_at ? new Date(u.created_at).toLocaleDateString() : '-'}</td>
             <td>
                 <button class="btn btn-sm btn-outline" onclick="showLunaModal('${u.id}','${u.email}')">루나 관리</button>
@@ -805,10 +805,26 @@ function closeRefundModal() { document.getElementById('refundModal').classList.r
 async function submitRefund() {
     const reason = document.getElementById('refundReason').value;
     if (!reason) { alert('환불 사유를 입력하세요'); return; }
+    // 1. 결제 상태 변경
+    const { data: pay } = await sb.from('payments').select('user_id, tokens_granted').eq('id', refundTargetId).single();
     await sb.from('payments').update({ status: 'refunded', refund_reason: reason }).eq('id', refundTargetId);
-    alert('환불 처리 완료');
+    // 2. 루나 회수 + plan free 전환
+    if (pay && pay.user_id) {
+        await sb.from('profiles').update({
+            plan: 'free', billing_key: null,
+            tokens_balance: 0, tokens_purchased: 0,
+            lunas_monthly: 0,
+            updated_at: new Date().toISOString()
+        }).eq('id', pay.user_id);
+        await sb.from('tokens_log').insert({
+            user_id: pay.user_id, action: 'refund', amount: -(pay.tokens_granted || 0),
+            description: '관리자 환불: ' + reason
+        });
+    }
+    alert('환불 처리 완료 (루나 회수됨)');
     closeRefundModal();
     loadPayments();
+    loadUsers();
     loadDashboardData();
 }
 
