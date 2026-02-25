@@ -136,6 +136,8 @@ tr:last-child td { border-bottom:none; }
     <div class="nav-item" data-tab="analytics"><i data-lucide="bar-chart-2"></i><span>분석</span></div>
     <div class="nav-item" data-tab="cs"><i data-lucide="headphones"></i><span>CS / 운영</span></div>
     <div class="nav-item" data-tab="security"><i data-lucide="shield"></i><span>보안</span></div>
+    <div class="nav-item" data-tab="events"><i data-lucide="calendar-days"></i><span>이벤트</span></div>
+    <div class="nav-item" data-tab="ai-config"><i data-lucide="cpu"></i><span>AI 설정</span></div>
     <div class="sidebar-footer">
         <a href="/"><i data-lucide="arrow-left"></i><span>사이트로 돌아가기</span></a>
     </div>
@@ -320,8 +322,8 @@ tr:last-child td { border-bottom:none; }
             <button class="btn btn-gold" onclick="showNoticeModal()"><i data-lucide="plus"></i> 공지 작성</button>
         </div>
         <table>
-            <thead><tr><th>제목</th><th>유형</th><th>상태</th><th>날짜</th><th>액션</th></tr></thead>
-            <tbody id="noticeTableBody"><tr><td colspan="5" class="loading">로딩 중...</td></tr></tbody>
+            <thead><tr><th>제목</th><th>유형</th><th>고정</th><th>기간</th><th>상태</th><th>날짜</th><th>액션</th></tr></thead>
+            <tbody id="noticeTableBody"><tr><td colspan="7" class="loading">로딩 중...</td></tr></tbody>
         </table>
     </div>
 
@@ -368,6 +370,85 @@ tr:last-child td { border-bottom:none; }
             <thead><tr><th>기기 ID</th><th>연결 계정 수</th><th>계정 목록</th><th>상태</th></tr></thead>
             <tbody id="freeAbuseBody"><tr><td colspan="4" class="loading">데이터 수집 중...</td></tr></tbody>
         </table>
+    </div>
+</div>
+
+<!-- ==================== TAB 9: 이벤트 ==================== -->
+<div class="tab-content" id="tab-events">
+    <div class="page-header">
+        <div><div class="page-title">이벤트 관리</div><div class="page-subtitle">이벤트 생성 및 루나 자동 지급 관리</div></div>
+        <button class="btn btn-gold" onclick="showEventModal()"><i data-lucide="plus"></i> 새 이벤트</button>
+    </div>
+    <div class="table-wrap">
+        <div class="table-header">
+            <div class="table-title">이벤트 목록</div>
+        </div>
+        <table>
+            <thead><tr><th>제목</th><th>유형</th><th>일일 지급</th><th>기간</th><th>대상</th><th>상태</th><th>액션</th></tr></thead>
+            <tbody id="eventTableBody"><tr><td colspan="7" class="loading">로딩 중...</td></tr></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ==================== TAB 10: AI 설정 ==================== -->
+<div class="tab-content" id="tab-ai-config">
+    <div class="page-header">
+        <div><div class="page-title">AI API 키 관리</div><div class="page-subtitle">AI 프로바이더 선택 및 API 키 관리</div></div>
+    </div>
+
+    <div class="section-title"><i data-lucide="zap"></i> 메인 AI 프로바이더</div>
+    <div class="stat-card" style="background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:20px;margin-bottom:24px;">
+        <div style="display:flex;gap:24px;align-items:center;flex-wrap:wrap;">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;">
+                <input type="radio" name="aiProvider" value="openai" checked> OpenAI (GPT)
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;">
+                <input type="radio" name="aiProvider" value="claude"> Claude (Anthropic)
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;">
+                <input type="radio" name="aiProvider" value="gemini"> Gemini (Google)
+            </label>
+            <button class="btn btn-gold" onclick="changeActiveProvider()">메인 AI 변경</button>
+        </div>
+        <div style="margin-top:12px;font-size:12px;color:var(--text3);" id="aiStatusLine">현재 활성 AI: -</div>
+    </div>
+
+    <div class="section-title"><i data-lucide="key"></i> API 키 설정</div>
+    <div style="display:grid;gap:16px;">
+        <div class="stat-card" style="display:flex;align-items:center;justify-content:space-between;background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:16px;">
+            <div style="flex:1;">
+                <div style="font-size:13px;font-weight:600;margin-bottom:8px;">OpenAI API Key</div>
+                <input type="password" id="openaiKeyInput" placeholder="sk-..." style="width:100%;background:var(--bg3);border:1px solid var(--line);border-radius:6px;padding:8px 12px;color:var(--text);font-size:13px;">
+            </div>
+            <div style="display:flex;gap:8px;margin-left:12px;">
+                <button class="btn btn-sm btn-outline" onclick="toggleKeyVis('openaiKeyInput')">표시</button>
+                <button class="btn btn-sm btn-gold" onclick="saveAiKey('openai')">저장</button>
+            </div>
+        </div>
+        <div class="stat-card" style="display:flex;align-items:center;justify-content:space-between;background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:16px;">
+            <div style="flex:1;">
+                <div style="font-size:13px;font-weight:600;margin-bottom:8px;">Claude API Key</div>
+                <input type="password" id="claudeKeyInput" placeholder="sk-ant-..." style="width:100%;background:var(--bg3);border:1px solid var(--line);border-radius:6px;padding:8px 12px;color:var(--text);font-size:13px;">
+            </div>
+            <div style="display:flex;gap:8px;margin-left:12px;">
+                <button class="btn btn-sm btn-outline" onclick="toggleKeyVis('claudeKeyInput')">표시</button>
+                <button class="btn btn-sm btn-gold" onclick="saveAiKey('claude')">저장</button>
+            </div>
+        </div>
+        <div class="stat-card" style="display:flex;align-items:center;justify-content:space-between;background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:16px;">
+            <div style="flex:1;">
+                <div style="font-size:13px;font-weight:600;margin-bottom:8px;">Gemini API Key</div>
+                <input type="password" id="geminiKeyInput" placeholder="AIza..." style="width:100%;background:var(--bg3);border:1px solid var(--line);border-radius:6px;padding:8px 12px;color:var(--text);font-size:13px;">
+            </div>
+            <div style="display:flex;gap:8px;margin-left:12px;">
+                <button class="btn btn-sm btn-outline" onclick="toggleKeyVis('geminiKeyInput')">표시</button>
+                <button class="btn btn-sm btn-gold" onclick="saveAiKey('gemini')">저장</button>
+            </div>
+        </div>
+    </div>
+
+    <div style="margin-top:20px;padding:16px;background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);">
+        <div style="font-size:12px;color:var(--text3);" id="aiLastUpdate">마지막 변경: -</div>
     </div>
 </div>
 
@@ -423,11 +504,50 @@ tr:last-child td { border-bottom:none; }
         <input type="text" id="noticeTitle" placeholder="공지 제목">
         <label>내용</label>
         <textarea id="noticeContent" rows="4" placeholder="공지 내용"></textarea>
-        <label>유형</label>
-        <select id="noticeType"><option value="info">일반</option><option value="warning">경고</option><option value="urgent">긴급</option></select>
+        <div class="form-row">
+            <div><label>유형</label>
+                <select id="noticeType">
+                    <option value="info">일반</option><option value="warning">경고</option><option value="urgent">긴급</option>
+                    <option value="update">업데이트</option><option value="event">이벤트</option><option value="maintenance">점검</option>
+                </select>
+            </div>
+            <div><label>외부 링크</label><input type="text" id="noticeUrl" placeholder="https://..."></div>
+        </div>
+        <div class="form-row">
+            <div><label>시작일</label><input type="date" id="noticeStartDate"></div>
+            <div><label>종료일</label><input type="date" id="noticeEndDate"></div>
+        </div>
+        <label style="display:flex;align-items:center;gap:8px;margin-top:14px;cursor:pointer;">
+            <input type="checkbox" id="noticePinned"> 상단 고정 (Pinned)
+        </label>
         <div class="modal-btns">
             <button class="btn btn-outline" onclick="closeNoticeModal()">취소</button>
             <button class="btn btn-gold" onclick="submitNotice()">등록</button>
+        </div>
+    </div>
+</div>
+
+<!-- 이벤트 모달 -->
+<div class="modal-overlay" id="eventModal">
+    <div class="modal">
+        <h3 id="eventModalTitle">새 이벤트</h3>
+        <label>제목</label>
+        <input type="text" id="eventTitle" placeholder="이벤트 제목">
+        <label>설명</label>
+        <textarea id="eventDesc" rows="3" placeholder="이벤트 설명"></textarea>
+        <div class="form-row">
+            <div><label>유형</label><select id="eventType"><option value="daily_luna">일일 루나 지급</option></select></div>
+            <div><label>일일 지급량</label><input type="number" id="eventAmount" value="50" min="1"></div>
+        </div>
+        <div class="form-row">
+            <div><label>시작일</label><input type="date" id="eventStart"></div>
+            <div><label>종료일</label><input type="date" id="eventEnd"></div>
+        </div>
+        <label>대상</label>
+        <select id="eventTarget"><option value="all">전체</option><option value="pro">Pro 유저</option><option value="free">Free 유저</option></select>
+        <div class="modal-btns">
+            <button class="btn btn-outline" onclick="closeEventModal()">취소</button>
+            <button class="btn btn-gold" onclick="saveEvent()">저장</button>
         </div>
     </div>
 </div>
@@ -485,6 +605,8 @@ async function loadAllData() {
     loadPayments();
     loadPromos();
     loadNotices();
+    loadEvents();
+    loadAiConfig();
 }
 
 // ========== DASHBOARD ==========
@@ -678,23 +800,29 @@ async function submitPromo() {
     loadPromos();
 }
 
-// ========== NOTICES ==========
+// ========== NOTICES (보강) ==========
 async function loadNotices() {
     try {
-        const { data: notices } = await sb.from('notices').select('*').order('created_at', { ascending: false });
+        const { data: notices } = await sb.from('notices').select('*')
+            .order('is_pinned', { ascending: false })
+            .order('created_at', { ascending: false });
         renderNotices(notices || []);
     } catch (e) { console.error('Notices error:', e); }
 }
 
 function renderNotices(notices) {
     const tbody = document.getElementById('noticeTableBody');
-    if (!notices.length) { tbody.innerHTML = '<tr><td colspan="5" class="loading">공지 없음</td></tr>'; return; }
+    if (!notices.length) { tbody.innerHTML = '<tr><td colspan="7" class="loading">공지 없음</td></tr>'; return; }
+    const typeLabel = { info:'일반', warning:'경고', urgent:'긴급', update:'업데이트', event:'이벤트', maintenance:'점검' };
     tbody.innerHTML = notices.map(n => {
-        const typeLabel = { info: '일반', warning: '경고', urgent: '긴급' };
+        const nType = n.notice_type || n.type || 'info';
+        const period = (n.start_date || n.end_date) ? `${n.start_date || '~'} ~ ${n.end_date || '무기한'}` : '-';
         return `
         <tr>
-            <td>${n.title}</td>
-            <td>${typeLabel[n.type] || n.type}</td>
+            <td>${n.url ? '<a href="'+n.url+'" target="_blank" style="color:var(--gold);">'+n.title+'</a>' : n.title}</td>
+            <td>${typeLabel[nType] || nType}</td>
+            <td>${n.is_pinned ? '<span style="color:var(--gold);">고정</span>' : '-'}</td>
+            <td style="font-size:12px;">${period}</td>
             <td><span class="badge ${n.is_active ? 'badge-paid' : 'badge-free'}">${n.is_active ? '활성' : '비활성'}</span></td>
             <td>${new Date(n.created_at).toLocaleDateString()}</td>
             <td>
@@ -705,14 +833,34 @@ function renderNotices(notices) {
     `}).join('');
 }
 
-function showNoticeModal() { document.getElementById('noticeModal').classList.add('show'); }
+function showNoticeModal() {
+    document.getElementById('noticeTitle').value = '';
+    document.getElementById('noticeContent').value = '';
+    document.getElementById('noticeType').value = 'info';
+    document.getElementById('noticeUrl').value = '';
+    document.getElementById('noticeStartDate').value = '';
+    document.getElementById('noticeEndDate').value = '';
+    document.getElementById('noticePinned').checked = false;
+    document.getElementById('noticeModal').classList.add('show');
+}
 function closeNoticeModal() { document.getElementById('noticeModal').classList.remove('show'); }
 async function submitNotice() {
     const title = document.getElementById('noticeTitle').value;
     const content = document.getElementById('noticeContent').value;
     const type = document.getElementById('noticeType').value;
+    const url = document.getElementById('noticeUrl').value.trim();
+    const startDate = document.getElementById('noticeStartDate').value;
+    const endDate = document.getElementById('noticeEndDate').value;
+    const pinned = document.getElementById('noticePinned').checked;
     if (!title || !content) { alert('제목과 내용을 입력하세요'); return; }
-    await sb.from('notices').insert({ title, content, type, is_active: true });
+    await sb.from('notices').insert({
+        title, content, type, is_active: true,
+        notice_type: type,
+        is_pinned: pinned,
+        url: url || null,
+        start_date: startDate || null,
+        end_date: endDate || null
+    });
     alert('공지사항 등록 완료');
     closeNoticeModal();
     loadNotices();
@@ -727,6 +875,156 @@ async function deleteNotice(id) {
     if (!confirm('삭제하시겠습니까?')) return;
     await sb.from('notices').delete().eq('id', id);
     loadNotices();
+}
+
+// ========== EVENTS ==========
+let editingEventId = null;
+async function loadEvents() {
+    try {
+        const { data: events } = await sb.from('events').select('*').order('created_at', { ascending: false });
+        renderEvents(events || []);
+    } catch (e) { console.error('Events error:', e); }
+}
+
+function renderEvents(events) {
+    const tbody = document.getElementById('eventTableBody');
+    if (!events.length) { tbody.innerHTML = '<tr><td colspan="7" class="loading">이벤트 없음</td></tr>'; return; }
+    const targetLabel = { all:'전체', pro:'Pro', free:'Free' };
+    tbody.innerHTML = events.map(ev => `
+        <tr>
+            <td>${ev.title}</td>
+            <td>${ev.event_type === 'daily_luna' ? '일일 루나' : ev.event_type}</td>
+            <td style="font-weight:700;color:var(--gold);">${ev.daily_amount} 루나</td>
+            <td style="font-size:12px;">${ev.start_date} ~ ${ev.end_date}</td>
+            <td>${targetLabel[ev.target] || ev.target}</td>
+            <td><span class="badge ${ev.is_active ? 'badge-paid' : 'badge-free'}">${ev.is_active ? '활성' : '비활성'}</span></td>
+            <td>
+                <button class="btn btn-sm btn-outline" onclick="editEvent(${ev.id})">수정</button>
+                <button class="btn btn-sm btn-outline" onclick="toggleEvent(${ev.id}, ${ev.is_active})">${ev.is_active ? 'OFF' : 'ON'}</button>
+                <button class="btn btn-sm btn-danger" onclick="deleteEvent(${ev.id})">삭제</button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function showEventModal() {
+    editingEventId = null;
+    document.getElementById('eventModalTitle').textContent = '새 이벤트';
+    document.getElementById('eventTitle').value = '';
+    document.getElementById('eventDesc').value = '';
+    document.getElementById('eventType').value = 'daily_luna';
+    document.getElementById('eventAmount').value = '50';
+    document.getElementById('eventStart').value = new Date().toISOString().split('T')[0];
+    document.getElementById('eventEnd').value = '';
+    document.getElementById('eventTarget').value = 'all';
+    document.getElementById('eventModal').classList.add('show');
+}
+function closeEventModal() { document.getElementById('eventModal').classList.remove('show'); }
+
+async function editEvent(id) {
+    const { data: ev } = await sb.from('events').select('*').eq('id', id).single();
+    if (!ev) return;
+    editingEventId = id;
+    document.getElementById('eventModalTitle').textContent = '이벤트 수정';
+    document.getElementById('eventTitle').value = ev.title || '';
+    document.getElementById('eventDesc').value = ev.description || '';
+    document.getElementById('eventType').value = ev.event_type || 'daily_luna';
+    document.getElementById('eventAmount').value = ev.daily_amount || 50;
+    document.getElementById('eventStart').value = ev.start_date || '';
+    document.getElementById('eventEnd').value = ev.end_date || '';
+    document.getElementById('eventTarget').value = ev.target || 'all';
+    document.getElementById('eventModal').classList.add('show');
+}
+
+async function saveEvent() {
+    const title = document.getElementById('eventTitle').value.trim();
+    const description = document.getElementById('eventDesc').value.trim();
+    const event_type = document.getElementById('eventType').value;
+    const daily_amount = parseInt(document.getElementById('eventAmount').value) || 50;
+    const start_date = document.getElementById('eventStart').value;
+    const end_date = document.getElementById('eventEnd').value;
+    const target = document.getElementById('eventTarget').value;
+    if (!title) { alert('제목을 입력하세요'); return; }
+    if (!start_date || !end_date) { alert('시작일과 종료일을 입력하세요'); return; }
+
+    const eventData = { title, description, event_type, daily_amount, start_date, end_date, target, updated_at: new Date().toISOString() };
+
+    if (editingEventId) {
+        await sb.from('events').update(eventData).eq('id', editingEventId);
+        alert('이벤트가 수정되었습니다.');
+    } else {
+        eventData.is_active = true;
+        await sb.from('events').insert(eventData);
+        alert('이벤트가 생성되었습니다.');
+    }
+    closeEventModal();
+    loadEvents();
+}
+
+async function toggleEvent(id, isActive) {
+    await sb.from('events').update({ is_active: !isActive, updated_at: new Date().toISOString() }).eq('id', id);
+    loadEvents();
+}
+
+async function deleteEvent(id) {
+    if (!confirm('이벤트를 삭제하시겠습니까?')) return;
+    await sb.from('events').delete().eq('id', id);
+    loadEvents();
+}
+
+// ========== AI CONFIG ==========
+async function loadAiConfig() {
+    try {
+        const { data } = await sb.from('ai_config').select('*').eq('id', 1).single();
+        if (data) {
+            document.getElementById('openaiKeyInput').value = maskKey(data.openai_key);
+            document.getElementById('claudeKeyInput').value = maskKey(data.claude_key);
+            document.getElementById('geminiKeyInput').value = maskKey(data.gemini_key);
+            const provRadio = document.querySelector('input[name="aiProvider"][value="' + data.active_provider + '"]');
+            if (provRadio) provRadio.checked = true;
+            document.getElementById('aiStatusLine').textContent = '현재 활성 AI: ' + (data.active_provider || 'openai').toUpperCase();
+            document.getElementById('aiLastUpdate').textContent = '마지막 변경: ' + (data.updated_at ? new Date(data.updated_at).toLocaleString() : '-');
+        }
+    } catch (e) { console.error('AI Config error:', e); }
+}
+
+function maskKey(key) {
+    if (!key || key.length < 8) return '';
+    return key.substring(0, 4) + '****' + key.substring(key.length - 4);
+}
+
+function toggleKeyVis(inputId) {
+    const inp = document.getElementById(inputId);
+    inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+
+async function saveAiKey(provider) {
+    const inputMap = { openai: 'openaiKeyInput', claude: 'claudeKeyInput', gemini: 'geminiKeyInput' };
+    const fieldMap = { openai: 'openai_key', claude: 'claude_key', gemini: 'gemini_key' };
+    const newKey = document.getElementById(inputMap[provider]).value.trim();
+    if (!newKey || newKey.includes('****')) {
+        alert('새 키를 입력하세요 (마스킹된 값은 저장할 수 없습니다)');
+        return;
+    }
+    const { error } = await sb.from('ai_config').update({
+        [fieldMap[provider]]: newKey,
+        updated_at: new Date().toISOString()
+    }).eq('id', 1);
+    if (error) { alert('저장 실패: ' + error.message); return; }
+    alert(provider.toUpperCase() + ' API 키가 저장되었습니다.');
+    loadAiConfig();
+}
+
+async function changeActiveProvider() {
+    const selected = document.querySelector('input[name="aiProvider"]:checked').value;
+    if (!confirm('메인 AI를 ' + selected.toUpperCase() + '(으)로 변경하시겠습니까?\n모든 앱에 즉시 반영됩니다.')) return;
+    const { error } = await sb.from('ai_config').update({
+        active_provider: selected,
+        updated_at: new Date().toISOString()
+    }).eq('id', 1);
+    if (error) { alert('변경 실패: ' + error.message); return; }
+    alert('메인 AI가 ' + selected.toUpperCase() + '(으)로 변경되었습니다.');
+    loadAiConfig();
 }
 
 // ========== HELPERS ==========
