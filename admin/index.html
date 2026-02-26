@@ -956,11 +956,17 @@
 
         // Auth Check
         async function checkAdmin() {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) {
+            // getSession으로 로컬 세션 먼저 확인 (getUser는 서버 호출이라 실패 가능)
+            let { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+                const refreshResult = await supabase.auth.refreshSession();
+                session = refreshResult.data.session;
+            }
+            if (!session) {
                 window.location.href = '/login.html';
                 return;
             }
+            const user = session.user;
 
             const { data: profile } = await supabase
                 .from('profiles')

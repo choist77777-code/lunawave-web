@@ -632,8 +632,14 @@ document.querySelectorAll('.nav-item').forEach(item => {
 
 // ========== AUTH CHECK ==========
 async function checkAdmin() {
-    const { data: { user } } = await _realSb.auth.getUser();
-    if (!user) { window.location.href = '/login.html'; return; }
+    // getSession으로 로컬 세션 먼저 확인 (getUser는 서버 호출이라 실패 가능)
+    let { data: { session } } = await _realSb.auth.getSession();
+    if (!session) {
+        const refreshResult = await _realSb.auth.refreshSession();
+        session = refreshResult.data.session;
+    }
+    if (!session) { window.location.href = '/login.html'; return; }
+    const user = session.user;
     const { data: profile } = await sb.from('profiles').select('role').eq('id', user.id).single();
     if (!profile || profile.role !== 'admin') {
         alert('관리자 권한이 없습니다.');
