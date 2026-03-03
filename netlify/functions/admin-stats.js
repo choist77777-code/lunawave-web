@@ -109,11 +109,11 @@ async function getOverviewStats() {
         .from('profiles')
         .select('id', { count: 'exact' });
 
-    // Pro 구독자 수
+    // Pro 구독자 수 (crescent/halfmoon/fullmoon)
     const { count: proUsers } = await supabase
         .from('profiles')
         .select('id', { count: 'exact' })
-        .eq('plan', 'pro')
+        .in('plan', ['crescent', 'halfmoon', 'fullmoon'])
         .gt('plan_expires_at', now.toISOString());
 
     // 오늘 매출
@@ -355,7 +355,7 @@ async function getLunaStats() {
         .map(([userId, usage]) => ({ user_id: userId, today_usage: usage }));
 
     return {
-        lunas: {
+        tokens: {
             total_granted: totalGranted,
             total_used: totalUsed,
             total_expired: totalExpired,
