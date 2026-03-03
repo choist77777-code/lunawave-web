@@ -79,16 +79,19 @@ async function loadUserInfo() {
     // Show current plan
     const currentPlan = document.getElementById('currentPlan');
     if (currentPlan) {
-        currentPlan.textContent = profile.plan === 'pro' ? 'Pro' : 'Free';
+        const planNames = { free: 'Free', crescent: '초승달', halfmoon: '반달', fullmoon: '보름달' };
+        currentPlan.textContent = planNames[profile.plan] || profile.plan || 'Free';
     }
 
-    // If already Pro, hide subscription tab content
-    if (profile.plan === 'pro') {
+    // If already subscribed, hide subscription tab content
+    const paidPlans = ['crescent', 'halfmoon', 'fullmoon'];
+    if (paidPlans.includes(profile.plan)) {
+        const planNames = { crescent: '초승달', halfmoon: '반달', fullmoon: '보름달' };
         const subInfo = document.getElementById('subscriptionInfo');
         if (subInfo) {
             subInfo.innerHTML = `
                 <div class="alert alert-success">
-                    이미 Pro 구독 중입니다. 만료일: ${new Date(profile.plan_expires_at).toLocaleDateString('ko-KR')}
+                    이미 ${planNames[profile.plan]} 플랜 구독 중입니다. 만료일: ${new Date(profile.plan_expires_at).toLocaleDateString('ko-KR')}
                 </div>
             `;
         }
@@ -192,8 +195,10 @@ function updatePriceWithDiscount(promo) {
 
 async function handleSubscribe() {
     const profile = await LW.getProfile();
-    if (profile?.plan === 'pro') {
-        alert('이미 Pro 구독 중입니다.');
+    const paidPlans = ['crescent', 'halfmoon', 'fullmoon'];
+    if (paidPlans.includes(profile?.plan)) {
+        const planNames = { crescent: '초승달', halfmoon: '반달', fullmoon: '보름달' };
+        alert('이미 ' + (planNames[profile.plan] || profile.plan) + ' 플랜 구독 중입니다.');
         return;
     }
 

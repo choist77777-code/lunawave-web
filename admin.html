@@ -713,7 +713,7 @@ function renderUsers(users) {
         <tr>
             <td>${u.email || '-'}</td>
             <td>${u.name || '-'}</td>
-            <td><span class="badge badge-${u.plan === 'pro' ? 'pro' : 'free'}">${u.plan === 'pro' ? 'Pro' : 'Free'}</span></td>
+            <td><span class="badge badge-${u.plan !== 'free' && u.plan ? 'pro' : 'free'}">${{'crescent':'초승달','halfmoon':'반달','fullmoon':'보름달'}[u.plan] || u.plan || 'Free'}</span></td>
             <td>${(u.lunas_free || 0) + (u.lunas_monthly || 0) + (u.lunas_bonus || 0) + (u.tokens_purchased || 0)}</td>
             <td>${u.created_at ? new Date(u.created_at).toLocaleDateString() : '-'}</td>
             <td>

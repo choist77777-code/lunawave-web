@@ -239,7 +239,7 @@ async function loadUsers(page = 1) {
             <tr data-user-id="${user.id}">
                 <td>${user.email}</td>
                 <td>${user.name || '-'}</td>
-                <td><span class="badge ${user.plan === 'pro' ? 'badge-pro' : 'badge-free'}">${user.plan || 'free'}</span></td>
+                <td><span class="badge ${user.plan !== 'free' && user.plan ? 'badge-pro' : 'badge-free'}">${{'crescent':'초승달','halfmoon':'반달','fullmoon':'보름달'}[user.plan] || user.plan || 'Free'}</span></td>
                 <td>${Math.floor((user.lunas_free || 0) + (user.lunas_monthly || 0) + (user.lunas_bonus || 0) + (user.tokens_purchased || 0))}</td>
                 <td>${new Date(user.created_at).toLocaleDateString('ko-KR')}</td>
                 <td>
@@ -283,7 +283,9 @@ async function showUserDetail(userId) {
                 <label>플랜</label>
                 <select class="form-select" id="editUserPlan">
                     <option value="free" ${user.plan === 'free' ? 'selected' : ''}>Free</option>
-                    <option value="pro" ${user.plan === 'pro' ? 'selected' : ''}>Pro</option>
+                    <option value="crescent" ${user.plan === 'crescent' ? 'selected' : ''}>초승달 (Crescent)</option>
+                    <option value="halfmoon" ${user.plan === 'halfmoon' ? 'selected' : ''}>반달 (Half Moon)</option>
+                    <option value="fullmoon" ${user.plan === 'fullmoon' ? 'selected' : ''}>보름달 (Full Moon)</option>
                 </select>
             </div>
             <div class="form-group">
