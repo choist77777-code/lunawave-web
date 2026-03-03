@@ -165,6 +165,12 @@ tr:last-child td { border-bottom:none; }
         <div class="stat-card"><div class="stat-label">ARPU</div><div class="stat-value" id="d-arpu">₩0</div></div>
         <div class="stat-card"><div class="stat-label">오늘 가입</div><div class="stat-value" id="d-new">0</div></div>
     </div>
+    <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label"><i data-lucide="log-in"></i>오늘 접속</div><div class="stat-value" id="d-logins">0</div></div>
+        <div class="stat-card"><div class="stat-label"><i data-lucide="activity"></i>DAU (일간 활성)</div><div class="stat-value" id="d-dau">0</div></div>
+        <div class="stat-card"><div class="stat-label"><i data-lucide="calendar"></i>WAU (주간 활성)</div><div class="stat-value" id="d-wau">0</div></div>
+        <div class="stat-card"><div class="stat-label"><i data-lucide="calendar-range"></i>MAU (월간 활성)</div><div class="stat-value" id="d-mau">0</div></div>
+    </div>
     <div class="chart-placeholder">매출 차트 (데이터 수집 후 표시)</div>
 </div>
 
@@ -708,6 +714,23 @@ async function loadDashboardData() {
         const arpu = totalUsers ? Math.round(monthTotal / totalUsers) : 0;
         document.getElementById('d-arpu').textContent = '₩' + arpu.toLocaleString();
 
+        // Today logins (오늘 접속 수)
+        const { data: todayLogins } = await sb.from('login_logs').select('id, user_id').gte('created_at', today);
+        document.getElementById('d-logins').textContent = (todayLogins || []).length;
+
+        // DAU (오늘 고유 접속자)
+        const dauSet = new Set((todayLogins || []).map(l => l.user_id).filter(Boolean));
+        document.getElementById('d-dau').textContent = dauSet.size || (todayLogins || []).length;
+
+        // WAU (최근 7일 고유 접속자)
+        const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0];
+        const { data: weekLogins } = await sb.from('login_logs').select('user_id').gte('created_at', weekAgo);
+        document.getElementById('d-wau').textContent = new Set((weekLogins || []).map(l => l.user_id).filter(Boolean)).size;
+
+        // MAU (이번 달 고유 접속자)
+        const { data: monthLogins } = await sb.from('login_logs').select('user_id').gte('created_at', monthStart);
+        document.getElementById('d-mau').textContent = new Set((monthLogins || []).map(l => l.user_id).filter(Boolean)).size;
+
     } catch (e) { console.error('Dashboard error:', e); }
 }
 
@@ -815,7 +838,7 @@ function renderPayments(payments) {
         <tr>
             <td>${p.paid_at ? new Date(p.paid_at).toLocaleDateString() : new Date(p.created_at).toLocaleDateString()}</td>
             <td>${p.profiles?.email || '-'}</td>
-            <td>${p.type === 'subscription' ? 'Pro 구독' : '루나 구매'}</td>
+            <td>${p.type === 'subscription' ? ({'crescent':'초승달 구독','halfmoon':'반달 구독','fullmoon':'보름달 구독'}[p.plan] || 'Pro 구독') : '루나 구매'}</td>
             <td>₩${(p.amount || 0).toLocaleString()}</td>
             <td><span class="badge badge-${p.status === 'paid' ? 'paid' : 'refund'}">${p.status === 'paid' ? '결제완료' : '환불'}</span></td>
             <td>${p.status === 'paid' ? `<button class="btn btn-sm btn-danger" onclick="showRefundModal('${p.id}','${p.profiles?.email}',${p.amount})">환불</button>` : '-'}</td>
