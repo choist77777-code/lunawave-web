@@ -97,17 +97,14 @@ async function loadAdminDashboard() {
 
         const stats = data.overview;
 
-        // Update stat cards
-        updateStatCard('todayRevenue', `₩${stats.today_revenue?.toLocaleString() || 0}`);
-        updateStatCard('weekRevenue', `₩${stats.week_revenue?.toLocaleString() || 0}`);
-        updateStatCard('monthRevenue', `₩${stats.month_revenue?.toLocaleString() || 0}`);
-        updateStatCard('netRevenue', `₩${stats.net_revenue?.toLocaleString() || 0}`);
-        updateStatCard('proSubscribers', stats.pro_subscribers || 0);
-        updateStatCard('totalUsers', stats.total_users || 0);
-        updateStatCard('mrr', `₩${stats.mrr?.toLocaleString() || 0}`);
-        updateStatCard('arpu', `₩${stats.arpu?.toLocaleString() || 0}`);
-        updateStatCard('todaySignups', stats.today_signups || 0);
-        updateStatCard('todayConversions', stats.today_conversions || 0);
+        // Update stat cards (ID는 admin.html의 실제 요소 ID와 일치)
+        updateStatCard('d-today', `₩${stats.today_revenue?.toLocaleString() || 0}`);
+        updateStatCard('d-month', `₩${stats.month_revenue?.toLocaleString() || 0}`);
+        updateStatCard('d-users', stats.total_users || 0);
+        updateStatCard('d-subs', stats.pro_subscribers || 0);
+        updateStatCard('d-mrr', `₩${stats.mrr?.toLocaleString() || 0}`);
+        updateStatCard('d-arpu', `₩${stats.arpu?.toLocaleString() || 0}`);
+        updateStatCard('d-new', stats.today_signups || 0);
 
         // Load charts
         loadRevenueChart();
@@ -232,7 +229,7 @@ async function loadUsers(page = 1) {
         updateStatCard('mau', data.users?.mau || 0);
 
         // Render users table
-        const tableBody = document.getElementById('usersTableBody');
+        const tableBody = document.getElementById('userTableBody');
         if (!tableBody) return;
 
         tableBody.innerHTML = (data.users?.list || []).map(user => `
@@ -359,16 +356,16 @@ async function loadTokenStats() {
 
         const tokens = data.tokens;
 
-        updateStatCard('totalGranted', Math.floor(tokens.total_granted || 0).toLocaleString());
-        updateStatCard('totalUsed', Math.floor(tokens.total_used || 0).toLocaleString());
-        updateStatCard('totalBalance', Math.floor(tokens.total_balance || 0).toLocaleString());
-        updateStatCard('totalExpired', Math.floor(tokens.total_expired || 0).toLocaleString());
+        updateStatCard('l-issued', Math.floor(tokens.total_granted || 0).toLocaleString());
+        updateStatCard('l-used', Math.floor(tokens.total_used || 0).toLocaleString());
+        updateStatCard('l-remaining', Math.floor(tokens.total_balance || 0).toLocaleString());
+        updateStatCard('l-anomaly', Math.floor(tokens.total_expired || 0).toLocaleString());
 
         // Feature usage chart
         loadFeatureUsageChart(tokens.by_feature);
 
         // Heavy users table
-        const tableBody = document.getElementById('heavyUsersTableBody');
+        const tableBody = document.getElementById('lunaLogBody');
         if (tableBody) {
             tableBody.innerHTML = (tokens.heavy_users || []).map(u => `
                 <tr>

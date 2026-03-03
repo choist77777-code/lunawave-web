@@ -667,8 +667,8 @@ async function loadDashboardData() {
         const { count: totalUsers } = await sb.from('profiles').select('*', { count: 'exact', head: true });
         document.getElementById('d-users').textContent = totalUsers || 0;
 
-        // Pro subscribers
-        const { count: proUsers } = await sb.from('profiles').select('*', { count: 'exact', head: true }).eq('plan', 'pro');
+        // Pro subscribers (crescent, halfmoon, fullmoon)
+        const { count: proUsers } = await sb.from('profiles').select('*', { count: 'exact', head: true }).in('plan', ['crescent', 'halfmoon', 'fullmoon']);
         document.getElementById('d-subs').textContent = proUsers || 0;
 
         // MRR
