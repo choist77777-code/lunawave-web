@@ -30,12 +30,17 @@ exports.handler = async (event) => {
 
         const body = JSON.parse(event.body || '{}');
 
-        await supabase.from('login_logs').insert({
+        const { error: insertError } = await supabase.from('login_logs').insert({
             user_id: user.id,
             ip_address: event.headers['x-forwarded-for'] || event.headers['client-ip'] || null,
-            device_name: body.device_name || 'web',
+            device_id: body.device_name || 'web',
             user_agent: body.user_agent ? body.user_agent.substring(0, 200) : null
         });
+
+        if (insertError) {
+            console.error('login_logs insert error:', insertError);
+            return { statusCode: 200, headers, body: JSON.stringify({ success: false, error: insertError.message }) };
+        }
 
         return { statusCode: 200, headers, body: JSON.stringify({ success: true }) };
 
