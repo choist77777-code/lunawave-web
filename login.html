@@ -419,6 +419,25 @@
                     return;
                 }
 
+                // 로그인 로그 기록 (Netlify function, RLS 우회)
+                try {
+                    const session = data.session;
+                    if (session && session.access_token) {
+                        fetch('/.netlify/functions/log-login', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': 'Bearer ' + session.access_token
+                            },
+                            body: JSON.stringify({
+                                device_name: navigator.platform || 'web',
+                                user_agent: navigator.userAgent ? navigator.userAgent.substring(0, 200) : null
+                            }),
+                            keepalive: true
+                        }).catch(function() {});
+                    }
+                } catch (_) {}
+
                 // 로그인 성공 → 대시보드로
                 window.location.href = '/dashboard.html';
 
