@@ -861,6 +861,22 @@
         </div>
     </main>
 
+    <!-- 공지사항 상세 모달 -->
+    <div id="noticeModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;">
+        <div style="background:var(--bg-primary);border-radius:var(--radius);padding:32px;max-width:520px;width:90%;max-height:80vh;overflow-y:auto;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+                <span id="noticeModalType" style="font-size:12px;font-weight:600;padding:4px 10px;border-radius:20px;background:var(--accent-light);color:var(--accent);"></span>
+                <button onclick="closeNoticeModal()" style="background:none;border:none;cursor:pointer;font-size:24px;color:var(--text-muted);">&times;</button>
+            </div>
+            <h3 id="noticeModalTitle" style="font-size:20px;font-weight:700;margin-bottom:8px;"></h3>
+            <div id="noticeModalDate" style="font-size:13px;color:var(--text-muted);margin-bottom:20px;"></div>
+            <div id="noticeModalContent" style="font-size:15px;line-height:1.8;color:var(--text-secondary);white-space:pre-wrap;"></div>
+            <div id="noticeModalUrl" style="margin-top:20px;display:none;">
+                <a id="noticeModalLink" href="#" target="_blank" style="display:inline-flex;align-items:center;gap:6px;color:var(--accent);font-size:14px;text-decoration:none;">자세히 보기 →</a>
+            </div>
+        </div>
+    </div>
+
     <!-- 구독 관리 모달 -->
     <div id="subscriptionModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;">
         <div style="background:var(--bg-primary);border-radius:var(--radius);padding:32px;max-width:520px;width:90%;max-height:90vh;overflow-y:auto;">
@@ -1174,15 +1190,43 @@
             `).join('');
         }
 
+        let _noticesCache = [];
         function renderNotices(notices) {
+            _noticesCache = notices;
             const container = document.getElementById('noticeList');
-            container.innerHTML = notices.map(n => `
-                <div class="notice-item ${n.type === 'urgent' ? 'urgent' : ''}">
+            container.innerHTML = notices.map((n, i) => `
+                <div class="notice-item ${n.type === 'urgent' ? 'urgent' : ''}" onclick="showNoticeDetail(${i})" style="cursor:pointer;">
                     <div class="notice-title">${n.title}</div>
                     <div class="notice-date">${new Date(n.created_at).toLocaleDateString()}</div>
                 </div>
             `).join('');
         }
+
+        function showNoticeDetail(index) {
+            const n = _noticesCache[index];
+            if (!n) return;
+            const typeMap = { notice: '공지', update: '업데이트', event: '이벤트', urgent: '긴급' };
+            document.getElementById('noticeModalType').textContent = typeMap[n.type] || '공지';
+            document.getElementById('noticeModalTitle').textContent = n.title;
+            document.getElementById('noticeModalDate').textContent = new Date(n.created_at).toLocaleDateString();
+            document.getElementById('noticeModalContent').textContent = n.content || '내용이 없습니다.';
+            const urlDiv = document.getElementById('noticeModalUrl');
+            if (n.url) {
+                document.getElementById('noticeModalLink').href = n.url;
+                urlDiv.style.display = 'block';
+            } else {
+                urlDiv.style.display = 'none';
+            }
+            document.getElementById('noticeModal').style.display = 'flex';
+        }
+
+        function closeNoticeModal() {
+            document.getElementById('noticeModal').style.display = 'none';
+        }
+
+        document.getElementById('noticeModal').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) closeNoticeModal();
+        });
 
         async function removeDevice(deviceId) {
             if (!confirm('이 기기를 해제하시겠습니까?')) return;
