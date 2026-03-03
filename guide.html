@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>사용 가이드 - LunaWave v6.1.3</title>
+<meta name="description" content="LunaWave 앱의 종합 사용 가이드. Engine2 비디오 빌더, AI 가사 생성, 자동 러너 등 모든 기능을 설명합니다.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg: #ffffff;
+    --bg2: #f9f9fb;
+    --bg3: #f3f4f6;
+    --text: #1a1a2e;
+    --text2: #64648c;
+    --text3: #9999b3;
+    --gold: #f5a623;
+    --gold-dark: #e6951a;
+    --gold-light: rgba(245,166,35,0.1);
+    --gold-gradient: linear-gradient(135deg, #f5a623, #ff8c00);
+    --border: #e8e8f0;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+    --shadow: 0 2px 8px rgba(0,0,0,0.08);
+    --shadow-lg: 0 4px 16px rgba(0,0,0,0.1);
+    --radius: 12px;
+    --radius-sm: 8px;
+    --info: #3b82f6;
+    --error: #ef4444;
+    --success: #22c55e;
+    --sidebar-w: 280px;
+    --header-h: 64px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: calc(var(--header-h) + 24px); }
+
+body {
+    font-family: 'Noto Sans KR', 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ===== HEADER ===== */
+.guide-header {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: var(--header-h);
+    background: rgba(255,255,255,0.97);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    padding: 0 32px;
+}
+.guide-header-inner {
+    width: 100%;
+    max-width: 1440px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+.logo-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: var(--text);
+}
+.logo-text {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 600;
+    font-size: 20px;
+    letter-spacing: 1.5px;
+}
+.logo-text span {
+    font-weight: 300;
+    color: var(--text3);
+}
+.header-divider {
+    width: 1px;
+    height: 24px;
+    background: var(--border);
+}
+.header-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text2);
+}
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+.header-version {
+    font-size: 12px;
+    font-weight: 600;
+    background: var(--gold-light);
+    color: var(--gold);
+    padding: 4px 12px;
+    border-radius: 100px;
+}
+.header-home-btn {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text2);
+    text-decoration: none;
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    transition: all 0.2s;
+}
+.header-home-btn:hover {
+    color: var(--gold);
+    background: var(--gold-light);
+}
+.mobile-menu-btn {
+    display: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    color: var(--text);
+}
+.mobile-menu-btn svg {
+    width: 24px;
+    height: 24px;
+}
+
+/* ===== SIDEBAR ===== */
+.guide-sidebar {
+    position: fixed;
+    top: var(--header-h);
+    left: 0;
+    bottom: 0;
+    width: var(--sidebar-w);
+    background: var(--bg);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    padding: 24px 0;
+    z-index: 100;
+    transition: transform 0.3s ease;
+}
+.guide-sidebar::-webkit-scrollbar {
+    width: 4px;
+}
+.guide-sidebar::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 4px;
+}
+.sidebar-section-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text3);
+    padding: 16px 24px 8px;
+}
+.sidebar-nav {
+    list-style: none;
+}
+.sidebar-nav li {
+    margin: 0;
+}
+.sidebar-nav a {
+    display: block;
+    padding: 8px 24px;
+    font-size: 14px;
+    color: var(--text2);
+    text-decoration: none;
+    transition: all 0.15s;
+    border-left: 3px solid transparent;
+    line-height: 1.5;
+}
+.sidebar-nav a:hover {
+    color: var(--text);
+    background: var(--bg2);
+}
+.sidebar-nav a.active {
+    color: var(--gold);
+    border-left-color: var(--gold);
+    background: var(--gold-light);
+    font-weight: 600;
+}
+.sidebar-nav a.sub {
+    padding-left: 40px;
+    font-size: 13px;
+}
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 99;
+}
+
+/* ===== MAIN CONTENT ===== */
+.guide-main {
+    margin-left: var(--sidebar-w);
+    padding: calc(var(--header-h) + 40px) 48px 80px;
+    max-width: calc(100% - var(--sidebar-w));
+}
+.guide-content {
+    max-width: 840px;
+    margin: 0 auto;
+}
+
+/* Section Heading */
+.section-anchor {
+    display: block;
+    position: relative;
+    top: calc(-1 * var(--header-h) - 24px);
+    visibility: hidden;
+}
+.guide-section {
+    margin-bottom: 64px;
+}
+.guide-section h2 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--gold);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.guide-section h2 .section-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: var(--gold-gradient);
+    color: #fff;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+.guide-section h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 32px 0 12px;
+    color: var(--text);
+}
+.guide-section h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 24px 0 8px;
+    color: var(--text);
+}
+.guide-section p {
+    margin-bottom: 16px;
+    color: var(--text2);
+    font-size: 15px;
+}
+.guide-section ul, .guide-section ol {
+    margin: 0 0 16px 0;
+    padding-left: 20px;
+}
+.guide-section li {
+    margin-bottom: 8px;
+    color: var(--text2);
+    font-size: 15px;
+}
+.guide-section li strong {
+    color: var(--text);
+}
+
+/* Image Card */
+.img-card {
+    margin: 20px 0 28px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    background: var(--bg2);
+}
+.img-card img {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+.img-card-caption {
+    padding: 10px 16px;
+    font-size: 13px;
+    color: var(--text3);
+    text-align: center;
+    border-top: 1px solid var(--border);
+    background: var(--bg);
+}
+
+/* Tip Box */
+.tip-box {
+    margin: 16px 0;
+    padding: 14px 18px;
+    border-left: 4px solid var(--info);
+    background: rgba(59,130,246,0.06);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    font-size: 14px;
+    color: var(--text2);
+}
+.tip-box strong {
+    color: var(--info);
+}
+.tip-box::before {
+    content: 'TIP';
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--info);
+    margin-bottom: 4px;
+    margin-right: 8px;
+}
+
+/* Warning Box */
+.warn-box {
+    margin: 16px 0;
+    padding: 14px 18px;
+    border-left: 4px solid var(--error);
+    background: rgba(239,68,68,0.06);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    font-size: 14px;
+    color: var(--text2);
+}
+.warn-box strong {
+    color: var(--error);
+}
+.warn-box::before {
+    content: 'WARNING';
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--error);
+    margin-bottom: 4px;
+    margin-right: 8px;
+}
+
+/* Steps List */
+.steps-list {
+    list-style: none;
+    padding: 0;
+    margin: 16px 0;
+    counter-reset: step-counter;
+}
+.steps-list li {
+    counter-increment: step-counter;
+    padding: 10px 0 10px 40px;
+    position: relative;
+    border-bottom: 1px solid var(--bg3);
+}
+.steps-list li:last-child {
+    border-bottom: none;
+}
+.steps-list li::before {
+    content: counter(step-counter);
+    position: absolute;
+    left: 0;
+    top: 10px;
+    width: 26px;
+    height: 26px;
+    background: var(--gold-gradient);
+    color: #fff;
+    border-radius: 50%;
+    font-size: 13px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Table */
+.guide-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0 24px;
+    font-size: 14px;
+}
+.guide-table th,
+.guide-table td {
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+}
+.guide-table th {
+    background: var(--bg2);
+    font-weight: 600;
+    color: var(--text);
+    font-size: 13px;
+}
+.guide-table td {
+    color: var(--text2);
+}
+.guide-table tbody tr:hover {
+    background: var(--bg2);
+}
+.guide-table code {
+    background: var(--bg3);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-family: 'Consolas', 'Monaco', monospace;
+    color: var(--text);
+}
+
+/* Requirements Grid */
+.req-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 16px 0 24px;
+}
+.req-card {
+    padding: 20px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+}
+.req-card h4 {
+    font-size: 14px;
+    font-weight: 700;
+    margin: 0 0 12px;
+    color: var(--text);
+}
+.req-card ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.req-card li {
+    padding: 4px 0;
+    font-size: 14px;
+    color: var(--text2);
+}
+.req-card li::before {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background: var(--gold);
+    border-radius: 50%;
+    margin-right: 8px;
+    vertical-align: middle;
+}
+
+/* Footer */
+.guide-footer {
+    margin-left: var(--sidebar-w);
+    padding: 32px 48px;
+    border-top: 1px solid var(--border);
+    background: var(--bg2);
+    text-align: center;
+}
+.guide-footer p {
+    font-size: 14px;
+    color: var(--text3);
+    margin-bottom: 8px;
+}
+.guide-footer a {
+    color: var(--gold);
+    text-decoration: none;
+    font-weight: 500;
+}
+.guide-footer a:hover {
+    color: var(--gold-dark);
+}
+
+/* Back to top */
+.back-to-top {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    width: 44px;
+    height: 44px;
+    background: var(--gold-gradient);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-lg);
+    opacity: 0;
+    transform: translateY(12px);
+    transition: all 0.3s;
+    z-index: 50;
+}
+.back-to-top.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+.back-to-top:hover {
+    box-shadow: 0 6px 20px rgba(245,166,35,0.4);
+}
+.back-to-top svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 1024px) {
+    .guide-sidebar {
+        transform: translateX(-100%);
+    }
+    .guide-sidebar.open {
+        transform: translateX(0);
+    }
+    .sidebar-overlay.open {
+        display: block;
+    }
+    .guide-main {
+        margin-left: 0;
+        max-width: 100%;
+        padding: calc(var(--header-h) + 32px) 32px 80px;
+    }
+    .guide-footer {
+        margin-left: 0;
+    }
+    .mobile-menu-btn {
+        display: block;
+    }
+}
+@media (max-width: 640px) {
+    .guide-main {
+        padding: calc(var(--header-h) + 24px) 16px 60px;
+    }
+    .guide-footer {
+        padding: 24px 16px;
+    }
+    .guide-section h2 {
+        font-size: 1.35rem;
+    }
+    .req-grid {
+        grid-template-columns: 1fr;
+    }
+    .header-title, .header-divider, .header-version {
+        display: none;
+    }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="guide-header">
+    <div class="guide-header-inner">
+        <div class="header-left">
+            <button class="mobile-menu-btn" onclick="toggleSidebar()" aria-label="Toggle menu">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+            <a href="https://lunawaveapp.com" class="logo-link">
+                <span class="logo-text">LUNA<span>WAVE</span></span>
+            </a>
+            <div class="header-divider"></div>
+            <span class="header-title">User Guide</span>
+        </div>
+        <div class="header-right">
+            <span class="header-version">v6.1.3</span>
+            <a href="https://lunawaveapp.com" class="header-home-btn">Home</a>
+        </div>
+    </div>
+</header>
+
+<!-- SIDEBAR OVERLAY (mobile) -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+<!-- SIDEBAR -->
+<aside class="guide-sidebar" id="guideSidebar">
+    <div class="sidebar-section-title">Guide</div>
+    <ul class="sidebar-nav" id="sidebarNav">
+        <li><a href="#getting-started" data-section="getting-started">1. Getting Started</a></li>
+        <li><a href="#interface" data-section="interface">2. Interface</a></li>
+        <li><a href="#engine2" data-section="engine2">3. Engine2 Video Builder</a></li>
+        <li><a href="#e2-topbar" data-section="e2-topbar" class="sub">3.1 Top Bar</a></li>
+        <li><a href="#e2-file" data-section="e2-file" class="sub">3.2 File Upload</a></li>
+        <li><a href="#e2-visualizer" data-section="e2-visualizer" class="sub">3.3 Visualizer</a></li>
+        <li><a href="#e2-text" data-section="e2-text" class="sub">3.4 Text Edit</a></li>
+        <li><a href="#e2-font" data-section="e2-font" class="sub">3.5 Font</a></li>
+        <li><a href="#e2-color" data-section="e2-color" class="sub">3.6 Color/Gradient</a></li>
+        <li><a href="#e2-subtitle" data-section="e2-subtitle" class="sub">3.7 Subtitle/Lyrics</a></li>
+        <li><a href="#e2-cutout" data-section="e2-cutout" class="sub">3.8 Cutout/Effects</a></li>
+        <li><a href="#e2-output" data-section="e2-output" class="sub">3.9 Output Settings</a></li>
+        <li><a href="#e2-render" data-section="e2-render" class="sub">3.10 Render</a></li>
+        <li><a href="#e2-preview" data-section="e2-preview" class="sub">3.11 Preview</a></li>
+        <li><a href="#ai-lyrics" data-section="ai-lyrics">4. AI Lyrics Generator</a></li>
+        <li><a href="#songs" data-section="songs">5. Song Management</a></li>
+        <li><a href="#runner" data-section="runner">6. Auto Input Runner</a></li>
+        <li><a href="#suno" data-section="suno">7. Suno Downloader</a></li>
+        <li><a href="#youtube-meta" data-section="youtube-meta">8. YouTube Metadata</a></li>
+        <li><a href="#analytics" data-section="analytics">9. Analytics</a></li>
+        <li><a href="#settings" data-section="settings">10. Settings</a></li>
+        <li><a href="#shortcuts" data-section="shortcuts">11. Keyboard Shortcuts</a></li>
+        <li><a href="#troubleshooting" data-section="troubleshooting">12. Troubleshooting</a></li>
+    </ul>
+</aside>
+
+<!-- MAIN CONTENT -->
+<main class="guide-main">
+<div class="guide-content">
+
+<!-- ============================================================ -->
+<!-- 1. GETTING STARTED -->
+<!-- ============================================================ -->
+<span class="section-anchor" id="getting-started"></span>
+<section class="guide-section">
+    <h2><span class="section-num">1</span> Getting Started</h2>
+
+    <h3>System Requirements</h3>
+    <div class="req-grid">
+        <div class="req-card">
+            <h4>Minimum</h4>
+            <ul>
+                <li>Windows 10 (64-bit)</li>
+                <li>CPU: Intel i5 / AMD Ryzen 5</li>
+                <li>RAM: 8 GB</li>
+                <li>Storage: 2 GB</li>
+                <li>GPU: Integrated graphics</li>
+            </ul>
+        </div>
+        <div class="req-card">
+            <h4>Recommended</h4>
+            <ul>
+                <li>Windows 10/11 (64-bit)</li>
+                <li>CPU: Intel i7 / AMD Ryzen 7</li>
+                <li>RAM: 16 GB</li>
+                <li>Storage: 5 GB+ SSD</li>
+                <li>GPU: NVIDIA GTX 1060+ (NVENC)</li>
+            </ul>
+        </div>
+    </div>
+    <div class="tip-box">NVIDIA GPU(GTX 1060 이상)가 있으면 하드웨어 인코딩(NVENC)으로 렌더링 속도가 5~10배 빨라집니다.</div>
+
+    <h3>Installation</h3>
+    <ol class="steps-list">
+        <li><a href="https://lunawaveapp.com/download.html" target="_blank">lunawaveapp.com/download</a>에서 최신 버전 다운로드</li>
+        <li>다운로드한 <strong>LUNA WAVE Setup x.x.x.exe</strong> 실행</li>
+        <li>설치 완료 후 앱이 자동 실행됩니다</li>
+        <li>계정 로그인 또는 회원가입 후 사용 시작</li>
+    </ol>
+    <div class="tip-box">앱은 자동 업데이트를 지원합니다. 새 버전이 있으면 시작 시 자동으로 업데이트됩니다.</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- 2. INTERFACE -->
+<!-- ============================================================ -->
+<span class="section-anchor" id="interface"></span>
+<section class="guide-section">
+    <h2><span class="section-num">2</span> Interface</h2>
+    <p>LunaWave의 메인 화면은 상단 탭으로 구성되어 있습니다. 각 탭에서 AI 가사 생성, 곡 관리, 자동 러너, 비디오 편집 등 모든 기능에 접근할 수 있습니다.</p>
+
+    <div class="img-card">
+        <img src="/images/manual/e1_01_home.png" alt="LunaWave Main Interface" loading="lazy">
+        <div class="img-card-caption">LunaWave Main Interface - Tab Navigation</div>
+    </div>
+
+    <h3>Tab Structure</h3>
+    <ul>
+        <li><strong>Generate</strong> - AI 기반 가사 자동 생성</li>
+        <li><strong>Songs</strong> - 생성된 곡 목록 관리</li>
+        <li><strong>Runner</strong> - Suno AI 자동 입력 러너</li>
+        <li><strong>Suno</strong> - Suno 곡 다운로드</li>
+        <li><strong>YouTube</strong> - YouTube 메타데이터 생성</li>
+        <li><strong>Video</strong> - Engine2 비디오 빌더 (별도 창)</li>
+        <li><strong>Analytics</strong> - 채널 분석</li>
+        <li><strong>Settings</strong> - 앱 설정</li>
+    </ul>
+    <div class="tip-box">테마는 Light / Dark 모드를 지원합니다. Settings에서 변경하거나, 상단 바의 테마 버튼으로 전환하세요.</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- 3. ENGINE2 VIDEO BUILDER -->
+<!-- ============================================================ -->
+<span class="section-anchor" id="engine2"></span>
+<section class="guide-section">
+    <h2><span class="section-num">3</span> Engine2 Video Builder</h2>
+    <p>Engine2는 음악 비주얼라이저 영상을 제작하는 핵심 모듈입니다. 오디오 파일과 이미지를 업로드하고, 비주얼라이저, 텍스트, 자막, 컷아웃 효과를 적용하여 전문적인 뮤직 비디오를 만들 수 있습니다.</p>
+
+    <div class="img-card">
+        <img src="/images/manual/e2_01_fullscreen.png" alt="Engine2 Full Screen Layout" loading="lazy">
+        <div class="img-card-caption">Engine2 Full Screen Layout</div>
+    </div>
+
+    <h3>Layout Overview</h3>
+    <ol class="steps-list">
+        <li><strong>Left Panel</strong>: File, Visualizer, Text/Font, Subtitle, Cutout, Output, Render section (accordion)</li>
+        <li><strong>Center Area</strong>: Preview canvas, meta info, status, log</li>
+        <li>Each accordion header toggles the section open/close</li>
+    </ol>
+    <div class="tip-box">Left panel sections are arranged in workflow order from top to bottom: File &rarr; Visualizer &rarr; Text &rarr; Cutout &rarr; Output &rarr; Render</div>
+
+    <!-- 3.1 TOP BAR -->
+    <span class="section-anchor" id="e2-topbar"></span>
+    <h3>3.1 Top Bar</h3>
+    <div class="img-card">
+        <img src="/images/manual/e2_12_topbar.png" alt="Engine2 Top Bar" loading="lazy">
+        <div class="img-card-caption">Engine2 Top Bar</div>
+    </div>
+    <ol class="steps-list">
+        <li><strong>LunaWave Logo</strong>: Click to return to the main page</li>
+        <li><strong>GPU Badge</strong>: Shows detected GPU name</li>
+        <li><strong>Luna Balance</strong>: Shows current Luna points balance</li>
+        <li><strong>Theme Button</strong>: Toggle between Light/Dark mode</li>
+    </ol>
+
+    <!-- 3.2 FILE UPLOAD -->
+    <span class="section-anchor" id="e2-file"></span>
+    <h3>3.2 File Upload</h3>
+    <div class="img-card">
+        <img src="/images/manual/e2_02_file.png" alt="File Upload Section" loading="lazy">
+        <div class="img-card-caption">File Upload Section</div>
+    </div>
+    <ol class="steps-list">
+        <li><strong>Audio files</strong>: Select audio files (MP3, WAV, FLAC, etc.). Multiple tracks auto-concatenate</li>
+        <li><strong>URL list</strong>: Upload a text file with YouTube URLs for batch download</li>
+        <li><strong>Image Mode</strong>: "1 Image" for single background, "2 Images" for separate person + background</li>
+        <li><strong>Image (required)</strong>: Select background image. PNG, JPG, WEBP supported</li>
+    </ol>
+    <div class="tip-box">Text Behind Person or Cutout requires an image with a person in it.</div>
+    <div class="warn-box">Both audio and image must be uploaded before rendering is possible.</div>
+
+    <!-- 3.3 VISUALIZER -->
+    <span class="section-anchor" id="e2-visualizer"></span>
+    <h3>3.3 Visualizer</h3>
+    <div class="img-card">
+        <img src="/images/manual/e2_03_visualizer.png" alt="Visualizer Section" loading="lazy">
+        <div class="img-card-caption">Visualizer Settings</div>
+    </div>
+    <ol class="steps-list">
+        <li><strong>Template/Shape</strong>: Choose from Bars, Line Wave, Dots</li>
+        <li><strong>Preset Grid</strong>: 12 presets (Classic, Mirror, Rounded, etc.) - click to apply</li>
+        <li><strong>Color</strong>: Set visualizer color. Check Gradient for 2-color gradient</li>
+        <li><strong>Direction / Bar count / Align / Sensitivity</strong>: Fine-tune direction, bar count, alignment, and sensitivity</li>
+    </ol>
+    <div class="tip-box">Use Quick Position buttons to move the visualizer in one click.</div>
+    <div class="tip-box">Style Presets like "Neon Night", "Lo-fi Dream" apply complete visual themes.</div>
+
+    <!-- 3.4 TEXT EDIT -->
+    <span class="section-anchor" id="e2-text"></span>
+    <h3>3.4 Text Edit</h3>
+    <div class="img-card">
+        <img src="/images/manual/e2_04_text.png" alt="Text Edit Section" loading="lazy">
+        <div class="img-card-caption">Text Edit Panel</div>
+    </div>
+    <ol class="steps-list">
+        <li><strong>Text items</strong>: Add (+), delete, duplicate, copy/paste styles for multiple text layers</li>
+        <li><strong>Text input</strong>: Enter text. Use "Line break" button for new lines</li>
+        <li><strong>X / Y</strong>: Position in pixels. Also adjustable by dragging on preview</li>
+        <li><strong>Align / Font size / Opacity / Line spacing</strong>: Alignment, size, transparency, line spacing</li>
+    </ol>
+    <div class="tip-box">Click text directly on the preview to select, drag to move.</div>
+    <div class="tip-box">Ctrl+Shift+C copies style, Ctrl+Shift+V pastes style to another text item.</div>
+
+    <!-- 3.5 FONT -->
+    <span class="section-anchor" id="e2-font"></span>
+    <h3>3.5 Font</h3>
+    <div class="img-card">
+        <img src="/images/manual/e2_05_font.png" alt="Font Selection" loading="lazy">
+        <div class="img-card-caption">Font Selection Panel</div>
+    </div>
+    <ol class="steps-list">
+        <li><strong>Font dropdown</strong>: Browse and select from system fonts</li>
+        <li><strong>Preview</strong>: Real-time sample text preview with selected font</li>
+        <li><strong>Favorites</strong>: Add fonts to favorites for quick access</li>
+        <li><strong>Select from file</strong>: Load TTF/OTF font files directly</li>
+    </ol>
+    <div class="tip-box">For Korean fonts, use malgun (Malgun Gothic), gulim, or load a TTF file directly.</div>
+
+    <!-- 3.6 COLOR/GRADIENT -->
+    <span class="section-anchor" id="e2-color"></span>
+    <h3>3.6 Color / Gradient</h3>
+    <div class="img-card">
+        <img src="/images/manual/e2_06_color.png" alt="Color and Gradient" loading="lazy">
+        <div class="img-card-caption">Color and Gradient Settings</div>
+    </div>
+    <ol class="steps-list">
+        <li><strong>Font color</strong>: Set the base text color</li>
+        <li><strong>Enable font gradient</strong>: Check to apply vertical gradient</li>
+        <li><strong>Preset chips</strong>: Sunset, Ocean, Neon, Gold, etc. - click to apply</li>
+        <li><strong>Color 1 / 2 / 3</strong>: Manually set top, middle, bottom gradient colors</li>
+    </ol>
+    <div class="tip-box">"Sync font color with Visualizer" automatically matches text and visualizer colors.</div>
+
+    <!-- 3.7 SUBTITLE/LYRICS -->
+    <span class="section-anchor" id="e2-subtitle"></span>
+    <h3>3.7 Subtitle / Lyrics</h3>
+    <div class="img-card">
+        <img src="/images/manual/e2_07_subtitle.png" alt="Subtitle Settings" loading="lazy">
+        <div class="img-card-caption">Subtitle / Lyrics Settings</div>
+    </div>
+    <ol class="steps-list">
+        <li><strong>SRT file upload</strong> &rarr; Overlay subtitles on video</li>
+        <li><strong>Font size, Highlight style</strong>: None, Current Line, Karaoke Fill</li>
+        <li><strong>Offset slider</strong>: Fine-tune timing from -5s to +5s</li>
+    </ol>
+    <div class="tip-box">If sync is off, adjust the Offset slider.</div>
+    <div class="warn-box">Only SRT format is supported for subtitle files.</div>
+
+    <!-- 3.8 CUTOUT/EFFECTS -->
+    <span class="section-anchor" id="e2-cutout"></span>
+    <h3>3.8 Cutout / Effects</h3>
+    <div class="img-card">
+        <img src="/images/manual/e2_08_cutout.png" alt="Cutout and Effects" loading="lazy">
+        <div class="img-card-caption">Cutout / Effects Panel</div>
+    </div>
+    <ol class="steps-list">
+        <li><strong>Auto</strong>: AI automatic person extraction. Enable Fast Mode for quicker processing</li>
+        <li><strong>Slow</strong>: Higher quality cutout processing</li>
+        <li><strong>View</strong>: Preview the cutout result</li>
+        <li><strong>Text behind person</strong>: Place text behind the extracted person</li>
+    </ol>
+    <div class="tip-box">"Ultra (BiRefNet)" provides the most precise cutout results.</div>
+    <div class="warn-box">Cutout is only available after uploading an image.</div>
+
+    <!-- 3.9 OUTPUT SETTINGS -->
+    <span class="section-anchor" id="e2-output"></span>
+    <h3>3.9 Output Settings</h3>
+    <div class="img-card">
+        <img src="/images/manual/e2_09_output.png" alt="Output Settings" loading="lazy">
+        <div class="img-card-caption">Output Settings Panel</div>
+    </div>
+    <ol class="steps-list">
+        <li><strong>Aspect</strong>: 16:9 (YouTube) or 9:16 (Shorts)</li>
+        <li><strong>Resolution</strong>: 1080p or 720p</li>
+        <li><strong>Advanced</strong>: Encoder, quality preset, CRF, and other advanced settings</li>
+        <li><strong>Presets</strong>: Save setting presets, Export/Import for sharing</li>
+    </ol>
+    <div class="tip-box">Auto encoder = GPU auto-detection. Best performance with NVIDIA.</div>
+    <div class="tip-box">Use the Storage panel to check disk usage and Clear All to clean up.</div>
+
+    <!-- 3.10 RENDER -->
+    <span class="section-anchor" id="e2-render"></span>
+    <h3>3.10 Render</h3>
+    <div class="img-card">
+        <img src="/images/manual/e2_10_render.png" alt="Render Section" loading="lazy">
+        <div class="img-card-caption">Render Execution Panel</div>
+    </div>
+    <ol class="steps-list">
+        <li><strong>Render Video (20 Luna)</strong>: Start final FFmpeg rendering</li>
+        <li><strong>Queue Manager</strong>: Process multiple videos in sequence</li>
+        <li><strong>Shorts</strong>: Dedicated 9:16 vertical video page</li>
+        <li><strong>Download timestamps</strong>: Download YouTube chapter timestamps</li>
+    </ol>
+    <div class="warn-box">Do not close the browser during rendering. Progress will be lost.</div>
+
+    <!-- 3.11 PREVIEW -->
+    <span class="section-anchor" id="e2-preview"></span>
+    <h3>3.11 Preview</h3>
+    <div class="img-card">
+        <img src="/images/manual/e2_11_preview.png" alt="Preview Area" loading="lazy">
+        <div class="img-card-caption">Preview Canvas and Controls</div>
+    </div>
+    <ol class="steps-list">
+        <li><strong>Preview canvas</strong>: Real-time display of all applied settings</li>
+        <li><strong>Guide button</strong>: Toggle center line / rule-of-thirds guidelines</li>
+        <li><strong>Preview 3 Seconds</strong>: Generate a 3-second preview video</li>
+        <li><strong>Clear Preview</strong>: Reset the preview</li>
+    </ol>
+    <div class="tip-box">Check image size, resolution, and font info in the meta information area.</div>
+    <div class="tip-box">Preview is for reference. Final FFmpeg output may differ slightly.</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- 4. AI LYRICS GENERATOR -->
+<!-- ============================================================ -->
+<span class="section-anchor" id="ai-lyrics"></span>
+<section class="guide-section">
+    <h2><span class="section-num">4</span> AI Lyrics Generator</h2>
+    <p>AI가 장르, 무드, 스토리 기반으로 가사를 자동 생성합니다.</p>
+
+    <div class="img-card">
+        <img src="/images/manual/e1_02_generate.png" alt="AI Lyrics Generation" loading="lazy">
+        <div class="img-card-caption">AI Lyrics Generation Tab</div>
+    </div>
+
+    <h3>How to Use</h3>
+    <ol class="steps-list">
+        <li><strong>Generate</strong> tab &rarr; Genre/Mood select</li>
+        <li>Enter Story or keywords</li>
+        <li>Click <strong>Generate</strong></li>
+        <li>Review and edit generated lyrics</li>
+    </ol>
+
+    <h3>Features</h3>
+    <ul>
+        <li><strong>Story Bank</strong>: Save song ideas for later use</li>
+        <li><strong>Custom Genre/Mood</strong>: Add your own custom genre and mood tags</li>
+        <li><strong>Multiple Generations</strong>: Generate multiple variations and pick the best one</li>
+    </ul>
+</section>
+
+<!-- ============================================================ -->
+<!-- 5. SONG MANAGEMENT -->
+<!-- ============================================================ -->
+<span class="section-anchor" id="songs"></span>
+<section class="guide-section">
+    <h2><span class="section-num">5</span> Song Management</h2>
+    <p>Generated songs are managed in the Songs tab. Queue, edit, and organize your song library.</p>
+
+    <div class="img-card">
+        <img src="/images/manual/e1_03_songs.png" alt="Song Management" loading="lazy">
+        <div class="img-card-caption">Song Management Tab</div>
+    </div>
+
+    <ul>
+        <li>View all generated songs in a list</li>
+        <li>Edit lyrics, genre, mood, and title</li>
+        <li>Queue management for auto runner</li>
+        <li>Delete or archive songs</li>
+    </ul>
+</section>
+
+<!-- ============================================================ -->
+<!-- 6. AUTO INPUT RUNNER -->
+<!-- ============================================================ -->
+<span class="section-anchor" id="runner"></span>
+<section class="guide-section">
+    <h2><span class="section-num">6</span> Auto Input Runner</h2>
+    <p>Suno AI에 곡 정보를 자동으로 입력하는 자동화 도구입니다.</p>
+
+    <div class="img-card">
+        <img src="/images/manual/e1_04_runner.png" alt="Auto Input Runner" loading="lazy">
+        <div class="img-card-caption">Auto Input Runner Tab</div>
+    </div>
+
+    <h3>Calibration</h3>
+    <p>Runner를 처음 사용하거나 Suno 레이아웃이 변경된 경우 캘리브레이션이 필요합니다.</p>
+    <ol class="steps-list">
+        <li>Calibration 버튼 클릭</li>
+        <li>Suno 페이지에서 <strong>Title</strong> 입력 필드 클릭</li>
+        <li><strong>Prompt</strong> 입력 필드 클릭</li>
+        <li><strong>Lyrics</strong> 입력 필드 클릭</li>
+        <li><strong>Create</strong> 버튼 위치 클릭</li>
+    </ol>
+
+    <div class="img-card">
+        <img src="/images/manual/e1_04_runner_detail.png" alt="Runner Detail" loading="lazy">
+        <div class="img-card-caption">Runner Calibration Detail</div>
+    </div>
+
+    <h3>Queue Management</h3>
+    <ul>
+        <li><strong>Add Song</strong>: Add songs to the runner queue</li>
+        <li><strong>Edit / Remove</strong>: Modify or delete queue items</li>
+        <li><strong>Clear All</strong>: Remove all items from queue</li>
+        <li><strong>Import JSON</strong>: Bulk import from JSON file</li>
+        <li><strong>Sync</strong>: Sync with Songs tab</li>
+    </ul>
+
+    <h3>Execution</h3>
+    <ol class="steps-list">
+        <li>Click <strong>Start Auto Input Runner</strong></li>
+        <li>Press <strong>F8</strong> to begin automated input</li>
+        <li>Press <strong>ESC</strong> to stop at any time</li>
+    </ol>
+
+    <div class="img-card">
+        <img src="/images/manual/e1_04_runner_auto.png" alt="Runner Auto Mode" loading="lazy">
+        <div class="img-card-caption">Runner Auto Mode in Action</div>
+    </div>
+
+    <div class="tip-box">Batch limit: 30-second pause every 10 songs to avoid rate limiting.</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- 7. SUNO DOWNLOADER -->
+<!-- ============================================================ -->
+<span class="section-anchor" id="suno"></span>
+<section class="guide-section">
+    <h2><span class="section-num">7</span> Suno Downloader</h2>
+    <p>Suno AI에서 생성한 곡을 자동으로 다운로드합니다.</p>
+
+    <h3>Auto Connect</h3>
+    <ol class="steps-list">
+        <li>Click the <strong>Auto Connect</strong> button</li>
+        <li>Browser opens &rarr; Log in to Suno</li>
+        <li>Cookie is automatically collected</li>
+    </ol>
+
+    <h3>Download</h3>
+    <ul>
+        <li><strong>MP3 Download</strong>: Download audio files</li>
+        <li><strong>SRT Download</strong>: Download synchronized lyrics</li>
+        <li><strong>Select All</strong>: Batch download multiple songs</li>
+    </ul>
+    <div class="tip-box">Connection issues? Make sure you are logged into Suno, then try reconnecting.</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- 8. YOUTUBE METADATA -->
+<!-- ============================================================ -->
+<span class="section-anchor" id="youtube-meta"></span>
+<section class="guide-section">
+    <h2><span class="section-num">8</span> YouTube Metadata</h2>
+    <p>AI가 YouTube 업로드에 최적화된 메타데이터를 자동 생성합니다.</p>
+
+    <ul>
+        <li><strong>Title Candidates</strong>: 10 optimized title suggestions</li>
+        <li><strong>Description</strong>: SEO-optimized video description</li>
+        <li><strong>Tags</strong>: 30 relevant tags for discoverability</li>
+        <li><strong>Thumbnail Prompt</strong>: AI image prompt for thumbnail creation</li>
+    </ul>
+</section>
+
+<!-- ============================================================ -->
+<!-- 9. ANALYTICS -->
+<!-- ============================================================ -->
+<span class="section-anchor" id="analytics"></span>
+<section class="guide-section">
+    <h2><span class="section-num">9</span> Analytics</h2>
+    <p>YouTube channel performance analysis and AI-powered insights.</p>
+
+    <div class="img-card">
+        <img src="/images/manual/e1_05_analytics.png" alt="Analytics Dashboard" loading="lazy">
+        <div class="img-card-caption">Analytics Dashboard</div>
+    </div>
+
+    <ul>
+        <li><strong>Channel Analysis</strong>: Overall channel performance metrics</li>
+        <li><strong>AI Insights</strong>: AI-powered recommendations for growth</li>
+        <li><strong>Competitor Compare</strong>: Compare your channel with competitors</li>
+        <li><strong>Timing Analysis</strong>: Best upload times for your audience</li>
+        <li><strong>Find Competitors</strong>: Discover channels in your niche</li>
+    </ul>
+</section>
+
+<!-- ============================================================ -->
+<!-- 10. SETTINGS -->
+<!-- ============================================================ -->
+<span class="section-anchor" id="settings"></span>
+<section class="guide-section">
+    <h2><span class="section-num">10</span> Settings</h2>
+
+    <div class="img-card">
+        <img src="/images/manual/e1_06_settings.png" alt="Settings Page" loading="lazy">
+        <div class="img-card-caption">Settings Page</div>
+    </div>
+
+    <ul>
+        <li><strong>Theme</strong>: Switch between Light and Dark mode</li>
+        <li><strong>Output Folder</strong>: Set the default output directory for rendered videos</li>
+        <li><strong>Language</strong>: Interface language selection</li>
+        <li><strong>API Keys</strong>: Configure AI provider API keys</li>
+    </ul>
+</section>
+
+<!-- ============================================================ -->
+<!-- 11. KEYBOARD SHORTCUTS -->
+<!-- ============================================================ -->
+<span class="section-anchor" id="shortcuts"></span>
+<section class="guide-section">
+    <h2><span class="section-num">11</span> Keyboard Shortcuts</h2>
+
+    <table class="guide-table">
+        <thead>
+            <tr>
+                <th>Shortcut</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>ESC</code></td>
+                <td>Stop Auto Runner / Cancel calibration</td>
+            </tr>
+            <tr>
+                <td><code>Ctrl + Click</code></td>
+                <td>Select text on canvas</td>
+            </tr>
+            <tr>
+                <td><code>Drag</code></td>
+                <td>Move text / visualizer position on canvas</td>
+            </tr>
+            <tr>
+                <td><code>Ctrl + Shift + C</code></td>
+                <td>Copy text style</td>
+            </tr>
+            <tr>
+                <td><code>Ctrl + Shift + V</code></td>
+                <td>Paste text style</td>
+            </tr>
+            <tr>
+                <td><code>F8</code></td>
+                <td>Start Auto Runner (after engine is running)</td>
+            </tr>
+        </tbody>
+    </table>
+</section>
+
+<!-- ============================================================ -->
+<!-- 12. TROUBLESHOOTING -->
+<!-- ============================================================ -->
+<span class="section-anchor" id="troubleshooting"></span>
+<section class="guide-section">
+    <h2><span class="section-num">12</span> Troubleshooting</h2>
+
+    <table class="guide-table">
+        <thead>
+            <tr>
+                <th>Issue</th>
+                <th>Solution</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>App does not start</td>
+                <td>Check if localhost:3000 is in use by another app. Check firewall settings.</td>
+            </tr>
+            <tr>
+                <td>Rendering is slow</td>
+                <td>Ensure NVIDIA GPU is detected. Update GPU drivers to the latest version.</td>
+            </tr>
+            <tr>
+                <td>Performance drops over time</td>
+                <td>Check CPU temperature and ventilation. Close unnecessary background apps.</td>
+            </tr>
+            <tr>
+                <td>Cutout not working</td>
+                <td>Verify the Cutout server is running. Restart the app if needed.</td>
+            </tr>
+            <tr>
+                <td>Canvas differs from FFmpeg output</td>
+                <td>Use "Accurate Preview" or "Preview 3 Seconds" to verify.</td>
+            </tr>
+            <tr>
+                <td>Suno connection failed</td>
+                <td>Check login status on Suno. Try reconnecting via Auto Connect.</td>
+            </tr>
+            <tr>
+                <td>Visualizer not visible</td>
+                <td>Make sure audio is uploaded and a visualizer preset is selected.</td>
+            </tr>
+        </tbody>
+    </table>
+</section>
+
+</div><!-- .guide-content -->
+</main>
+
+<!-- FOOTER -->
+<footer class="guide-footer">
+    <p>&copy; 2026 LUNA WAVE. All rights reserved.</p>
+    <p><a href="https://lunawaveapp.com">lunawaveapp.com</a></p>
+</footer>
+
+<!-- BACK TO TOP -->
+<button class="back-to-top" id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Back to top">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+</button>
+
+<script>
+(function() {
+    // === Sidebar toggle (mobile) ===
+    window.toggleSidebar = function() {
+        var sb = document.getElementById('guideSidebar');
+        var ov = document.getElementById('sidebarOverlay');
+        sb.classList.toggle('open');
+        ov.classList.toggle('open');
+    };
+
+    // Close sidebar on link click (mobile)
+    var sidebarLinks = document.querySelectorAll('.sidebar-nav a');
+    sidebarLinks.forEach(function(link) {
+        link.addEventListener('click', function() {
+            if (window.innerWidth <= 1024) {
+                document.getElementById('guideSidebar').classList.remove('open');
+                document.getElementById('sidebarOverlay').classList.remove('open');
+            }
+        });
+    });
+
+    // === Active section highlight on scroll ===
+    var sections = [];
+    var navLinks = document.querySelectorAll('.sidebar-nav a[data-section]');
+    navLinks.forEach(function(link) {
+        var id = link.getAttribute('data-section');
+        var el = document.getElementById(id);
+        if (el) sections.push({ id: id, el: el, link: link });
+    });
+
+    function updateActive() {
+        var scrollY = window.scrollY + 120;
+        var current = null;
+        for (var i = sections.length - 1; i >= 0; i--) {
+            var rect = sections[i].el.getBoundingClientRect();
+            var top = rect.top + window.scrollY;
+            if (scrollY >= top) {
+                current = sections[i];
+                break;
+            }
+        }
+        navLinks.forEach(function(l) { l.classList.remove('active'); });
+        if (current) {
+            current.link.classList.add('active');
+            // Scroll sidebar to keep active link visible
+            var sidebar = document.getElementById('guideSidebar');
+            var linkRect = current.link.getBoundingClientRect();
+            var sidebarRect = sidebar.getBoundingClientRect();
+            if (linkRect.top < sidebarRect.top + 80 || linkRect.bottom > sidebarRect.bottom - 40) {
+                current.link.scrollIntoView({ block: 'center', behavior: 'smooth' });
+            }
+        }
+    }
+
+    var scrollTimeout;
+    window.addEventListener('scroll', function() {
+        if (scrollTimeout) cancelAnimationFrame(scrollTimeout);
+        scrollTimeout = requestAnimationFrame(updateActive);
+    });
+    updateActive();
+
+    // === Back to top button ===
+    var btn = document.getElementById('backToTop');
+    window.addEventListener('scroll', function() {
+        if (window.scrollY > 400) {
+            btn.classList.add('visible');
+        } else {
+            btn.classList.remove('visible');
+        }
+    });
+})();
+</script>
+</body>
+</html>
