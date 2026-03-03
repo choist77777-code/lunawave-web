@@ -100,7 +100,8 @@ async function handleLogin(e) {
                     body: JSON.stringify({
                         device_name: navigator.platform || 'web',
                         user_agent: navigator.userAgent ? navigator.userAgent.substring(0, 200) : null
-                    })
+                    }),
+                    keepalive: true
                 }).catch(function() {});
             }
         } catch (_) { /* login log is non-critical */ }
