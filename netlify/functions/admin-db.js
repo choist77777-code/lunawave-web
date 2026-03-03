@@ -6,7 +6,7 @@ const supabase = createClient(
     process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-const ALLOWED_TABLES = ['profiles', 'payments', 'events', 'notices', 'promo_codes', 'ai_config'];
+const ALLOWED_TABLES = ['profiles', 'payments', 'events', 'notices', 'promo_codes', 'ai_config', 'inquiries', 'faq', 'tokens_log', 'login_logs', 'devices'];
 
 exports.handler = async (event) => {
     const headers = {

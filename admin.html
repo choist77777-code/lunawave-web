@@ -9,6 +9,7 @@
 <title>LunaWave Admin</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="/js/supabase-client.js"></script>
 <style>
@@ -331,10 +332,10 @@ tr:last-child td { border-bottom:none; }
     <div class="stat-card" style="display:flex;align-items:center;justify-content:space-between;background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:20px;">
         <div>
             <div style="font-size:15px;font-weight:600;">현재 최신 버전</div>
-            <div style="font-size:13px;color:var(--text3);margin-top:4px;">최소 지원: v5.0.0-beta.1</div>
+            <div style="font-size:13px;color:var(--text3);margin-top:4px;">버전 입력 후 저장하면 업데이트 공지가 등록됩니다</div>
         </div>
         <div style="display:flex;align-items:center;gap:12px;">
-            <input type="text" id="appVersion" value="5.0.0-beta.1" style="width:100px;background:var(--bg3);border:1px solid var(--line);border-radius:6px;padding:8px;color:var(--text);font-size:14px;text-align:center;">
+            <input type="text" id="appVersion" value="6.1.2" style="width:100px;background:var(--bg3);border:1px solid var(--line);border-radius:6px;padding:8px;color:var(--text);font-size:14px;text-align:center;">
             <button class="btn btn-gold" onclick="saveVersion()">저장</button>
         </div>
     </div>
@@ -620,13 +621,25 @@ class _AdminQuery {
 const sb = { from: (t) => new _AdminQuery(t), auth: _realSb.auth };
 
 // ========== TAB NAVIGATION ==========
+const _tabLoaded = {};
 document.querySelectorAll('.nav-item').forEach(item => {
     item.addEventListener('click', () => {
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
         item.classList.add('active');
-        document.getElementById('tab-' + item.dataset.tab).classList.add('active');
+        const tab = item.dataset.tab;
+        document.getElementById('tab-' + tab).classList.add('active');
         lucide.createIcons();
+        if (!_tabLoaded[tab]) {
+            _tabLoaded[tab] = true;
+            switch(tab) {
+                case 'luna': loadLunaStats(); break;
+                case 'analytics': loadAnalytics(); break;
+                case 'cs': loadInquiries(); break;
+                case 'security': loadSecurity(); break;
+                case 'marketing': loadReferralStats(); break;
+            }
+        }
     });
 });
 
@@ -889,6 +902,7 @@ async function submitPromo() {
 }
 
 // ========== NOTICES (보강) ==========
+let editingNoticeId = null;
 async function loadNotices() {
     try {
         const { data: notices } = await sb.from('notices').select('*')
@@ -914,6 +928,7 @@ function renderNotices(notices) {
             <td><span class="badge ${n.is_active ? 'badge-paid' : 'badge-free'}">${n.is_active ? '활성' : '비활성'}</span></td>
             <td>${new Date(n.created_at).toLocaleDateString()}</td>
             <td>
+                <button class="btn btn-sm btn-outline" onclick="editNotice('${n.id}')">수정</button>
                 <button class="btn btn-sm btn-outline" onclick="toggleNotice('${n.id}', ${n.is_active})">${n.is_active ? '비활성화' : '활성화'}</button>
                 <button class="btn btn-sm btn-danger" onclick="deleteNotice('${n.id}')">삭제</button>
             </td>
@@ -922,6 +937,7 @@ function renderNotices(notices) {
 }
 
 function showNoticeModal() {
+    editingNoticeId = null;
     document.getElementById('noticeTitle').value = '';
     document.getElementById('noticeContent').value = '';
     document.getElementById('noticeType').value = 'info';
@@ -931,7 +947,22 @@ function showNoticeModal() {
     document.getElementById('noticePinned').checked = false;
     document.getElementById('noticeModal').classList.add('show');
 }
-function closeNoticeModal() { document.getElementById('noticeModal').classList.remove('show'); }
+function closeNoticeModal() { editingNoticeId = null; document.getElementById('noticeModal').classList.remove('show'); }
+
+async function editNotice(id) {
+    const { data: n } = await sb.from('notices').select('*').eq('id', id).single();
+    if (!n) { alert('공지를 찾을 수 없습니다.'); return; }
+    editingNoticeId = id;
+    document.getElementById('noticeTitle').value = n.title || '';
+    document.getElementById('noticeContent').value = n.content || '';
+    document.getElementById('noticeType').value = n.notice_type || n.type || 'info';
+    document.getElementById('noticeUrl').value = n.url || '';
+    document.getElementById('noticeStartDate').value = n.start_date || '';
+    document.getElementById('noticeEndDate').value = n.end_date || '';
+    document.getElementById('noticePinned').checked = !!n.is_pinned;
+    document.getElementById('noticeModal').classList.add('show');
+}
+
 async function submitNotice() {
     const title = document.getElementById('noticeTitle').value;
     const content = document.getElementById('noticeContent').value;
@@ -941,15 +972,25 @@ async function submitNotice() {
     const endDate = document.getElementById('noticeEndDate').value;
     const pinned = document.getElementById('noticePinned').checked;
     if (!title || !content) { alert('제목과 내용을 입력하세요'); return; }
-    await sb.from('notices').insert({
-        title, content, type, is_active: true,
-        notice_type: type,
+
+    const noticeData = {
+        title, content, type, notice_type: type,
         is_pinned: pinned,
         url: url || null,
         start_date: startDate || null,
         end_date: endDate || null
-    });
-    alert('공지사항 등록 완료');
+    };
+
+    if (editingNoticeId) {
+        noticeData.updated_at = new Date().toISOString();
+        await sb.from('notices').update(noticeData).eq('id', editingNoticeId);
+        alert('공지사항이 수정되었습니다.');
+    } else {
+        noticeData.is_active = true;
+        await sb.from('notices').insert(noticeData);
+        alert('공지사항 등록 완료');
+    }
+    editingNoticeId = null;
     closeNoticeModal();
     loadNotices();
 }
@@ -1115,9 +1156,236 @@ async function changeActiveProvider() {
     loadAiConfig();
 }
 
+// ========== LUNA STATS ==========
+async function loadLunaStats() {
+    try {
+        const { data: grantedLogs } = await sb.from('tokens_log').select('amount')
+            .in('action', ['subscription', 'purchase', 'promo', 'referral_bonus', 'daily', 'monthly_bonus', 'admin_grant', 'event_grant', 'invite_reward']);
+        const totalGranted = (grantedLogs || []).reduce((s, l) => s + (l.amount || 0), 0);
+        document.getElementById('l-issued').textContent = Math.floor(totalGranted).toLocaleString();
+
+        const { data: usedLogs } = await sb.from('tokens_log').select('amount').eq('action', 'use');
+        const totalUsed = Math.abs((usedLogs || []).reduce((s, l) => s + (l.amount || 0), 0));
+        document.getElementById('l-used').textContent = Math.floor(totalUsed).toLocaleString();
+
+        const { data: balances } = await sb.from('profiles').select('lunas_free, lunas_monthly, lunas_bonus, tokens_purchased');
+        const totalBalance = (balances || []).reduce((s, p) =>
+            s + (p.lunas_free || 0) + (p.lunas_monthly || 0) + (p.lunas_bonus || 0) + (p.tokens_purchased || 0), 0);
+        document.getElementById('l-remaining').textContent = Math.floor(totalBalance).toLocaleString();
+
+        const today = new Date().toISOString().split('T')[0];
+        const { data: todayUsage } = await sb.from('tokens_log').select('user_id, amount').eq('action', 'use').gte('created_at', today);
+        const userUsage = {};
+        (todayUsage || []).forEach(l => { userUsage[l.user_id] = (userUsage[l.user_id] || 0) + Math.abs(l.amount || 0); });
+        const heavyCount = Object.values(userUsage).filter(v => v >= 100).length;
+        document.getElementById('l-anomaly').textContent = heavyCount;
+
+        const { data: recentLogs } = await sb.from('tokens_log').select('user_id, action, feature, amount, balance_after, created_at')
+            .order('created_at', { ascending: false }).limit(20);
+        const lunaLogBody = document.getElementById('lunaLogBody');
+        if (recentLogs && recentLogs.length) {
+            const uids = [...new Set(recentLogs.map(l => l.user_id).filter(Boolean))];
+            let emailMap = {};
+            if (uids.length) {
+                const { data: users } = await sb.from('profiles').select('id, email').in('id', uids);
+                (users || []).forEach(u => { emailMap[u.id] = u.email; });
+            }
+            lunaLogBody.innerHTML = recentLogs.map(l => `
+                <tr>
+                    <td style="font-size:12px;">${emailMap[l.user_id] || '-'}</td>
+                    <td>${l.feature || l.action || '-'}</td>
+                    <td style="color:${l.amount < 0 ? 'var(--red)' : 'var(--green)'};">${l.amount > 0 ? '+' : ''}${l.amount}</td>
+                    <td>${l.balance_after != null ? l.balance_after : '-'}</td>
+                    <td style="font-size:12px;">${l.created_at ? new Date(l.created_at).toLocaleString() : '-'}</td>
+                </tr>
+            `).join('');
+        } else {
+            lunaLogBody.innerHTML = '<tr><td colspan="5" class="loading">사용 내역 없음</td></tr>';
+        }
+    } catch (e) { console.error('Luna stats error:', e); }
+}
+
+// ========== ANALYTICS ==========
+async function loadAnalytics() {
+    try {
+        const today = new Date().toISOString().split('T')[0];
+        const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString();
+        const monthAgo = new Date(Date.now() - 30 * 86400000).toISOString();
+
+        const { data: dauData } = await sb.from('login_logs').select('user_id').gte('created_at', today);
+        document.getElementById('a-dau').textContent = new Set((dauData || []).map(l => l.user_id)).size;
+
+        const { data: wauData } = await sb.from('login_logs').select('user_id').gte('created_at', weekAgo);
+        document.getElementById('a-wau').textContent = new Set((wauData || []).map(l => l.user_id)).size;
+
+        const { data: mauData } = await sb.from('login_logs').select('user_id').gte('created_at', monthAgo);
+        document.getElementById('a-mau').textContent = new Set((mauData || []).map(l => l.user_id)).size;
+
+        const { count: totalUsers } = await sb.from('profiles').select('*', { count: 'exact', head: true });
+        const { count: paidUsers } = await sb.from('profiles').select('*', { count: 'exact', head: true })
+            .in('plan', ['crescent', 'halfmoon', 'fullmoon']);
+        document.getElementById('a-conv').textContent = (totalUsers ? ((paidUsers || 0) / totalUsers * 100).toFixed(1) : 0) + '%';
+
+        const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString();
+        const { data: allUsers } = await sb.from('profiles').select('id, email, plan, last_sign_in_at, created_at');
+        const churnBody = document.getElementById('churnTableBody');
+        const churnUsers = (allUsers || []).filter(u => {
+            const lastActive = u.last_sign_in_at || u.created_at;
+            return lastActive && new Date(lastActive) < new Date(sevenDaysAgo);
+        }).sort((a, b) => new Date(a.last_sign_in_at || a.created_at) - new Date(b.last_sign_in_at || b.created_at))
+        .slice(0, 20);
+
+        if (churnUsers.length) {
+            churnBody.innerHTML = churnUsers.map(u => {
+                const lastDate = new Date(u.last_sign_in_at || u.created_at);
+                const daysInactive = Math.floor((Date.now() - lastDate) / 86400000);
+                const planLabel = {'crescent':'초승달','halfmoon':'반달','fullmoon':'보름달'}[u.plan] || u.plan || 'Free';
+                return `<tr>
+                    <td>${u.email || '-'}</td>
+                    <td><span class="badge badge-${u.plan !== 'free' && u.plan ? 'pro' : 'free'}">${planLabel}</span></td>
+                    <td style="font-size:12px;">${lastDate.toLocaleDateString()}</td>
+                    <td style="color:var(--red);font-weight:700;">${daysInactive}일</td>
+                    <td>-</td>
+                </tr>`;
+            }).join('');
+        } else {
+            churnBody.innerHTML = '<tr><td colspan="5" class="loading">이탈 경고 유저 없음</td></tr>';
+        }
+    } catch (e) { console.error('Analytics error:', e); }
+}
+
+// ========== CS: INQUIRIES ==========
+async function loadInquiries() {
+    try {
+        const { data: inquiries } = await sb.from('inquiries').select('*').order('created_at', { ascending: false }).limit(30);
+        const tbody = document.getElementById('csTableBody');
+        if (!inquiries || !inquiries.length) {
+            tbody.innerHTML = '<tr><td colspan="5" class="loading">문의 없음</td></tr>';
+            return;
+        }
+        tbody.innerHTML = inquiries.map(i => `
+            <tr>
+                <td>${i.email || '-'}</td>
+                <td>${i.title || i.subject || '-'}</td>
+                <td><span class="badge ${i.status === 'replied' ? 'badge-paid' : 'badge-free'}">${i.status === 'replied' ? '답변완료' : '대기중'}</span></td>
+                <td style="font-size:12px;">${i.created_at ? new Date(i.created_at).toLocaleDateString() : '-'}</td>
+                <td><button class="btn btn-sm btn-outline" onclick="showInquiryDetail('${i.id}')">보기</button></td>
+            </tr>
+        `).join('');
+    } catch (e) { console.error('Inquiries error:', e); }
+}
+
+async function showInquiryDetail(id) {
+    const { data: inquiry } = await sb.from('inquiries').select('*').eq('id', id).single();
+    if (!inquiry) { alert('문의를 찾을 수 없습니다.'); return; }
+    const msg = `[${inquiry.email || '-'}]\n제목: ${inquiry.title || inquiry.subject || '-'}\n\n${inquiry.content || inquiry.message || '-'}${inquiry.reply ? '\n\n--- 기존 답변 ---\n' + inquiry.reply : ''}`;
+    const reply = prompt(msg + '\n\n--- 답변을 입력하세요 ---');
+    if (reply !== null && reply.trim()) {
+        await sb.from('inquiries').update({
+            reply: reply.trim(),
+            status: 'replied',
+            replied_at: new Date().toISOString()
+        }).eq('id', id);
+        alert('답변이 등록되었습니다.');
+        loadInquiries();
+    }
+}
+
+// ========== SECURITY ==========
+async function loadSecurity() {
+    try {
+        const { data: logs } = await sb.from('login_logs').select('*').order('created_at', { ascending: false }).limit(30);
+        const loginLogBody = document.getElementById('loginLogBody');
+        if (logs && logs.length) {
+            const uids = [...new Set(logs.map(l => l.user_id).filter(Boolean))];
+            let emailMap = {};
+            if (uids.length) {
+                const { data: users } = await sb.from('profiles').select('id, email').in('id', uids);
+                (users || []).forEach(u => { emailMap[u.id] = u.email; });
+            }
+            loginLogBody.innerHTML = logs.map(l => `
+                <tr>
+                    <td style="font-size:12px;">${emailMap[l.user_id] || '-'}</td>
+                    <td>${l.ip_address || '-'}</td>
+                    <td style="font-size:12px;">${(l.user_agent || l.device_name || '-').substring(0, 40)}</td>
+                    <td style="font-size:12px;">${l.created_at ? new Date(l.created_at).toLocaleString() : '-'}</td>
+                </tr>
+            `).join('');
+        } else {
+            loginLogBody.innerHTML = '<tr><td colspan="4" class="loading">로그인 기록 없음</td></tr>';
+        }
+
+        const { data: devices } = await sb.from('devices').select('*');
+        const freeAbuseBody = document.getElementById('freeAbuseBody');
+        if (devices && devices.length) {
+            const deviceMap = {};
+            devices.forEach(d => {
+                const did = d.device_id || d.hardware_id;
+                if (!did) return;
+                if (!deviceMap[did]) deviceMap[did] = [];
+                deviceMap[did].push(d.user_email || d.user_id || '-');
+            });
+            const abuseDevices = Object.entries(deviceMap).filter(([, a]) => a.length >= 3);
+            if (abuseDevices.length) {
+                freeAbuseBody.innerHTML = abuseDevices.map(([did, accounts]) => `
+                    <tr>
+                        <td style="font-family:monospace;font-size:12px;">${did.substring(0, 16)}</td>
+                        <td style="color:var(--red);font-weight:700;">${accounts.length}개</td>
+                        <td style="font-size:12px;">${accounts.join(', ')}</td>
+                        <td><span class="badge badge-free">${accounts.length >= 5 ? '위험' : '주의'}</span></td>
+                    </tr>
+                `).join('');
+            } else {
+                freeAbuseBody.innerHTML = '<tr><td colspan="4" class="loading">악용 감지 없음</td></tr>';
+            }
+        } else {
+            freeAbuseBody.innerHTML = '<tr><td colspan="4" class="loading">기기 데이터 없음</td></tr>';
+        }
+    } catch (e) { console.error('Security error:', e); }
+}
+
+// ========== REFERRAL STATS ==========
+async function loadReferralStats() {
+    try {
+        const { data: referred } = await sb.from('profiles').select('invited_by').not('invited_by', 'is', null);
+        document.getElementById('m-refs').textContent = (referred || []).length;
+
+        const { data: paidReferred } = await sb.from('profiles').select('plan, invited_by')
+            .not('invited_by', 'is', null)
+            .in('plan', ['crescent', 'halfmoon', 'fullmoon']);
+        document.getElementById('m-conv').textContent = (paidReferred || []).length;
+
+        const { data: bonusLogs } = await sb.from('tokens_log').select('amount').eq('action', 'invite_reward').gt('amount', 0);
+        const totalBonus = (bonusLogs || []).reduce((s, l) => s + (l.amount || 0), 0);
+        document.getElementById('m-bonus').textContent = Math.floor(totalBonus).toLocaleString() + ' 루나';
+    } catch (e) { console.error('Referral stats error:', e); }
+}
+
 // ========== HELPERS ==========
-function saveDiscount() { alert('할인율이 저장되었습니다. payment.html에 반영해주세요.'); }
-function saveVersion() { alert('버전 정보가 저장되었습니다.'); }
+async function saveDiscount() {
+    const rate = parseInt(document.getElementById('discountRate').value);
+    if (isNaN(rate) || rate < 0 || rate > 80) { alert('0~80 사이 값을 입력하세요'); return; }
+    const { data: existing } = await sb.from('promo_codes').select('id').eq('code', 'FIRST_PAYMENT_DISCOUNT');
+    if (existing && existing.length) {
+        await sb.from('promo_codes').update({ value: rate, updated_at: new Date().toISOString() }).eq('code', 'FIRST_PAYMENT_DISCOUNT');
+    } else {
+        await sb.from('promo_codes').insert({ code: 'FIRST_PAYMENT_DISCOUNT', type: 'discount', value: rate, max_uses: 99999, is_active: true });
+    }
+    alert('첫 결제 할인율이 ' + rate + '%로 저장되었습니다.');
+}
+
+async function saveVersion() {
+    const version = document.getElementById('appVersion').value.trim();
+    if (!version) { alert('버전을 입력하세요'); return; }
+    await sb.from('notices').insert({
+        title: '앱 업데이트 v' + version,
+        content: '최신 버전 v' + version + '이 출시되었습니다. 업데이트해주세요.',
+        type: 'update', notice_type: 'update',
+        is_active: true, is_pinned: false
+    });
+    alert('버전 ' + version + ' 업데이트 공지가 등록되었습니다.\ndownload.html과 dashboard.html의 버전도 수동으로 업데이트하세요.');
+    loadNotices();
+}
 
 // ========== INIT ==========
 checkAdmin();

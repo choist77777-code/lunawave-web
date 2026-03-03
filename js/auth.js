@@ -87,7 +87,19 @@ async function handleLogin(e) {
             return;
         }
 
-        // Login success
+        // Login success - record login log
+        try {
+            const userId = data.user?.id;
+            if (userId) {
+                await supabase.from('login_logs').insert({
+                    user_id: userId,
+                    ip_address: null,
+                    device_name: navigator.platform || 'web',
+                    user_agent: navigator.userAgent?.substring(0, 200)
+                });
+            }
+        } catch (_) { /* login log is non-critical */ }
+
         window.location.href = '/dashboard.html';
 
     } catch (err) {
