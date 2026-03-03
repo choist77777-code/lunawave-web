@@ -87,16 +87,21 @@ async function handleLogin(e) {
             return;
         }
 
-        // Login success - record login log
+        // Login success - record login log (Netlify function, RLS 우회)
         try {
-            const userId = data.user?.id;
-            if (userId) {
-                await supabase.from('login_logs').insert({
-                    user_id: userId,
-                    ip_address: null,
-                    device_name: navigator.platform || 'web',
-                    user_agent: navigator.userAgent?.substring(0, 200)
-                });
+            const session = data.session;
+            if (session && session.access_token) {
+                fetch('/.netlify/functions/log-login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + session.access_token
+                    },
+                    body: JSON.stringify({
+                        device_name: navigator.platform || 'web',
+                        user_agent: navigator.userAgent ? navigator.userAgent.substring(0, 200) : null
+                    })
+                }).catch(function() {});
             }
         } catch (_) { /* login log is non-critical */ }
 
