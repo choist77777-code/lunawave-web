@@ -90,8 +90,16 @@ exports.handler = async (event) => {
                 paid_at: paymentData.paid_at
             };
         } else {
-            // 데모 모드
-            console.log('Demo mode: PortOne V1 not configured');
+            // 프로덕션 환경에서는 결제 검증 필수
+            if (process.env.NODE_ENV === 'production' || process.env.NETLIFY) {
+                return {
+                    statusCode: 500,
+                    headers,
+                    body: JSON.stringify({ success: false, error: 'Payment verification not configured' })
+                };
+            }
+            // 로컬 개발 환경 데모 모드
+            console.warn('[WARN] Demo mode: PortOne V1 not configured - local dev only');
             paymentInfo = {
                 status: 'paid',
                 amount: expected_amount,

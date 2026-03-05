@@ -41,10 +41,17 @@ exports.handler = async (event) => {
             return { statusCode: 200, headers, body: JSON.stringify({ ok: true, already: true }) };
         }
 
-        // Grant 300 luna bonus
+        // Grant 300 luna bonus (기존값에 더하기)
+        const { data: currentProfile } = await supabase
+            .from('profiles')
+            .select('lunas_bonus')
+            .eq('id', user.id)
+            .single();
+
+        const currentBonus = currentProfile?.lunas_bonus || 0;
         const { error: updateError } = await supabase
             .from('profiles')
-            .update({ lunas_bonus: 300 })
+            .update({ lunas_bonus: currentBonus + 300 })
             .eq('id', user.id);
 
         if (updateError) {

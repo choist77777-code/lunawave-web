@@ -199,13 +199,13 @@ exports.handler = async (event) => {
         const today = now.toISOString().split('T')[0];
         const { data: currentProfile } = await supabase
             .from('profiles')
-            .select('lunas_monthly, tokens_purchased')
+            .select('lunas_monthly, tokens_purchased, lunas_bonus')
             .eq('id', user.id)
             .single();
 
         const monthlyBonus = PLAN_MONTHLY[plan] || 0;
         const dailyAmount = PLAN_DAILY[plan] || 20;
-        const newMonthly = (currentProfile?.lunas_monthly || 0) + monthlyBonus;
+        const newMonthly = monthlyBonus;
 
         const { error: updateError } = await supabase
             .from('profiles')
@@ -255,7 +255,7 @@ exports.handler = async (event) => {
                 user_id: user.id,
                 action: 'subscription',
                 amount: monthlyBonus,
-                balance_after: dailyAmount + newMonthly + (currentProfile?.tokens_purchased || 0),
+                balance_after: dailyAmount + newMonthly + (currentProfile?.tokens_purchased || 0) + (currentProfile?.lunas_bonus || 0),
                 description: `${plan} 구독 - 월간 보너스 ${monthlyBonus}루나 + 일간 ${dailyAmount}루나`
             });
 

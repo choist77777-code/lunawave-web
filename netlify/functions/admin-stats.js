@@ -7,8 +7,12 @@ const supabase = createClient(
 );
 
 exports.handler = async (event) => {
+    const allowedOrigins = ['https://lunawaveapp.com', 'http://localhost:3000'];
+    const reqOrigin = event.headers.origin || event.headers.Origin || '';
+    const corsOrigin = allowedOrigins.includes(reqOrigin) ? reqOrigin : 'https://lunawaveapp.com';
+
     const headers = {
-        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Origin': corsOrigin,
         'Access-Control-Allow-Headers': 'Content-Type, Authorization',
         'Content-Type': 'application/json'
     };
@@ -143,8 +147,17 @@ async function getOverviewStats() {
 
     const monthRevenue = monthPayments?.reduce((sum, p) => sum + p.amount, 0) || 0;
 
-    // MRR (월간 반복 매출) = Pro 구독자 * 17,900
-    const mrr = (proUsers || 0) * 17900;
+    // MRR (월간 반복 매출) = 플랜별 가격 * 유저 수
+    const planPrices = { crescent: 13900, halfmoon: 33000, fullmoon: 79000 };
+    let mrr = 0;
+    for (const [planName, price] of Object.entries(planPrices)) {
+        const { count: planCount } = await supabase
+            .from('profiles')
+            .select('id', { count: 'exact' })
+            .eq('plan', planName)
+            .gt('plan_expires_at', now.toISOString());
+        mrr += (planCount || 0) * price;
+    }
 
     // 실수령액 (수수료 2.9% 차감)
     const feeRate = 0.029;

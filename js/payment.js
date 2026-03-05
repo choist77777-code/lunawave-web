@@ -248,6 +248,11 @@ async function handleSubscribe() {
 
                 const result = await verifyResponse.json();
 
+                if (!verifyResponse.ok || result.error) {
+                    alert(result.error || '결제 검증에 실패했습니다. 관리자에게 문의하세요.');
+                    return;
+                }
+
                 if (result.success) {
                     alert('Pro 구독이 완료되었습니다!');
                     window.location.href = '/dashboard.html';
@@ -318,6 +323,11 @@ async function handlePurchaseTokens() {
                 });
 
                 const result = await verifyResponse.json();
+
+                if (!verifyResponse.ok || result.error) {
+                    alert(result.error || '결제 검증에 실패했습니다. 관리자에게 문의하세요.');
+                    return;
+                }
 
                 if (result.success) {
                     alert(`${result.tokens_granted} 토큰이 충전되었습니다!`);

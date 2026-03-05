@@ -23,10 +23,19 @@ exports.handler = async (event) => {
     }
 
     try {
-        const { userId } = JSON.parse(event.body || '{}');
-        if (!userId) {
-            return { statusCode: 400, headers, body: JSON.stringify({ ok: false, message: 'userId 필요' }) };
+        // Bearer token 인증
+        const authHeader = event.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return { statusCode: 401, headers, body: JSON.stringify({ ok: false, message: 'Unauthorized' }) };
         }
+
+        const token = authHeader.split(' ')[1];
+        const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+        if (authError || !user) {
+            return { statusCode: 401, headers, body: JSON.stringify({ ok: false, message: 'Invalid token' }) };
+        }
+
+        const userId = user.id;
 
         // 1. Supabase에서 프로필 조회
         const { data: profile, error: profileErr } = await supabase

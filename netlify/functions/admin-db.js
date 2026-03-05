@@ -9,8 +9,12 @@ const supabase = createClient(
 const ALLOWED_TABLES = ['profiles', 'payments', 'events', 'notices', 'promo_codes', 'ai_config', 'inquiries', 'faq', 'tokens_log', 'login_logs', 'devices'];
 
 exports.handler = async (event) => {
+    const allowedOrigins = ['https://lunawaveapp.com', 'http://localhost:3000'];
+    const reqOrigin = event.headers.origin || event.headers.Origin || '';
+    const corsOrigin = allowedOrigins.includes(reqOrigin) ? reqOrigin : 'https://lunawaveapp.com';
+
     const headers = {
-        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Origin': corsOrigin,
         'Access-Control-Allow-Headers': 'Content-Type, Authorization',
         'Content-Type': 'application/json'
     };
@@ -60,6 +64,11 @@ exports.handler = async (event) => {
 
 async function executeQuery(body) {
     const { table, action, data, filters, select, selectOpts, order, limit, single, range } = body;
+
+    // delete/update는 반드시 filters가 있어야 함 (전체 삭제/수정 방지)
+    if ((action === 'delete' || action === 'update') && (!filters || !Array.isArray(filters) || filters.length === 0)) {
+        return { data: null, error: { message: `${action} requires at least one filter to prevent bulk operations` } };
+    }
 
     let query;
 

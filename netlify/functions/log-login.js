@@ -33,7 +33,7 @@ exports.handler = async (event) => {
         const { error: insertError } = await supabase.from('login_logs').insert({
             user_id: user.id,
             ip_address: event.headers['x-forwarded-for'] || event.headers['client-ip'] || null,
-            device_id: body.device_name || 'web',
+            device_id: body.device_id || body.device_name || 'web',
             user_agent: body.user_agent ? body.user_agent.substring(0, 200) : null
         });
 
