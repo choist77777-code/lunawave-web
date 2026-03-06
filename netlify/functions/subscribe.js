@@ -74,6 +74,8 @@ exports.handler = async (event) => {
                 .from('profiles')
                 .update({
                     billing_key: null,
+                    customer_uid: null,
+                    auto_renew: false,
                     updated_at: new Date().toISOString()
                 })
                 .eq('id', user.id);
@@ -107,6 +109,7 @@ exports.handler = async (event) => {
         // 결제 금액 계산 (업그레이드 일할 계산 포함)
         let amount = PLAN_PRICES[plan];
         let promo_discount = 0;
+        let promo_bonus_lunas = 0;
 
         // 업그레이드 일할 계산
         if (body.is_upgrade) {
@@ -148,6 +151,8 @@ exports.handler = async (event) => {
                         promo_discount = Math.floor(amount * (promo.value / 100));
                     } else if (promo.type === 'fixed') {
                         promo_discount = promo.value;
+                    } else if (promo.type === 'bonus_lunas') {
+                        promo_bonus_lunas = promo.value;
                     }
                     amount = Math.max(0, amount - promo_discount);
 
@@ -248,15 +253,27 @@ exports.handler = async (event) => {
                 }
             });
 
+        // 프로모 보너스 루나 지급 (bonus_lunas 타입)
+        let bonusLunasGranted = 0;
+        if (promo_bonus_lunas > 0) {
+            const newPurchased = (currentProfile?.tokens_purchased || 0) + promo_bonus_lunas;
+            await supabase
+                .from('profiles')
+                .update({ tokens_purchased: newPurchased, updated_at: now.toISOString() })
+                .eq('id', user.id);
+            bonusLunasGranted = promo_bonus_lunas;
+        }
+
         // 루나 로그 기록
+        const totalPurchased = (currentProfile?.tokens_purchased || 0) + bonusLunasGranted;
         await supabase
             .from('tokens_log')
             .insert({
                 user_id: user.id,
                 action: 'subscription',
                 amount: monthlyBonus,
-                balance_after: dailyAmount + newMonthly + (currentProfile?.tokens_purchased || 0) + (currentProfile?.lunas_bonus || 0),
-                description: `${plan} 구독 - 월간 보너스 ${monthlyBonus}루나 + 일간 ${dailyAmount}루나`
+                balance_after: dailyAmount + newMonthly + totalPurchased + (currentProfile?.lunas_bonus || 0),
+                description: `${plan} 구독 - 월간 보너스 ${monthlyBonus}루나 + 일간 ${dailyAmount}루나${bonusLunasGranted > 0 ? ` + 프로모 보너스 ${bonusLunasGranted}루나` : ''}`
             });
 
         return {

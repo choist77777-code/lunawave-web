@@ -60,10 +60,17 @@ exports.handler = async (event) => {
         }
 
         // Log the bonus
+        const { data: updatedProfile } = await supabase
+            .from('profiles')
+            .select('lunas_free, lunas_monthly, lunas_bonus, tokens_purchased')
+            .eq('id', user.id)
+            .single();
+
         await supabase.from('tokens_log').insert({
             user_id: user.id,
             action: 'welcome_bonus',
             amount: 300,
+            balance_after: (updatedProfile?.lunas_free || 0) + (updatedProfile?.lunas_monthly || 0) + (updatedProfile?.lunas_bonus || 0) + (updatedProfile?.tokens_purchased || 0),
             description: '첫 가입 환영 보너스 300 루나'
         });
 
