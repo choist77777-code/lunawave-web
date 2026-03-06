@@ -235,7 +235,7 @@ exports.handler = async (event) => {
             .order('last_active_at', { ascending: false })
             .limit(5);
 
-        // 구독 만료 확인
+        // 구독 만료 확인 + 즉시 free 전환
         let planStatus = 'active';
         if (profile.plan !== 'free' && profile.plan_expires_at) {
             const expiresAt = new Date(profile.plan_expires_at);
@@ -244,6 +244,19 @@ exports.handler = async (event) => {
 
             if (daysUntilExpiry <= 0) {
                 planStatus = 'expired';
+                // billing_key가 없으면 즉시 free로 전환 (자동 갱신 아닌 경우)
+                if (!profile.billing_key) {
+                    await supabase
+                        .from('profiles')
+                        .update({
+                            plan: 'free',
+                            updated_at: now.toISOString()
+                        })
+                        .eq('id', user.id);
+
+                    profile.plan = 'free';
+                    planStatus = 'expired_converted';
+                }
             } else if (daysUntilExpiry <= 7) {
                 planStatus = 'expiring_soon';
             }

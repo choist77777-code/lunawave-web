@@ -183,6 +183,12 @@ exports.handler = async (event) => {
                 const plan_expires_at = new Date(now);
                 plan_expires_at.setMonth(plan_expires_at.getMonth() + 1);
 
+                const { data: fmProfile } = await supabase
+                    .from('profiles')
+                    .select('lunas_bonus, tokens_purchased')
+                    .eq('id', user.id)
+                    .single();
+
                 await supabase
                     .from('profiles')
                     .update({
@@ -201,13 +207,14 @@ exports.handler = async (event) => {
                     .update({ used_count: promo.used_count + 1 })
                     .eq('id', promo.id);
 
+                const fmBalanceAfter = 50 + 1500 + (fmProfile?.lunas_bonus || 0) + (fmProfile?.tokens_purchased || 0);
                 await supabase
                     .from('tokens_log')
                     .insert({
                         user_id: user.id,
                         action: 'promo',
                         amount: 1550, // 50 + 1500
-                        balance_after: 1550,
+                        balance_after: fmBalanceAfter,
                         description: `프로모션 코드 적용: ${promo.code} (1개월 무료 초승달)`
                     });
 

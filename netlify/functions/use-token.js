@@ -135,7 +135,14 @@ exports.handler = async (event) => {
         // 일간 루나 자동 지급 체크
         await checkDailyLunaGrant(user.id, profile);
 
-        const userPlan = profile.plan || 'free';
+        // 구독 만료 체크: plan_expires_at이 지났으면 free로 취급
+        let userPlan = profile.plan || 'free';
+        if (userPlan !== 'free' && profile.plan_expires_at) {
+            const expiresAt = new Date(profile.plan_expires_at);
+            if (expiresAt < new Date()) {
+                userPlan = 'free';
+            }
+        }
         const userLevel = PLAN_LEVEL[userPlan] || 0;
         const requiredLevel = FEATURE_MIN_PLAN[feature] || 0;
 
