@@ -58,7 +58,8 @@ exports.handler = async (event) => {
         }
 
         const body = JSON.parse(event.body);
-        const { payment_id, merchant_uid, package_type, promo_code } = body;
+        const { merchant_uid, package_type, promo_code } = body;
+        const payment_id = body.payment_id || body.imp_uid;
 
         // 패키지 확인
         const pkg = LUNA_PACKAGES[package_type];
@@ -105,20 +106,34 @@ exports.handler = async (event) => {
         }
 
         // 포트원 결제 검증
-        if (PORTONE_V2_API_SECRET && payment_id) {
-            const verifyResponse = await fetch(`https://api.portone.io/payments/${encodeURIComponent(payment_id)}`, {
-                headers: {
-                    'Authorization': `PortOne ${PORTONE_V2_API_SECRET}`
-                }
-            });
-            const verifyData = await verifyResponse.json();
+        if (payment_id) {
+            if (PORTONE_V2_API_SECRET) {
+                // PortOne V2 검증
+                const verifyResponse = await fetch(`https://api.portone.io/payments/${encodeURIComponent(payment_id)}`, {
+                    headers: {
+                        'Authorization': `PortOne ${PORTONE_V2_API_SECRET}`
+                    }
+                });
+                const verifyData = await verifyResponse.json();
 
-            if (verifyData.status !== 'PAID' || verifyData.amount?.total !== amount) {
-                return {
-                    statusCode: 400,
-                    headers,
-                    body: JSON.stringify({ error: 'Payment verification failed' })
-                };
+                if (verifyData.status !== 'PAID' || verifyData.amount?.total !== amount) {
+                    return {
+                        statusCode: 400,
+                        headers,
+                        body: JSON.stringify({ error: 'Payment verification failed' })
+                    };
+                }
+            } else if (process.env.IMP_REST_API_KEY) {
+                // PortOne V1 검증 fallback
+                const { getPayment } = require('./portone-v1-helper');
+                const paymentData = await getPayment(payment_id);
+                if (paymentData.status !== 'paid' || paymentData.amount !== amount) {
+                    return {
+                        statusCode: 400,
+                        headers,
+                        body: JSON.stringify({ error: 'Payment verification failed' })
+                    };
+                }
             }
         }
 

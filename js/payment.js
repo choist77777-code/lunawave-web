@@ -4,8 +4,9 @@ const PORTONE_IMP_CODE = 'imp52320115';
 
 const PRICES = {
     subscription: {
-        normal: 17900,
-        firstMonth: 8950
+        crescent: 13900,
+        halfmoon: 33000,
+        fullmoon: 79000
     },
     tokens: {
         small: { tokens: 500, price: 7900 },
@@ -202,6 +203,14 @@ async function handleSubscribe() {
         return;
     }
 
+    // 선택된 플랜 확인
+    const selectedPlan = window.selectedSubscriptionPlan || 'crescent';
+    const amount = PRICES.subscription[selectedPlan];
+    if (!amount) {
+        alert('플랜을 선택해주세요.');
+        return;
+    }
+
     // Check if PortOne is configured
     if (PORTONE_IMP_CODE === 'YOUR_PORTONE_IMP_CODE') {
         alert('결제 시스템이 아직 설정되지 않았습니다. 관리자에게 문의하세요.');
@@ -216,21 +225,20 @@ async function handleSubscribe() {
 
     IMP.init(PORTONE_IMP_CODE);
 
+    const planNames = { crescent: '초승달', halfmoon: '반달', fullmoon: '보름달' };
     const user = await LW.getUser();
-    const amount = profile?.payments?.length === 0 ? PRICES.subscription.firstMonth : PRICES.subscription.normal;
     const merchantUid = `sub_${Date.now()}_${user.id.substring(0, 8)}`;
 
     IMP.request_pay({
         pg: 'kginicis',
         pay_method: 'card',
         merchant_uid: merchantUid,
-        name: 'LunaWave Pro 구독',
+        name: `LunaWave ${planNames[selectedPlan] || selectedPlan} 구독`,
         amount: amount,
         buyer_email: user.email,
         buyer_name: profile?.name || ''
     }, async (response) => {
         if (response.success) {
-            // Verify and process payment
             try {
                 const session = await LW.getSession();
                 const verifyResponse = await fetch('/.netlify/functions/subscribe', {
@@ -242,7 +250,7 @@ async function handleSubscribe() {
                     body: JSON.stringify({
                         imp_uid: response.imp_uid,
                         merchant_uid: merchantUid,
-                        is_first_payment: profile?.payments?.length === 0
+                        plan: selectedPlan
                     })
                 });
 
@@ -254,7 +262,7 @@ async function handleSubscribe() {
                 }
 
                 if (result.success) {
-                    alert('Pro 구독이 완료되었습니다!');
+                    alert(`${planNames[selectedPlan]} 구독이 완료되었습니다!`);
                     window.location.href = '/dashboard.html';
                 } else {
                     alert('결제 처리 중 오류가 발생했습니다.');
