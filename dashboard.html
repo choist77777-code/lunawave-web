@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <link rel="icon" href="/favicon.ico" sizes="any">
     <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>대시보드 - LunaWave</title>
+    <title>Dashboard - LunaWave</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -632,20 +632,20 @@
             <div class="header-right">
                 <div class="token-badge" id="headerTokens">
                     <i data-lucide="coins"></i>
-                    <span id="headerTokenCount">0</span> 루나
+                    <span id="headerTokenCount">0</span> Luna
                 </div>
 
                 <div class="user-menu">
                     <button class="user-btn" id="userMenuBtn">
                         <i data-lucide="user"></i>
-                        <span id="userName">사용자</span>
+                        <span id="userName">User</span>
                         <i data-lucide="chevron-down"></i>
                     </button>
                     <div class="user-dropdown" id="userDropdown">
-                        <a href="/settings.html"><i data-lucide="settings"></i> 설정</a>
-                        <a href="/inquiry.html"><i data-lucide="message-circle"></i> 문의하기</a>
+                        <a href="/settings.html"><i data-lucide="settings"></i> Settings</a>
+                        <a href="/inquiry.html"><i data-lucide="message-circle"></i> Contact</a>
                         <hr>
-                        <button id="logoutBtn"><i data-lucide="log-out"></i> 로그아웃</button>
+                        <button id="logoutBtn"><i data-lucide="log-out"></i> Log out</button>
                     </div>
                 </div>
             </div>
@@ -653,17 +653,17 @@
     </header>
 
     <main class="main-container">
-        <h1 class="page-title">대시보드</h1>
+        <h1 class="page-title">Dashboard</h1>
 
         <!-- Free Plan Upgrade Banner (hidden for Pro) -->
         <div class="upgrade-banner" id="upgradeBanner">
             <div>
-                <h3>플랜을 업그레이드하고 더 많은 기능을 사용하세요</h3>
-                <p>초승달부터 컷아웃, 메타데이터 생성 등 프리미엄 기능 이용 가능</p>
+                <h3>Upgrade your plan to unlock more features</h3>
+                <p>Crescent and up: cutout, metadata AI, and more premium features</p>
             </div>
             <a href="/payment.html?type=subscription" class="btn btn-primary">
                 <i data-lucide="crown"></i>
-                플랜 업그레이드
+                Upgrade plan
             </a>
         </div>
 
@@ -673,15 +673,15 @@
                 <div class="card-header">
                     <div class="card-title">
                         <i data-lucide="credit-card"></i>
-                        내 플랜
+                        My plan
                     </div>
-                    <button class="btn btn-secondary btn-sm" onclick="openSubscriptionModal()">플랜 관리</button>
+                    <button class="btn btn-secondary btn-sm" onclick="openSubscriptionModal()">Manage plan</button>
                 </div>
                 <div class="plan-info">
                     <div class="plan-badge" id="planBadge">Free</div>
                     <div class="plan-details">
-                        <h3 id="planName">Free 플랜</h3>
-                        <p id="planDesc">무료 체험 중 (3곡 제한)</p>
+                        <h3 id="planName">Free plan</h3>
+                        <p id="planDesc">Free trial (3 songs limit)</p>
                     </div>
                 </div>
             </div>
@@ -691,20 +691,20 @@
                 <div class="card-header">
                     <div class="card-title">
                         <i data-lucide="coins"></i>
-                        루나 잔액
+                        Luna balance
                     </div>
                 </div>
                 <div class="token-display">
                     <div class="token-amount" id="totalTokens">0</div>
-                    <div class="token-label">사용 가능한 루나</div>
+                    <div class="token-label">Available Luna</div>
                     <div class="token-breakdown">
                         <div class="token-item">
                             <div class="token-item-value" id="monthlyTokens">0</div>
-                            <div class="token-item-label">일간 루나</div>
+                            <div class="token-item-label">Daily Luna</div>
                         </div>
                         <div class="token-item">
                             <div class="token-item-value" id="purchasedTokens">0</div>
-                            <div class="token-item-label">월간 루나</div>
+                            <div class="token-item-label">Monthly Luna</div>
                         </div>
                     </div>
                 </div>
@@ -712,7 +712,7 @@
                     <div class="progress-fill" id="tokenProgress" style="width: 100%;"></div>
                 </div>
                 <p style="font-size:12px; color:var(--text-muted); margin-top:8px; text-align:center;">
-                    일간 루나는 매일, 월간 루나는 매월 충전됩니다
+                    Daily Luna resets daily. Monthly Luna resets monthly.
                 </p>
             </div>
 
@@ -721,15 +721,15 @@
                 <div class="card-header">
                     <div class="card-title">
                         <i data-lucide="music"></i>
-                        무료 노래
+                        Free songs
                     </div>
                 </div>
                 <div class="free-limit">
                     <div class="free-limit-count"><span id="freeSongsRemaining">3</span>/3</div>
-                    <div class="free-limit-label">남은 무료 노래</div>
+                    <div class="free-limit-label">Remaining</div>
                 </div>
                 <p style="font-size:13px; color:var(--text-secondary); margin-top:16px; text-align:center;">
-                    Pro 업그레이드 시 무제한 노래 생성
+                    Upgrade to Pro for unlimited songs
                 </p>
             </div>
 
@@ -738,21 +738,21 @@
                 <div class="card-header">
                     <div class="card-title">
                         <i data-lucide="bar-chart-2"></i>
-                        이번 달 사용량
+                        This month's usage
                     </div>
                 </div>
                 <div class="usage-grid">
                     <div class="usage-item">
                         <div class="usage-value" id="usageRender">0</div>
-                        <div class="usage-label">렌더링</div>
+                        <div class="usage-label">Renders</div>
                     </div>
                     <div class="usage-item">
                         <div class="usage-value" id="usageCutout">0</div>
-                        <div class="usage-label">컷아웃</div>
+                        <div class="usage-label">Cutouts</div>
                     </div>
                     <div class="usage-item">
                         <div class="usage-value" id="usageMetadata">0</div>
-                        <div class="usage-label">메타데이터</div>
+                        <div class="usage-label">Metadata</div>
                     </div>
                 </div>
             </div>
@@ -762,15 +762,15 @@
                 <div class="download-icon">
                     <i data-lucide="download"></i>
                 </div>
-                <h3>앱 다운로드</h3>
-                <p>LunaWave 앱을 다운로드하세요</p>
+                <h3>Download app</h3>
+                <p>Download LunaWave</p>
                 <a href="https://github.com/choist77777-code/lunawave-web/releases/download/v6.1.23/LUNA.WAVE.Setup.6.1.23.exe" class="btn btn-primary">
                     <i data-lucide="monitor"></i>
-                    Windows 다운로드
+                    Windows download
                 </a>
                 <a href="https://github.com/choist77777-code/lunawave-web/releases/download/v6.1.23/LUNA.WAVE-6.1.23.dmg" class="btn btn-secondary" style="margin-top:8px;">
                     <i data-lucide="laptop"></i>
-                    macOS 다운로드
+                    macOS download
                 </a>
                 <p style="font-size:12px; color:var(--text-muted); margin-top:12px;">
                     v6.1.23 | Windows & macOS
@@ -782,17 +782,17 @@
                 <div class="card-header">
                     <div class="card-title">
                         <i data-lucide="monitor"></i>
-                        등록된 기기
+                        Registered devices
                     </div>
-                    <span style="font-size:13px; color:var(--text-muted);">최대 2대</span>
+                    <span style="font-size:13px; color:var(--text-muted);">Up to 2</span>
                 </div>
                 <div class="device-list" id="deviceList">
                     <div class="device-item">
                         <div class="device-info">
                             <i data-lucide="monitor"></i>
                             <div>
-                                <div class="device-name">등록된 기기 없음</div>
-                                <div class="device-date">앱에서 로그인하면 자동 등록됩니다</div>
+                                <div class="device-name">Registered devices 없음</div>
+                                <div class="device-date">Automatically registered when you log in from the app</div>
                             </div>
                         </div>
                     </div>
@@ -804,27 +804,27 @@
                 <div class="card-header">
                     <div class="card-title">
                         <i data-lucide="gift"></i>
-                        친구 추천
+                        Refer a friend
                     </div>
                 </div>
                 <div class="referral-code">
                     <code id="referralCode">XXXXXXXX</code>
                     <button class="btn btn-secondary btn-sm" id="copyReferral">
                         <i data-lucide="copy"></i>
-                        복사
+                        Copy
                     </button>
                 </div>
                 <p style="font-size:13px; color:var(--text-secondary); margin-bottom:16px;">
-                    친구가 플랜 구독 시 양쪽 모두 200루나 보너스!
+                    Both you and your friend get 200 Luna bonus when they subscribe!
                 </p>
                 <div class="referral-stats">
                     <div class="referral-stat">
                         <div class="referral-stat-value" id="referralCount">0</div>
-                        <div class="referral-stat-label">추천한 친구</div>
+                        <div class="referral-stat-label">Friends referred</div>
                     </div>
                     <div class="referral-stat">
                         <div class="referral-stat-value" id="referralBonus">0</div>
-                        <div class="referral-stat-label">받은 보너스</div>
+                        <div class="referral-stat-label">Bonus received</div>
                     </div>
                 </div>
             </div>
@@ -834,14 +834,14 @@
                 <div class="card-header">
                     <div class="card-title">
                         <i data-lucide="receipt"></i>
-                        결제 내역
+                        Payment history
                     </div>
-                    <a href="/payments.html" class="btn btn-secondary btn-sm">전체 보기</a>
+                    <a href="/payments.html" class="btn btn-secondary btn-sm">View all</a>
                 </div>
                 <div class="payment-list" id="paymentList">
                     <div class="payment-item">
                         <div class="payment-info">
-                            <div class="payment-type">결제 내역이 없습니다</div>
+                            <div class="payment-type">Payment history이 없습니다</div>
                         </div>
                     </div>
                 </div>
@@ -852,12 +852,12 @@
                 <div class="card-header">
                     <div class="card-title">
                         <i data-lucide="bell"></i>
-                        공지사항
+                        Announcements
                     </div>
                 </div>
                 <div class="notice-list" id="noticeList">
                     <div class="notice-item">
-                        <div class="notice-title">LunaWave 서비스 오픈!</div>
+                        <div class="notice-title">LunaWave launched!</div>
                         <div class="notice-date">2026.02.02</div>
                     </div>
                 </div>
@@ -865,7 +865,7 @@
         </div>
     </main>
 
-    <!-- 공지사항 상세 모달 -->
+    <!-- Announcements 상세 모달 -->
     <div id="noticeModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;">
         <div style="background:var(--bg-primary);border-radius:var(--radius);padding:32px;max-width:520px;width:90%;max-height:80vh;overflow-y:auto;">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
@@ -876,49 +876,49 @@
             <div id="noticeModalDate" style="font-size:13px;color:var(--text-muted);margin-bottom:20px;"></div>
             <div id="noticeModalContent" style="font-size:15px;line-height:1.8;color:var(--text-secondary);white-space:pre-wrap;"></div>
             <div id="noticeModalUrl" style="margin-top:20px;display:none;">
-                <a id="noticeModalLink" href="#" target="_blank" style="display:inline-flex;align-items:center;gap:6px;color:var(--accent);font-size:14px;text-decoration:none;">자세히 보기 →</a>
+                <a id="noticeModalLink" href="#" target="_blank" style="display:inline-flex;align-items:center;gap:6px;color:var(--accent);font-size:14px;text-decoration:none;">Read more →</a>
             </div>
         </div>
     </div>
 
-    <!-- 구독 관리 모달 -->
+    <!-- Subscription modal -->
     <div id="subscriptionModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;">
         <div style="background:var(--bg-primary);border-radius:var(--radius);padding:32px;max-width:520px;width:90%;max-height:90vh;overflow-y:auto;">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
-                <h3 style="font-size:20px;font-weight:700;">구독 관리</h3>
+                <h3 style="font-size:20px;font-weight:700;">Manage subscription</h3>
                 <button onclick="closeSubscriptionModal()" style="background:none;border:none;cursor:pointer;font-size:24px;color:var(--text-muted);">&times;</button>
             </div>
 
             <div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:16px;margin-bottom:20px;">
-                <p style="font-size:14px;color:var(--text-secondary);margin-bottom:8px;">현재 플랜</p>
+                <p style="font-size:14px;color:var(--text-secondary);margin-bottom:8px;">Current plan</p>
                 <p style="font-size:18px;font-weight:700;" id="modalPlanName">-</p>
-                <p style="font-size:14px;color:var(--text-secondary);margin-top:8px;">다음 결제일: <strong id="modalNextBilling">-</strong></p>
-                <p style="font-size:14px;color:var(--text-secondary);">월 결제 금액: <strong id="modalBillingAmount">-</strong></p>
+                <p style="font-size:14px;color:var(--text-secondary);margin-top:8px;">Next billing: <strong id="modalNextBilling">-</strong></p>
+                <p style="font-size:14px;color:var(--text-secondary);">Monthly charge: <strong id="modalBillingAmount">-</strong></p>
             </div>
 
             <div style="background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.3);border-radius:var(--radius-sm);padding:16px;margin-bottom:20px;">
-                <h4 style="font-size:14px;font-weight:600;margin-bottom:8px;">환불 정책</h4>
+                <h4 style="font-size:14px;font-weight:600;margin-bottom:8px;">Refund policy</h4>
                 <p style="font-size:13px;color:var(--text-secondary);line-height:1.8;">
-                    • 결제일로부터 <strong>14일 이내</strong> + 루나 <strong>1개도 미사용</strong> 시 전액 환불<br>
-                    • 루나를 1개라도 사용하신 경우 환불이 불가합니다<br>
-                    • 환불 요청: support@lunawaveapp.com
+                    • Full refund within <strong>14 days</strong> if you have <strong>not used any Luna</strong><br>
+                    • Refund not available if any Luna has been consumed<br>
+                    • Refund requests: support@lunawaveapp.com
                 </p>
             </div>
 
             <div style="background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.2);border-radius:var(--radius-sm);padding:16px;margin-bottom:24px;">
-                <h4 style="font-size:14px;font-weight:600;margin-bottom:8px;">구독 취소 안내</h4>
+                <h4 style="font-size:14px;font-weight:600;margin-bottom:8px;">Cancellation info</h4>
                 <p style="font-size:13px;color:var(--text-secondary);line-height:1.8;">
-                    • 구독 취소 시 <strong>다음 달부터</strong> 결제가 중단됩니다<br>
-                    • 취소 후에도 <strong>이번 달 말까지</strong> 루나를 계속 사용할 수 있습니다
+                    • Cancellation stops billing <strong>starting next cycle</strong><br>
+                    • You can continue using Luna <strong>until the end of the current cycle</strong>
                 </p>
             </div>
 
             <div style="display:flex;gap:12px;">
-                <button class="btn btn-secondary" style="flex:1;" onclick="requestRefund()">환불 요청</button>
-                <button class="btn btn-danger" style="flex:1;background:rgba(239,68,68,0.1);color:var(--error);border:1px solid var(--error);padding:12px 24px;border-radius:var(--radius-sm);font-weight:600;font-size:14px;cursor:pointer;font-family:inherit;" onclick="cancelSubscription()">구독 취소</button>
+                <button class="btn btn-secondary" style="flex:1;" onclick="requestRefund()">Request refund</button>
+                <button class="btn btn-danger" style="flex:1;background:rgba(239,68,68,0.1);color:var(--error);border:1px solid var(--error);padding:12px 24px;border-radius:var(--radius-sm);font-weight:600;font-size:14px;cursor:pointer;font-family:inherit;" onclick="cancelSubscription()">Cancel subscription</button>
             </div>
             <div style="text-align:center;margin-top:16px;">
-                <a href="/payment.html" style="font-size:14px;color:var(--accent);text-decoration:none;">플랜 업그레이드 &rarr;</a>
+                <a href="/payment.html" style="font-size:14px;color:var(--accent);text-decoration:none;">Upgrade plan &rarr;</a>
             </div>
         </div>
     </div>
@@ -926,7 +926,7 @@
     <script>
         lucide.createIcons();
 
-        // Supabase 초기화
+        // Supabase s기화
         const sb = LW.supabase;
 
         // User Menu Toggle
@@ -948,7 +948,7 @@
             const code = document.getElementById('referralCode').textContent;
             const url = `${window.location.origin}/signup.html?ref=${code}`;
             navigator.clipboard.writeText(url).then(() => {
-                alert('추천 링크가 복사되었습니다!');
+                alert('추천 링크가 Copydone!');
             });
         });
 
@@ -960,10 +960,10 @@
         // Load Dashboard Data
         async function loadDashboard() {
             try {
-                // 세션 가져오기 (토큰 자동 갱신)
+                // Session Fetch (토큰 자동 갱신)
                 let { data: { session } } = await sb.auth.getSession();
 
-                // 세션 없으면 갱신 시도
+                // Session 없으면 갱신 Try
                 if (!session) {
                     const refreshResult = await sb.auth.refreshSession();
                     session = refreshResult.data.session;
@@ -1011,8 +1011,8 @@
                         renderDevices(cpData.devices);
                     }
                 } else {
-                    // check-plan 실패 시 직접 조회 폴백
-                    console.log('[Dashboard] check-plan 실패, 직접 조회 시도');
+                    // check-plan Failed 시 직접 조회 폴백
+                    console.log('[Dashboard] check-plan Failed, 직접 조회 Try');
                     const { data: p, error: pErr } = await sb.from('profiles').select('*').eq('id', user.id).single();
                     console.log('[Dashboard] profiles 직접 조회:', p, pErr);
 
@@ -1033,7 +1033,7 @@
                             user.user_metadata?.full_name || user.email;
                     }
 
-                    // 디바이스 직접 조회
+                    // Device 직접 조회
                     const { data: devices } = await sb.from('devices').select('*')
                         .eq('user_id', user.id).order('last_active_at', { ascending: false });
                     if (devices && devices.length > 0) renderDevices(devices);
@@ -1088,11 +1088,11 @@
         function updateUI(status) {
             const plan = status.plan || 'free';
             const isPaid = plan !== 'free';
-            const PLAN_NAMES = { free: 'Free', crescent: '초승달', halfmoon: '반달', fullmoon: '보름달' };
+            const PLAN_NAMES = { free: 'Free', crescent: 'Crescent', halfmoon: 'Half Moon', fullmoon: 'Full Moon' };
             const PLAN_DESCS = {
-                free: '무료 플랜 (매일 20루나)',
-                crescent: '매일 50루나 + 월 1,500루나',
-                halfmoon: '매일 200루나 + 월 3,000루나',
+                free: 'Free 플랜 (매d 20루나)',
+                crescent: '매d 50루나 + M 1,500루나',
+                halfmoon: '매d 200루나 + M 3,000루나',
                 fullmoon: '무제한 사용'
             };
 
@@ -1109,13 +1109,13 @@
             planName.textContent = (PLAN_NAMES[plan] || 'Free') + ' 플랜';
 
             if (status.plan_expires_at && isPaid) {
-                planDesc.textContent = `만료일: ${new Date(status.plan_expires_at).toLocaleDateString()} | ${PLAN_DESCS[plan] || ''}`;
+                planDesc.textContent = `Expiredd: ${new Date(status.plan_expires_at).toLocaleDateString()} | ${PLAN_DESCS[plan] || ''}`;
             } else {
                 planDesc.textContent = PLAN_DESCS[plan] || '';
             }
 
             if (isPaid) {
-                // 유료 플랜
+                // Paid 플랜
                 document.getElementById('tokenCard').style.display = 'block';
                 document.getElementById('freeSongsCard').style.display = 'none';
                 document.getElementById('upgradeBanner').style.display = 'none';
@@ -1132,13 +1132,13 @@
                 const progress = Math.min(100, (status.tokens_balance / dailyMax) * 100);
                 document.getElementById('tokenProgress').style.width = progress + '%';
             } else {
-                // Free 플랜
+                // Free plan
                 planBadge.textContent = 'Free';
                 planBadge.className = 'plan-badge free';
-                planName.textContent = 'Free 플랜';
-                planDesc.textContent = '무료 플랜 (매일 20루나)';
+                planName.textContent = 'Free plan';
+                planDesc.textContent = 'Free 플랜 (매d 20루나)';
 
-                // Free 플랜: 총 루나 = tokens_balance(일간+월간+보너스) + tokens_purchased(구매)
+                // Free plan: 총 루나 = tokens_balance(d간+M간+보너스) + tokens_purchased(Purchase)
                 var freeDaily = status.tokens_balance || 0;
                 var freePurchased = status.tokens_purchased || 0;
                 var freeTotal = status.tokens_total || (freeDaily + freePurchased);
@@ -1169,12 +1169,12 @@
                     <div class="device-info">
                         <i data-lucide="monitor"></i>
                         <div>
-                            <div class="device-name">${d.device_name || '알 수 없는 기기'}</div>
-                            <div class="device-date">마지막 접속: ${new Date(d.last_active_at).toLocaleDateString()}</div>
+                            <div class="device-name">${d.device_name || '알 수 없는 Device'}</div>
+                            <div class="device-date">Last accessed: ${new Date(d.last_active_at).toLocaleDateString()}</div>
                         </div>
                     </div>
                     <button class="btn btn-danger btn-sm" onclick="removeDevice('${d.id}')">
-                        해제
+                        Unregister
                     </button>
                 </div>
             `).join('');
@@ -1186,7 +1186,7 @@
             container.innerHTML = payments.map(p => `
                 <div class="payment-item">
                     <div class="payment-info">
-                        <div class="payment-type">${p.type === 'subscription' ? ((p.plan === 'crescent' ? '초승달' : p.plan === 'halfmoon' ? '반달' : p.plan === 'fullmoon' ? '보름달' : '') + ' 구독') : '루나 구매'}</div>
+                        <div class="payment-type">${p.type === 'subscription' ? ((p.plan === 'crescent' ? 'Crescent' : p.plan === 'halfmoon' ? 'Half Moon' : p.plan === 'fullmoon' ? 'Full Moon' : '') + ' Subscription') : '루나 Purchase'}</div>
                         <div class="payment-date">${new Date(p.paid_at).toLocaleDateString()}</div>
                     </div>
                     <div class="payment-amount">₩${p.amount.toLocaleString()}</div>
@@ -1209,7 +1209,7 @@
         function showNoticeDetail(index) {
             const n = _noticesCache[index];
             if (!n) return;
-            const typeMap = { notice: '공지', update: '업데이트', event: '이벤트', urgent: '긴급' };
+            const typeMap = { notice: '공지', update: 'Update', event: '이벤트', urgent: '긴급' };
             document.getElementById('noticeModalType').textContent = typeMap[n.type] || '공지';
             document.getElementById('noticeModalTitle').textContent = n.title;
             document.getElementById('noticeModalDate').textContent = new Date(n.created_at).toLocaleDateString();
@@ -1233,20 +1233,20 @@
         });
 
         async function removeDevice(deviceId) {
-            if (!confirm('이 기기를 해제하시겠습니까?')) return;
+            if (!confirm('이 Device를 Unregister??')) return;
 
             await sb.from('devices').delete().eq('id', deviceId);
             loadDashboard();
         }
 
-        // 구독 관리 모달
+        // Manage subscription 모달
         let _dashboardProfile = null;
 
         function openSubscriptionModal() {
             const modal = document.getElementById('subscriptionModal');
             modal.style.display = 'flex';
 
-            const PLAN_NAMES = { free: 'Free', crescent: '초승달 (Crescent)', halfmoon: '반달 (Half Moon)', fullmoon: '보름달 (Full Moon)' };
+            const PLAN_NAMES = { free: 'Free', crescent: 'Crescent (Crescent)', halfmoon: 'Half Moon (Half Moon)', fullmoon: 'Full Moon (Full Moon)' };
             const PLAN_PRICES = { crescent: 13900, halfmoon: 33000, fullmoon: 79000 };
 
             const plan = _dashboardProfile?.plan || 'free';
@@ -1270,15 +1270,15 @@
 
         async function requestRefund() {
             const confirmed = confirm(
-                '환불을 요청하시겠습니까?\n\n' +
-                '• 결제일로부터 14일 이내, 루나 미사용 시에만 환불 가능합니다.\n' +
-                '• 환불 처리까지 영업일 기준 3~5일 소요됩니다.'
+                'Request a refund?\n\n' +
+                '• 결제d로부터 14d within, 루나 미사용 시에만 Refund Available합니다.\n' +
+                '• Refund 처리까지 영업d 기준 3~5d 소요됩니다.'
             );
             if (!confirmed) return;
 
             try {
                 const { data: { session } } = await sb.auth.getSession();
-                if (!session) { alert('로그인이 필요합니다.'); return; }
+                if (!session) { alert('Login이 필요합니다.'); return; }
 
                 const res = await fetch('/.netlify/functions/request-refund', {
                     method: 'POST',
@@ -1290,28 +1290,28 @@
                 });
                 const data = await res.json();
                 if (data.ok || data.success) {
-                    alert('환불 요청이 완료됐습니다. 처리까지 3~5 영업일이 소요됩니다.');
+                    alert('Request refund이 Completed됐습니다. 처리까지 3~5 영업d이 소요됩니다.');
                     closeSubscriptionModal();
                     loadDashboard();
                 } else {
-                    alert('환불 요청 실패: ' + (data.message || data.error || '환불 조건을 확인해주세요.'));
+                    alert('Request refund Failed: ' + (data.message || data.error || 'Refund 조건을 Confirmplease.'));
                 }
             } catch (e) {
-                alert('오류가 발생했습니다. support@lunawaveapp.com으로 문의해주세요.');
+                alert('An error occurred. support@lunawaveapp.com으로 문의please.');
             }
         }
 
         async function cancelSubscription() {
             const confirmed = confirm(
-                '구독을 취소하시겠습니까?\n\n' +
-                '• 취소 후에도 이번 달 말까지는 계속 이용 가능합니다.\n' +
-                '• 다음 달부터 결제가 중단됩니다.'
+                'Subscription을 Cancel??\n\n' +
+                '• Cancel 후에도 이번 달 말까지는 계속 Available합니다.\n' +
+                '• Next 달부터 결제가 중단됩니다.'
             );
             if (!confirmed) return;
 
             try {
                 const { data: { session } } = await sb.auth.getSession();
-                if (!session) { alert('로그인이 필요합니다.'); return; }
+                if (!session) { alert('Login이 필요합니다.'); return; }
 
                 const res = await fetch('/.netlify/functions/payment-cancel', {
                     method: 'POST',
@@ -1323,14 +1323,14 @@
                 });
                 const data = await res.json();
                 if (data.ok || data.success) {
-                    alert('구독이 취소됐습니다. 이번 달 말까지 계속 이용하실 수 있습니다.');
+                    alert('Subscription이 Cancel됐습니다. 이번 달 말까지 계속 Use하실 수 있습니다.');
                     closeSubscriptionModal();
                     loadDashboard();
                 } else {
-                    alert('취소 실패: ' + (data.message || data.error || '다시 시도해주세요.'));
+                    alert('Cancel Failed: ' + (data.message || data.error || 'Please try again.'));
                 }
             } catch (e) {
-                alert('오류가 발생했습니다. support@lunawaveapp.com으로 문의해주세요.');
+                alert('An error occurred. support@lunawaveapp.com으로 문의please.');
             }
         }
 
