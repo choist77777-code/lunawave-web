@@ -12,15 +12,21 @@ exports.handler = async () => {
             environment: process.env.PADDLE_ENVIRONMENT || 'sandbox',
             token: process.env.PADDLE_CLIENT_TOKEN || '',
             prices: {
+                // v7 Factory plans
                 subscription: {
+                    hobby:    process.env.PADDLE_PRICE_HOBBY   || '',
+                    creator:  process.env.PADDLE_PRICE_CREATOR || '',
+                    pro:      process.env.PADDLE_PRICE_PRO     || '',
+                    studio:   process.env.PADDLE_PRICE_STUDIO  || '',
+                    // Legacy v6
                     crescent: process.env.PADDLE_PRICE_CRESCENT || '',
                     halfmoon: process.env.PADDLE_PRICE_HALFMOON || '',
                     fullmoon: process.env.PADDLE_PRICE_FULLMOON || ''
                 },
                 tokens: {
-                    small: process.env.PADDLE_PRICE_TOKENS_SMALL || '',
+                    small:  process.env.PADDLE_PRICE_TOKENS_SMALL  || '',
                     medium: process.env.PADDLE_PRICE_TOKENS_MEDIUM || '',
-                    large: process.env.PADDLE_PRICE_TOKENS_LARGE || ''
+                    large:  process.env.PADDLE_PRICE_TOKENS_LARGE  || ''
                 }
             }
         })

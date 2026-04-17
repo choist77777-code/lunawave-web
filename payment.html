@@ -6,12 +6,11 @@
 <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Subscribe - LunaWave</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<title>Subscribe — LUNA WAVE Factory</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/lucide@latest"></script>
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="/js/supabase-client.js"></script>
-<!-- Paddle.js v2 (Billing) -->
 <script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
 <style>
 :root {
@@ -26,7 +25,7 @@
     --border: #e8e8f0;
     --shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
     --shadow-lg: 0 12px 32px rgba(0,0,0,0.12);
-    --radius: 12px;
+    --radius: 14px;
     --radius-sm: 8px;
     --success: #22c55e;
     --error: #ef4444;
@@ -34,7 +33,7 @@
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
-    font-family: 'Inter', 'Outfit', sans-serif;
+    font-family: 'Inter', sans-serif;
     background: var(--bg-secondary);
     color: var(--text-primary);
     min-height: 100vh;
@@ -48,58 +47,56 @@ body {
     font-size: 14px; margin-bottom: 24px; font-weight: 500;
 }
 .back-link:hover { color: var(--text-primary); }
-.page-header { text-align: center; margin-bottom: 48px; }
-.page-title { font-family:'Outfit'; font-size: 36px; font-weight: 700; margin-bottom: 12px; }
-.page-subtitle { font-size: 16px; color: var(--text-secondary); }
-
-/* Tabs */
-.tabs {
-    display: flex; justify-content: center; gap: 8px; margin-bottom: 36px;
-    background: var(--bg-primary); padding: 6px; border-radius: 100px;
-    max-width: 320px; margin-left: auto; margin-right: auto;
-    border: 1px solid var(--border);
+.page-header { text-align: center; margin-bottom: 12px; }
+.page-eyebrow { font-size: 12px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--accent); margin-bottom: 12px; }
+.page-title { font-family:'Outfit'; font-size: 40px; font-weight: 800; margin-bottom: 12px; line-height: 1.2; }
+.page-subtitle { font-size: 17px; color: var(--text-secondary); max-width: 560px; margin: 0 auto 12px; line-height: 1.6; }
+.value-prop {
+    display: inline-block; background: var(--accent-light); color: var(--accent-dark);
+    padding: 6px 14px; border-radius: 999px;
+    font-size: 13px; font-weight: 600; margin-bottom: 36px;
 }
-.tab-btn {
-    flex: 1; padding: 10px 20px; background: transparent; border: none;
-    border-radius: 100px; font-size: 14px; font-weight: 600;
-    color: var(--text-secondary); cursor: pointer; transition: all .2s;
-}
-.tab-btn.active { background: var(--text-primary); color: white; }
 
-/* Plans grid */
 .plans {
     display: grid; grid-template-columns: repeat(4, 1fr);
-    gap: 20px; margin-bottom: 48px;
+    gap: 18px; margin: 36px auto 36px; max-width: 1100px;
 }
 .plan-card {
     background: var(--bg-primary); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 32px 24px;
-    position: relative; transition: transform .2s;
+    border-radius: var(--radius); padding: 30px 22px;
+    position: relative; transition: transform .2s, box-shadow .2s;
     display: flex; flex-direction: column;
 }
-.plan-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+.plan-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
 .plan-card.popular { border-color: var(--popular); border-width: 2px; }
 .plan-card.popular::before {
-    content: 'POPULAR'; position: absolute; top: -11px; left: 50%;
+    content: 'MOST POPULAR'; position: absolute; top: -12px; left: 50%;
     transform: translateX(-50%); background: var(--popular); color: white;
-    padding: 3px 14px; border-radius: 4px;
-    font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+    padding: 4px 14px; border-radius: 4px;
+    font-size: 10px; font-weight: 800; letter-spacing: 1.5px;
 }
-.plan-name { font-size: 14px; font-weight: 700; margin-bottom: 10px; color: var(--text-primary); }
-.plan-price { font-family: 'Outfit'; font-size: 36px; font-weight: 800; margin-bottom: 4px; }
+.plan-name { font-size: 14px; font-weight: 700; margin-bottom: 8px; color: var(--text-primary); text-transform: uppercase; letter-spacing: 1px; }
+.plan-tagline { font-size: 12px; color: var(--text-muted); margin-bottom: 18px; }
+.plan-price { font-family: 'Outfit'; font-size: 38px; font-weight: 800; margin-bottom: 4px; line-height: 1; }
 .plan-price small { font-size: 14px; font-weight: 400; color: var(--text-muted); }
-.plan-period { font-size: 12px; color: var(--text-muted); margin-bottom: 24px; min-height: 18px; }
+.plan-output {
+    background: var(--accent-light); padding: 8px 12px; border-radius: 8px;
+    margin: 16px 0 18px; text-align: center;
+    font-size: 13px; color: var(--accent-dark); font-weight: 600;
+}
+.plan-output b { font-size: 18px; display: block; }
 .plan-features { list-style: none; text-align: left; margin-bottom: 24px; flex: 1; }
 .plan-features li {
     display: flex; align-items: flex-start; gap: 8px;
-    padding: 6px 0; font-size: 13px; color: var(--text-secondary);
+    padding: 5px 0; font-size: 13px; color: var(--text-secondary);
 }
-.plan-features li i { color: var(--success); width: 14px; height: 14px; flex-shrink: 0; margin-top: 2px; }
+.plan-features li i { color: var(--success); width: 14px; height: 14px; flex-shrink: 0; margin-top: 3px; }
 .plan-btn {
-    display: block; width: 100%; padding: 12px;
-    border-radius: var(--radius-sm); font-size: 14px; font-weight: 600;
-    text-align: center; cursor: pointer; transition: all .2s;
+    display: block; width: 100%; padding: 13px;
+    border-radius: var(--radius-sm); font-size: 14px; font-weight: 700;
+    text-align: center; cursor: pointer; transition: all .15s;
     text-decoration: none; border: none;
+    font-family: inherit;
 }
 .plan-btn.primary { background: var(--text-primary); color: white; }
 .plan-btn.primary:hover { background: #000; }
@@ -108,293 +105,191 @@ body {
 .plan-btn.current { background: var(--accent-light); color: var(--accent-dark); cursor: default; }
 .plan-btn:disabled { opacity: .4; cursor: not-allowed; }
 
-/* Info block */
+.info-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;
+    max-width: 1100px; margin: 0 auto;
+}
 .info-block {
     background: var(--bg-primary); border-radius: var(--radius);
-    padding: 32px; margin-bottom: 24px; border: 1px solid var(--border);
+    padding: 24px; border: 1px solid var(--border);
 }
-.info-block h3 { font-size: 16px; font-weight: 700; margin-bottom: 12px; display:flex; align-items:center; gap:8px; }
+.info-block h3 { font-size: 15px; font-weight: 700; margin-bottom: 10px; display:flex; align-items:center; gap:8px; }
 .info-block h3 i { width: 18px; height: 18px; color: var(--accent); }
 .info-block p { font-size: 13px; color: var(--text-secondary); line-height: 1.7; }
-.info-block ul { list-style: none; margin-top: 8px; }
-.info-block ul li { font-size: 13px; color: var(--text-secondary); padding: 4px 0; padding-left: 16px; position: relative; }
-.info-block ul li::before { content: '•'; position: absolute; left: 4px; color: var(--accent); }
-
-/* Token section */
-.tokens-hidden { display: none; }
 
 .status-banner {
     background: var(--accent-light); border-left: 3px solid var(--accent);
-    padding: 16px 20px; border-radius: var(--radius-sm); margin-bottom: 24px;
+    padding: 14px 18px; border-radius: var(--radius-sm); margin: 0 auto 28px;
+    max-width: 1100px;
     font-size: 14px; color: var(--text-primary);
 }
-.status-banner strong { color: var(--accent-dark); }
 
-/* Responsive */
-@media (max-width: 900px) {
-    .plans { grid-template-columns: 1fr 1fr; }
-}
+.faq { max-width: 760px; margin: 60px auto 0; }
+.faq h2 { font-family: 'Outfit'; font-size: 26px; font-weight: 700; text-align: center; margin-bottom: 28px; }
+.faq-item { border-bottom: 1px solid var(--border); padding: 16px 0; }
+.faq-q { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+.faq-a { font-size: 14px; color: var(--text-secondary); line-height: 1.7; }
+
+@media (max-width: 1024px) { .plans { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 540px) {
     .plans { grid-template-columns: 1fr; }
-    .page-title { font-size: 28px; }
+    .info-grid { grid-template-columns: 1fr; }
+    .page-title { font-size: 30px; }
 }
 </style>
 </head>
 <body>
 <div class="container">
-    <a href="/dashboard.html" class="back-link">
-        <i data-lucide="arrow-left"></i> Back to dashboard
+    <a href="/factory.html" class="back-link">
+        <i data-lucide="arrow-left"></i> Back to Factory
     </a>
+
     <div class="page-header">
+        <div class="page-eyebrow">LUNA WAVE FACTORY</div>
         <h1 class="page-title">Choose your plan</h1>
-        <p class="page-subtitle">Turn Suno songs into YouTube videos. Cancel anytime.</p>
+        <p class="page-subtitle">Set it once. Music videos auto-generate and upload to YouTube — 24/7.</p>
+        <div class="value-prop">⚡ Cancel anytime · 14-day refund · No hidden fees</div>
     </div>
 
     <div class="status-banner" id="statusBanner" style="display:none;">
         <span id="statusText"></span>
     </div>
 
-    <!-- Tabs -->
-    <div class="tabs">
-        <button class="tab-btn active" id="tabSub" onclick="showTab('sub')">Subscription</button>
-        <button class="tab-btn" id="tabTokens" onclick="showTab('tokens')">Token packs</button>
-    </div>
-
-    <!-- Subscription Plans -->
-    <div id="subPlans" class="plans">
-        <!-- Free -->
+    <div class="plans">
+        <!-- Hobby -->
         <div class="plan-card">
-            <div class="plan-name">Free</div>
-            <div class="plan-price">$0</div>
-            <div class="plan-period">Forever free</div>
+            <div class="plan-name">Hobby</div>
+            <div class="plan-tagline">Casual creator</div>
+            <div class="plan-price">$19<small>/mo</small></div>
+            <div class="plan-output"><b>12 videos / month</b>3 per week</div>
             <ul class="plan-features">
-                <li><i data-lucide="check"></i> 20 daily Luna</li>
-                <li><i data-lucide="check"></i> 1 Image mode</li>
-                <li><i data-lucide="check"></i> Standard Cutout</li>
-                <li><i data-lucide="check"></i> BARS visualizer (1 style)</li>
-                <li><i data-lucide="check"></i> Canvas Preview</li>
-                <li><i data-lucide="x" style="color:var(--text-muted)"></i> Watermarked (720p)</li>
+                <li><i data-lucide="check"></i> Auto Suno song generation</li>
+                <li><i data-lucide="check"></i> AI lyrics with persona</li>
+                <li><i data-lucide="check"></i> Visualizer + cutout</li>
+                <li><i data-lucide="check"></i> Auto YouTube upload</li>
+                <li><i data-lucide="check"></i> 1080p, no watermark</li>
             </ul>
-            <button class="plan-btn outline" id="btnFree" disabled>Your current plan</button>
+            <button class="plan-btn primary" onclick="subscribe('hobby')">Start Hobby</button>
         </div>
 
-        <!-- Crescent -->
-        <div class="plan-card">
-            <div class="plan-name">Crescent</div>
-            <div class="plan-price">$9.99<small>/mo</small></div>
-            <div class="plan-period">50 daily + 1,500 monthly Luna</div>
-            <ul class="plan-features">
-                <li><i data-lucide="check"></i> No watermark (1080p)</li>
-                <li><i data-lucide="check"></i> 1 Image + 2 Images</li>
-                <li><i data-lucide="check"></i> 16:9 + 9:16 + 1:1 ratios</li>
-                <li><i data-lucide="check"></i> Ultra Cutout (BiRefNet)</li>
-                <li><i data-lucide="check"></i> 3 visualizers + presets</li>
-                <li><i data-lucide="check"></i> Accurate Preview</li>
-                <li><i data-lucide="check"></i> SRT subtitles/lyrics</li>
-            </ul>
-            <button class="plan-btn primary" onclick="subscribe('crescent')">Subscribe</button>
-        </div>
-
-        <!-- Half Moon -->
+        <!-- Creator (popular) -->
         <div class="plan-card popular">
-            <div class="plan-name">Half Moon</div>
-            <div class="plan-price">$24.99<small>/mo</small></div>
-            <div class="plan-period">200 daily + 3,000 monthly Luna</div>
+            <div class="plan-name">Creator</div>
+            <div class="plan-tagline">Daily uploader</div>
+            <div class="plan-price">$49<small>/mo</small></div>
+            <div class="plan-output"><b>30 videos / month</b>1 per day</div>
             <ul class="plan-features">
-                <li><i data-lucide="check"></i> Everything in Crescent</li>
-                <li><i data-lucide="check"></i> Text Behind Person</li>
-                <li><i data-lucide="check"></i> Outline effects</li>
-                <li><i data-lucide="check"></i> Visualizer Behind Person</li>
-                <li><i data-lucide="check"></i> AI lyrics generation</li>
-                <li><i data-lucide="check"></i> Suno automation (Runner/Bulk)</li>
+                <li><i data-lucide="check"></i> Everything in Hobby</li>
+                <li><i data-lucide="check"></i> Custom upload schedule</li>
+                <li><i data-lucide="check"></i> Multi-genre rotation</li>
+                <li><i data-lucide="check"></i> AI thumbnail generation</li>
+                <li><i data-lucide="check"></i> YouTube metadata AI</li>
                 <li><i data-lucide="check"></i> Priority rendering</li>
             </ul>
-            <button class="plan-btn primary" onclick="subscribe('halfmoon')">Subscribe</button>
+            <button class="plan-btn primary" onclick="subscribe('creator')">Start Creator</button>
         </div>
 
-        <!-- Full Moon -->
+        <!-- Pro -->
         <div class="plan-card">
-            <div class="plan-name">Full Moon</div>
-            <div class="plan-price">$49.99<small>/mo</small></div>
-            <div class="plan-period">Unlimited Luna</div>
+            <div class="plan-name">Pro</div>
+            <div class="plan-tagline">Pro channel</div>
+            <div class="plan-price">$149<small>/mo</small></div>
+            <div class="plan-output"><b>90 videos / month</b>3 per day</div>
             <ul class="plan-features">
-                <li><i data-lucide="check"></i> Everything in Half Moon</li>
-                <li><i data-lucide="check"></i> YouTube metadata AI</li>
-                <li><i data-lucide="check"></i> Analytics (channel/competitor)</li>
-                <li><i data-lucide="check"></i> AI Insights</li>
-                <li><i data-lucide="check"></i> Custom genres/moods</li>
-                <li><i data-lucide="check"></i> Highest priority rendering</li>
-                <li><i data-lucide="check"></i> 1:1 email support</li>
+                <li><i data-lucide="check"></i> Everything in Creator</li>
+                <li><i data-lucide="check"></i> AI image generation (DALL-E 3)</li>
+                <li><i data-lucide="check"></i> Channel analytics</li>
+                <li><i data-lucide="check"></i> Custom genres &amp; moods</li>
+                <li><i data-lucide="check"></i> Premium support</li>
             </ul>
-            <button class="plan-btn primary" onclick="subscribe('fullmoon')">Subscribe</button>
+            <button class="plan-btn primary" onclick="subscribe('pro')">Start Pro</button>
         </div>
-    </div>
 
-    <!-- Token Packs -->
-    <div id="tokenPlans" class="plans tokens-hidden">
+        <!-- Studio -->
         <div class="plan-card">
-            <div class="plan-name">Small</div>
-            <div class="plan-price">$4.99</div>
-            <div class="plan-period">One-time purchase</div>
+            <div class="plan-name">Studio</div>
+            <div class="plan-tagline">Agency / Multi-channel</div>
+            <div class="plan-price">$399<small>/mo</small></div>
+            <div class="plan-output"><b>720 videos / month</b>1 per hour, 24/7</div>
             <ul class="plan-features">
-                <li><i data-lucide="coins"></i> 500 Luna</li>
-                <li><i data-lucide="check"></i> Never expires</li>
-                <li><i data-lucide="check"></i> Use anytime</li>
+                <li><i data-lucide="check"></i> Everything in Pro</li>
+                <li><i data-lucide="check"></i> Multi-channel support</li>
+                <li><i data-lucide="check"></i> Highest priority queue</li>
+                <li><i data-lucide="check"></i> Dedicated 1:1 manager</li>
+                <li><i data-lucide="check"></i> Custom integrations</li>
             </ul>
-            <button class="plan-btn primary" onclick="buyTokens('small')">Buy now</button>
-        </div>
-        <div class="plan-card popular">
-            <div class="plan-name">Medium</div>
-            <div class="plan-price">$9.99</div>
-            <div class="plan-period">Best value</div>
-            <ul class="plan-features">
-                <li><i data-lucide="coins"></i> 1,000 Luna</li>
-                <li><i data-lucide="check"></i> Never expires</li>
-                <li><i data-lucide="check"></i> Save 20% vs Small × 2</li>
-            </ul>
-            <button class="plan-btn primary" onclick="buyTokens('medium')">Buy now</button>
-        </div>
-        <div class="plan-card">
-            <div class="plan-name">Large</div>
-            <div class="plan-price">$24.99</div>
-            <div class="plan-period">For power users</div>
-            <ul class="plan-features">
-                <li><i data-lucide="coins"></i> 3,000 Luna</li>
-                <li><i data-lucide="check"></i> Never expires</li>
-                <li><i data-lucide="check"></i> Save 33% vs Small × 6</li>
-            </ul>
-            <button class="plan-btn primary" onclick="buyTokens('large')">Buy now</button>
-        </div>
-        <div class="plan-card">
-            <div class="plan-name">Enterprise</div>
-            <div class="plan-price">Contact</div>
-            <div class="plan-period">10,000+ Luna</div>
-            <ul class="plan-features">
-                <li><i data-lucide="mail"></i> Custom pricing</li>
-                <li><i data-lucide="mail"></i> Volume discount</li>
-                <li><i data-lucide="mail"></i> Dedicated support</li>
-            </ul>
-            <a href="mailto:choist77777@gmail.com?subject=LunaWave Enterprise" class="plan-btn outline">Email us</a>
+            <button class="plan-btn primary" onclick="subscribe('studio')">Start Studio</button>
         </div>
     </div>
 
-    <!-- Info blocks -->
-    <div class="info-block">
-        <h3><i data-lucide="shield-check"></i> Secure payment</h3>
-        <p>Payments are processed by <strong>Paddle.com Market Ltd.</strong> as Merchant of Record. Paddle handles all sales tax (VAT/GST), fraud prevention, and compliance. We never see your card details.</p>
+    <div class="info-grid">
+        <div class="info-block">
+            <h3><i data-lucide="shield-check"></i> Secure global payment</h3>
+            <p>Payments processed by <strong>Paddle.com Market Ltd.</strong> as Merchant of Record. Paddle handles all sales tax (VAT/GST) for 200+ countries automatically.</p>
+        </div>
+        <div class="info-block">
+            <h3><i data-lucide="refresh-cw"></i> 14-day refund policy</h3>
+            <p>Full refund within 14 days if you've used minimal Luna. Email <a href="mailto:choist77777@gmail.com" style="color:var(--accent)">choist77777@gmail.com</a>.</p>
+        </div>
+        <div class="info-block">
+            <h3><i data-lucide="x-circle"></i> Cancel anytime</h3>
+            <p>One click in your dashboard. You keep access until the end of your billing cycle. No retention emails, no questions.</p>
+        </div>
+        <div class="info-block">
+            <h3><i data-lucide="credit-card"></i> Payment methods</h3>
+            <p>Visa, MasterCard, Amex, Discover, JCB, Apple Pay, Google Pay, PayPal. Currency auto-converted from USD.</p>
+        </div>
     </div>
 
-    <div class="info-block">
-        <h3><i data-lucide="refresh-cw"></i> Cancel anytime</h3>
-        <p>Cancel your subscription anytime from your dashboard. You'll keep access until the end of your billing cycle. No questions asked.</p>
-    </div>
-
-    <div class="info-block">
-        <h3><i data-lucide="rotate-ccw"></i> 14-day refund policy</h3>
-        <ul>
-            <li>Full refund available within 14 days of initial purchase</li>
-            <li>Condition: Luna consumption must be minimal (under 20 Luna)</li>
-            <li>Contact: <a href="mailto:choist77777@gmail.com" style="color:var(--accent);">choist77777@gmail.com</a></li>
-        </ul>
-    </div>
-
-    <div class="info-block">
-        <h3><i data-lucide="credit-card"></i> Payment methods</h3>
-        <p>We accept: Visa, MasterCard, American Express, Discover, JCB, Apple Pay, Google Pay, and PayPal. Currency is automatically converted from USD at Paddle's rate.</p>
+    <div class="faq">
+        <h2>Frequently asked questions</h2>
+        <div class="faq-item"><div class="faq-q">Do I need a Suno subscription?</div><div class="faq-a">Yes. LUNA WAVE Factory uses your Suno account to generate songs. Suno Free gives ~4–5 songs/day. For YouTube monetization, Suno's $10/mo Pro plan is required.</div></div>
+        <div class="faq-item"><div class="faq-q">What if my Suno credits run out?</div><div class="faq-a">The Factory pauses uploads until Suno credits refresh. We respect Suno's rate limits.</div></div>
+        <div class="faq-item"><div class="faq-q">Can I upload to multiple YouTube channels?</div><div class="faq-a">Hobby/Creator/Pro: 1 channel. Studio: multiple channels supported.</div></div>
+        <div class="faq-item"><div class="faq-q">What about copyright?</div><div class="faq-a">All songs are generated by your Suno account, so they're yours. LUNA WAVE only orchestrates the workflow. Always comply with Suno's terms of service.</div></div>
+        <div class="faq-item"><div class="faq-q">Can I switch plans anytime?</div><div class="faq-a">Yes. Upgrades take effect immediately (prorated). Downgrades take effect next billing cycle.</div></div>
     </div>
 </div>
 
 <script>
-/* =============================================================
- * Paddle integration (v2 Billing)
- * =============================================================
- * Paddle vendor ID & product IDs are injected at runtime via /api/config/paddle-ids
- * (or fallback to placeholders below — replace after Paddle account approval)
- */
 const PADDLE_CONFIG = {
-    // TODO: Replace after Paddle approval. Set environment: 'sandbox' for testing.
-    environment: 'sandbox', // or 'production'
+    environment: 'sandbox',
     token: 'test_PLACEHOLDER_CLIENT_TOKEN',
-    prices: {
-        // Paddle price IDs (pri_xxx format) - replace with real IDs
-        subscription: {
-            crescent: 'pri_PLACEHOLDER_CRESCENT',
-            halfmoon: 'pri_PLACEHOLDER_HALFMOON',
-            fullmoon: 'pri_PLACEHOLDER_FULLMOON'
-        },
-        tokens: {
-            small: 'pri_PLACEHOLDER_TOKENS_SMALL',
-            medium: 'pri_PLACEHOLDER_TOKENS_MEDIUM',
-            large: 'pri_PLACEHOLDER_TOKENS_LARGE'
-        }
-    }
+    prices: { subscription: {} }
 };
 
 let currentUser = null;
 let paddleReady = false;
 
-// Initialize Paddle when script loads
 function initPaddle() {
     if (typeof Paddle === 'undefined') {
-        console.warn('[Paddle] SDK not loaded yet, retrying...');
         setTimeout(initPaddle, 500);
         return;
     }
     try {
-        if (PADDLE_CONFIG.environment === 'sandbox') {
-            Paddle.Environment.set('sandbox');
-        }
-        Paddle.Initialize({
-            token: PADDLE_CONFIG.token,
-            eventCallback: handlePaddleEvent
-        });
+        if (PADDLE_CONFIG.environment === 'sandbox') Paddle.Environment.set('sandbox');
+        Paddle.Initialize({ token: PADDLE_CONFIG.token, eventCallback: handlePaddleEvent });
         paddleReady = true;
-        console.log('[Paddle] Initialized in', PADDLE_CONFIG.environment, 'mode');
-    } catch (e) {
-        console.error('[Paddle] Initialize failed:', e);
-    }
+    } catch (e) { console.error('[Paddle] init failed:', e); }
 }
 
 function handlePaddleEvent(event) {
-    console.log('[Paddle Event]', event.name, event.data);
     if (event.name === 'checkout.completed') {
-        showStatus('✅ Payment successful! Your plan will be activated in a few seconds.', 'success');
-        // Supabase webhook updates the profile; refresh dashboard after delay
-        setTimeout(() => { window.location.href = '/dashboard.html'; }, 3000);
-    } else if (event.name === 'checkout.closed') {
-        console.log('[Paddle] Checkout closed');
+        showStatus('✅ Payment successful! Redirecting to Factory...', 'success');
+        setTimeout(() => { window.location.href = '/factory.html'; }, 3000);
     }
 }
 
-async function loadUserAndConfig() {
-    // 1. Check auth
+async function loadConfig() {
     if (typeof LW !== 'undefined' && LW.getSession) {
         const session = await LW.getSession();
         if (!session) {
-            showStatus('Please log in to subscribe. <a href="/login.html">Log in</a>', 'warn');
-            disableAllButtons();
+            showStatus('Please <a href="/login.html">log in</a> first to subscribe.', 'warn');
+            document.querySelectorAll('.plan-btn.primary').forEach(b => { b.disabled = true; b.textContent = 'Log in required'; });
             return;
         }
         currentUser = session.user;
     }
-
-    // 2. Fetch current plan
-    try {
-        const r = await fetch('/.netlify/functions/check-plan', {
-            headers: { 'Authorization': 'Bearer ' + (await LW.getAccessToken()) }
-        });
-        if (r.ok) {
-            const d = await r.json();
-            if (d.plan && d.plan !== 'free') {
-                showStatus(`You're currently on <strong>${d.plan}</strong>. Next billing: ${d.plan_expires_at ? new Date(d.plan_expires_at).toLocaleDateString() : '—'}`, 'info');
-                markCurrentPlan(d.plan);
-            }
-        }
-    } catch (e) {
-        console.warn('[Plan check] Failed:', e.message);
-    }
-
-    // 3. Fetch Paddle config from server (optional, allows live rotation)
     try {
         const r = await fetch('/.netlify/functions/paddle-config');
         if (r.ok) {
@@ -402,111 +297,47 @@ async function loadUserAndConfig() {
             if (cfg.token) PADDLE_CONFIG.token = cfg.token;
             if (cfg.environment) PADDLE_CONFIG.environment = cfg.environment;
             if (cfg.prices) PADDLE_CONFIG.prices = cfg.prices;
-            console.log('[Paddle] Config loaded from server');
         }
-    } catch (_e) {
-        console.log('[Paddle] Using hardcoded config (server config unavailable)');
-    }
-
+    } catch (_e) {}
     initPaddle();
-}
-
-function markCurrentPlan(plan) {
-    if (plan === 'crescent' || plan === 'halfmoon' || plan === 'fullmoon') {
-        const btn = document.querySelector(`.plan-card:nth-child(${plan === 'crescent' ? 2 : plan === 'halfmoon' ? 3 : 4}) .plan-btn`);
-        if (btn) {
-            btn.textContent = 'Your current plan';
-            btn.className = 'plan-btn current';
-            btn.disabled = true;
-            btn.onclick = null;
-        }
-    }
-}
-
-function showTab(tab) {
-    document.getElementById('tabSub').classList.toggle('active', tab === 'sub');
-    document.getElementById('tabTokens').classList.toggle('active', tab === 'tokens');
-    document.getElementById('subPlans').classList.toggle('tokens-hidden', tab !== 'sub');
-    document.getElementById('tokenPlans').classList.toggle('tokens-hidden', tab !== 'tokens');
 }
 
 function showStatus(html, type) {
     const banner = document.getElementById('statusBanner');
-    const text = document.getElementById('statusText');
-    text.innerHTML = html;
+    document.getElementById('statusText').innerHTML = html;
     banner.style.display = 'block';
     banner.style.borderLeftColor = type === 'success' ? 'var(--success)' :
                                     type === 'warn' ? 'var(--error)' : 'var(--accent)';
 }
 
-function disableAllButtons() {
-    document.querySelectorAll('.plan-btn.primary').forEach(b => { b.disabled = true; b.textContent = 'Log in required'; });
-}
-
 async function subscribe(plan) {
     if (!currentUser) { showStatus('Please log in first.', 'warn'); return; }
-    if (!paddleReady) { showStatus('Payment system loading... please wait.', 'warn'); return; }
-    const priceId = PADDLE_CONFIG.prices.subscription[plan];
-    if (!priceId || priceId.includes('PLACEHOLDER')) {
-        showStatus('⚠️ Paddle product IDs not configured yet. Contact: choist77777@gmail.com', 'warn');
+    if (!paddleReady) { showStatus('Loading payment system...', 'warn'); return; }
+    const priceId = PADDLE_CONFIG.prices.subscription && PADDLE_CONFIG.prices.subscription[plan];
+    if (!priceId || priceId.includes('PLACEHOLDER') || !priceId) {
+        showStatus('⚠️ Paddle product IDs not configured yet. Email choist77777@gmail.com to subscribe directly.', 'warn');
         return;
     }
     try {
         Paddle.Checkout.open({
-            items: [{ priceId: priceId, quantity: 1 }],
+            items: [{ priceId, quantity: 1 }],
             customer: { email: currentUser.email },
-            customData: { user_id: currentUser.id, plan: plan, type: 'subscription' },
-            settings: {
-                displayMode: 'overlay',
-                theme: 'light',
-                locale: 'en',
-                successUrl: window.location.origin + '/payment.html?result=success&plan=' + plan
-            }
+            customData: { user_id: currentUser.id, plan, type: 'subscription' },
+            settings: { displayMode: 'overlay', theme: 'light', locale: 'en',
+                        successUrl: window.location.origin + '/factory.html?welcome=1' }
         });
-    } catch (e) {
-        console.error('[Subscribe] Error:', e);
-        showStatus('❌ ' + e.message, 'warn');
-    }
+    } catch (e) { showStatus('❌ ' + e.message, 'warn'); }
 }
 
-async function buyTokens(pack) {
-    if (!currentUser) { showStatus('Please log in first.', 'warn'); return; }
-    if (!paddleReady) { showStatus('Payment system loading... please wait.', 'warn'); return; }
-    const priceId = PADDLE_CONFIG.prices.tokens[pack];
-    if (!priceId || priceId.includes('PLACEHOLDER')) {
-        showStatus('⚠️ Paddle product IDs not configured yet. Contact: choist77777@gmail.com', 'warn');
-        return;
-    }
-    try {
-        Paddle.Checkout.open({
-            items: [{ priceId: priceId, quantity: 1 }],
-            customer: { email: currentUser.email },
-            customData: { user_id: currentUser.id, package: pack, type: 'tokens' },
-            settings: {
-                displayMode: 'overlay',
-                theme: 'light',
-                locale: 'en'
-            }
-        });
-    } catch (e) {
-        console.error('[BuyTokens] Error:', e);
-        showStatus('❌ ' + e.message, 'warn');
-    }
-}
-
-// Handle return from Paddle redirect
 (function checkRedirect() {
     const params = new URLSearchParams(window.location.search);
     if (params.get('result') === 'success') {
-        showStatus('✅ Payment successful! Your plan is being activated...', 'success');
-        setTimeout(() => { window.location.href = '/dashboard.html'; }, 3000);
+        showStatus('✅ Activated! Redirecting...', 'success');
+        setTimeout(() => { window.location.href = '/factory.html'; }, 3000);
     }
 })();
 
-document.addEventListener('DOMContentLoaded', () => {
-    lucide.createIcons();
-    loadUserAndConfig();
-});
+document.addEventListener('DOMContentLoaded', () => { lucide.createIcons(); loadConfig(); });
 </script>
 </body>
 </html>

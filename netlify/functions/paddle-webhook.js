@@ -10,16 +10,25 @@ const supabase = createClient(
 const PADDLE_WEBHOOK_SECRET = process.env.PADDLE_WEBHOOK_SECRET;
 
 // Global USD pricing (Paddle Merchant of Record)
+// Legacy luna packs (kept for backward compat with old transactions)
 const LUNA_PACKAGES = {
     'small': { lunas: 500, price_usd_cents: 499 },
     'medium': { lunas: 1000, price_usd_cents: 999 },
     'large': { lunas: 3000, price_usd_cents: 2499 }
 };
 
+// LUNA WAVE v7.0 "Factory" subscription tiers
+// Maps plan key to monthly video quota + price
 const SUBSCRIPTION_PLANS = {
-    'crescent': { price_usd_cents: 999 },
-    'halfmoon': { price_usd_cents: 2499 },
-    'fullmoon': { price_usd_cents: 4999 }
+    // Legacy v6 plans (still accepted from old subscriptions)
+    'crescent': { price_usd_cents: 999, factory_quota_monthly: 12 },
+    'halfmoon': { price_usd_cents: 2499, factory_quota_monthly: 30 },
+    'fullmoon': { price_usd_cents: 4999, factory_quota_monthly: 90 },
+    // v7 Factory plans
+    'hobby':    { price_usd_cents: 1900,  factory_quota_monthly: 12 },
+    'creator':  { price_usd_cents: 4900,  factory_quota_monthly: 30 },
+    'pro':      { price_usd_cents: 14900, factory_quota_monthly: 90 },
+    'studio':   { price_usd_cents: 39900, factory_quota_monthly: 720 }
 };
 
 // Paddle webhook 서명 검증
@@ -141,12 +150,17 @@ exports.handler = async (event) => {
                 const nextBillingAt = sub.next_billed_at || sub.current_billing_period?.ends_at || null;
                 const startedAt = sub.first_billed_at || sub.started_at || now;
 
+                const planInfo = SUBSCRIPTION_PLANS[plan];
                 const updatePayload = {
                     plan: plan,
                     plan_started_at: startedAt,
                     plan_expires_at: nextBillingAt,
                     auto_renew: true,
-                    updated_at: now
+                    updated_at: now,
+                    // v7 Factory: 플랜에 맞는 월 영상 쿼터 자동 설정
+                    factory_plan: plan,
+                    factory_quota_monthly: planInfo.factory_quota_monthly,
+                    factory_started_at: startedAt
                 };
                 // Store subscription ID for later cancel
                 if (sub.id) updatePayload.paddle_subscription_id = sub.id;
@@ -179,9 +193,17 @@ exports.handler = async (event) => {
                 await supabase.from('profiles').update({
                     plan: 'free',
                     auto_renew: false,
-                    updated_at: now
+                    updated_at: now,
+                    // v7 Factory: 무료 플랜으로 강등 (월 3 trial)
+                    factory_plan: 'free',
+                    factory_quota_monthly: 3
                 }).eq('id', userId);
-                console.log(`[Paddle] Subscription cancelled: ${userId}`);
+                // 자동 파이프라인 정지
+                await supabase.from('factory_configs').update({
+                    enabled: false,
+                    updated_at: now
+                }).eq('user_id', userId);
+                console.log(`[Paddle] Subscription cancelled + Factory disabled: ${userId}`);
             }
         }
 
