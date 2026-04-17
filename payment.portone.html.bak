@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>구독 플랜 - LunaWave</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="/js/supabase-client.js"></script>
+    <script src="https://cdn.iamport.kr/v1/iamport.js"></script>
+
+    <style>
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f9f9fb;
+            --text-primary: #1a1a2e;
+            --text-secondary: #64648c;
+            --text-muted: #9999b3;
+            --accent: #f5a623;
+            --accent-light: rgba(245, 166, 35, 0.1);
+            --border: #e8e8f0;
+            --shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+            --radius: 12px;
+            --radius-sm: 8px;
+            --success: #22c55e;
+            --error: #ef4444;
+            --popular: #8b5cf6;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Noto Sans KR', 'Outfit', sans-serif;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 24px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+        .back-link:hover { color: var(--text-primary); }
+        .page-header {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+        .page-title {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+        .page-subtitle {
+            font-size: 16px;
+            color: var(--text-secondary);
+        }
+        .upgrade-info {
+            background: var(--accent-light);
+            border: 1px solid var(--accent);
+            border-radius: var(--radius);
+            padding: 16px;
+            text-align: center;
+            margin-bottom: 32px;
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+        .plans-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin-bottom: 48px;
+        }
+        @media (max-width: 1024px) {
+            .plans-grid { grid-template-columns: 1fr; }
+        }
+        .plan-card {
+            background: var(--bg-primary);
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            padding: 32px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        .plan-card:hover {
+            border-color: var(--accent);
+            box-shadow: var(--shadow);
+            transform: translateY(-4px);
+        }
+        .plan-card.popular {
+            border-color: var(--popular);
+        }
+        .popular-badge {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--popular);
+            color: white;
+            padding: 4px 16px;
+            border-radius: 100px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        .plan-name {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+        .plan-name-en {
+            font-size: 14px;
+            color: var(--text-muted);
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        .plan-price {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .price-amount {
+            font-size: 42px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+        .price-period {
+            font-size: 16px;
+            color: var(--text-secondary);
+            font-weight: 400;
+        }
+        .plan-features {
+            list-style: none;
+            margin-bottom: 32px;
+        }
+        .plan-features li {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 10px 0;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .plan-features li i {
+            color: var(--success);
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+        .promo-section {
+            margin-bottom: 20px;
+        }
+        .promo-label {
+            font-size: 13px;
+            font-weight: 500;
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+        }
+        .promo-input {
+            display: flex;
+            gap: 8px;
+        }
+        .promo-input input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-family: inherit;
+        }
+        .promo-input input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        .promo-input button {
+            padding: 10px 16px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .promo-input button:hover {
+            border-color: var(--accent);
+            background: var(--accent-light);
+        }
+        .promo-applied {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            padding: 10px;
+            background: rgba(34, 197, 94, 0.1);
+            border-radius: var(--radius-sm);
+            color: var(--success);
+            font-size: 13px;
+            margin-top: 8px;
+        }
+        .promo-applied i {
+            width: 16px;
+            height: 16px;
+        }
+        .payment-methods {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .payment-method {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px;
+            border: 2px solid var(--border);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .payment-method:hover { border-color: var(--accent); }
+        .payment-method.selected {
+            border-color: var(--accent);
+            background: var(--accent-light);
+        }
+        .payment-method i {
+            width: 18px;
+            height: 18px;
+        }
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            padding: 16px 24px;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            font-family: inherit;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent), #e6951a);
+            color: white;
+        }
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(245, 166, 35, 0.3);
+        }
+        .btn-primary:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .alert {
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        .alert-error {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+        }
+        .fine-print {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-align: center;
+            margin-top: 12px;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/dashboard.html" class="back-link">
+            <i data-lucide="arrow-left"></i>
+            대시보드로 돌아가기
+        </a>
+
+        <div class="page-header">
+            <h1 class="page-title">구독 플랜 선택</h1>
+            <p class="page-subtitle">프로젝트에 맞는 플랜을 선택하세요</p>
+        </div>
+
+        <div class="upgrade-info">
+            하위 플랜에서 상위 플랜으로 업그레이드 시 남은 기간을 일할 계산하여 차액만 결제됩니다.
+        </div>
+
+        <div id="alert" class="alert alert-error" style="display:none;"></div>
+
+        <div class="plans-grid">
+            <!-- Crescent Plan -->
+            <div class="plan-card" data-plan="crescent">
+                <div class="plan-name">초승달</div>
+                <div class="plan-name-en">Crescent</div>
+                <div class="plan-price">
+                    <span class="price-amount">13,900</span><span class="price-period">원/월</span>
+                </div>
+                <ul class="plan-features">
+                    <li><i data-lucide="check"></i> 일 50 + 월 1,500 루나</li>
+                    <li><i data-lucide="check"></i> 워터마크 없음</li>
+                    <li><i data-lucide="check"></i> 1080p 해상도</li>
+                    <li><i data-lucide="check"></i> Ultra Cutout</li>
+                    <li><i data-lucide="check"></i> Accurate Preview</li>
+                    <li><i data-lucide="check"></i> SRT 자막</li>
+                </ul>
+                <div class="promo-section">
+                    <label class="promo-label">프로모션 코드</label>
+                    <div class="promo-input">
+                        <input type="text" id="promoCrescent" placeholder="코드 입력">
+                        <button onclick="applyPromo('crescent')">적용</button>
+                    </div>
+                    <div class="promo-applied" id="promoAppliedCrescent">
+                        <i data-lucide="check-circle"></i>
+                        <span id="promoTextCrescent"></span>
+                    </div>
+                </div>
+                <div class="payment-methods">
+                    <div class="payment-method selected" data-plan="crescent" data-method="card">
+                        <i data-lucide="credit-card"></i>
+                        신용카드
+                    </div>
+                    <div class="payment-method disabled" data-plan="crescent" data-method="kakaopay" style="opacity:0.4;cursor:not-allowed;pointer-events:none;" title="카카오페이 정기결제 준비중">
+                        카카오페이
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="paySubscription('crescent')">
+                    <span id="btnTextCrescent">13,900원 결제하기</span>
+                    <div id="spinnerCrescent" class="spinner" style="display:none;"></div>
+                </button>
+                <p class="fine-print">구독은 매월 자동 갱신됩니다. 언제든 해지 가능합니다.</p>
+            </div>
+
+            <!-- Half Moon Plan -->
+            <div class="plan-card popular" data-plan="halfmoon">
+                <div class="popular-badge">POPULAR</div>
+                <div class="plan-name">반달</div>
+                <div class="plan-name-en">Half Moon</div>
+                <div class="plan-price">
+                    <span class="price-amount">33,000</span><span class="price-period">원/월</span>
+                </div>
+                <ul class="plan-features">
+                    <li><i data-lucide="check"></i> 일 200 + 월 3,000 루나</li>
+                    <li><i data-lucide="check"></i> 초승달 전체 포함</li>
+                    <li><i data-lucide="check"></i> Text Behind Person</li>
+                    <li><i data-lucide="check"></i> AI 가사 생성</li>
+                    <li><i data-lucide="check"></i> Suno 자동화</li>
+                    <li><i data-lucide="check"></i> 우선 렌더링</li>
+                </ul>
+                <div class="promo-section">
+                    <label class="promo-label">프로모션 코드</label>
+                    <div class="promo-input">
+                        <input type="text" id="promoHalfmoon" placeholder="코드 입력">
+                        <button onclick="applyPromo('halfmoon')">적용</button>
+                    </div>
+                    <div class="promo-applied" id="promoAppliedHalfmoon">
+                        <i data-lucide="check-circle"></i>
+                        <span id="promoTextHalfmoon"></span>
+                    </div>
+                </div>
+                <div class="payment-methods">
+                    <div class="payment-method selected" data-plan="halfmoon" data-method="card">
+                        <i data-lucide="credit-card"></i>
+                        신용카드
+                    </div>
+                    <div class="payment-method disabled" data-plan="halfmoon" data-method="kakaopay" style="opacity:0.4;cursor:not-allowed;pointer-events:none;" title="카카오페이 정기결제 준비중">
+                        카카오페이
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="paySubscription('halfmoon')">
+                    <span id="btnTextHalfmoon">33,000원 결제하기</span>
+                    <div id="spinnerHalfmoon" class="spinner" style="display:none;"></div>
+                </button>
+                <p class="fine-print">구독은 매월 자동 갱신됩니다. 언제든 해지 가능합니다.</p>
+            </div>
+
+            <!-- Full Moon Plan -->
+            <div class="plan-card" data-plan="fullmoon">
+                <div class="plan-name">보름달</div>
+                <div class="plan-name-en">Full Moon</div>
+                <div class="plan-price">
+                    <span class="price-amount">79,000</span><span class="price-period">원/월</span>
+                </div>
+                <ul class="plan-features">
+                    <li><i data-lucide="check"></i> 무제한 루나</li>
+                    <li><i data-lucide="check"></i> 반달 전체 포함</li>
+                    <li><i data-lucide="check"></i> YouTube 메타데이터 AI</li>
+                    <li><i data-lucide="check"></i> Analytics</li>
+                    <li><i data-lucide="check"></i> 최우선 렌더링</li>
+                    <li><i data-lucide="check"></i> 1:1 지원</li>
+                </ul>
+                <div class="promo-section">
+                    <label class="promo-label">프로모션 코드</label>
+                    <div class="promo-input">
+                        <input type="text" id="promoFullmoon" placeholder="코드 입력">
+                        <button onclick="applyPromo('fullmoon')">적용</button>
+                    </div>
+                    <div class="promo-applied" id="promoAppliedFullmoon">
+                        <i data-lucide="check-circle"></i>
+                        <span id="promoTextFullmoon"></span>
+                    </div>
+                </div>
+                <div class="payment-methods">
+                    <div class="payment-method selected" data-plan="fullmoon" data-method="card">
+                        <i data-lucide="credit-card"></i>
+                        신용카드
+                    </div>
+                    <div class="payment-method disabled" data-plan="fullmoon" data-method="kakaopay" style="opacity:0.4;cursor:not-allowed;pointer-events:none;" title="카카오페이 정기결제 준비중">
+                        카카오페이
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="paySubscription('fullmoon')">
+                    <span id="btnTextFullmoon">79,000원 결제하기</span>
+                    <div id="spinnerFullmoon" class="spinner" style="display:none;"></div>
+                </button>
+                <p class="fine-print">구독은 매월 자동 갱신됩니다. 언제든 해지 가능합니다.</p>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        const IMP_CODE = 'imp52320115';
+
+        const sb = LW.supabase;
+        let user;
+
+        const planPrices = {
+            crescent: 13900,
+            halfmoon: 33000,
+            fullmoon: 79000
+        };
+
+        const planNames = {
+            crescent: '초승달 (Crescent)',
+            halfmoon: '반달 (Half Moon)',
+            fullmoon: '보름달 (Full Moon)'
+        };
+
+        const selectedMethods = {
+            crescent: 'card',
+            halfmoon: 'card',
+            fullmoon: 'card'
+        };
+
+        const appliedPromos = {
+            crescent: null,
+            halfmoon: null,
+            fullmoon: null
+        };
+
+        document.querySelectorAll('.payment-method').forEach(method => {
+            method.addEventListener('click', () => {
+                const plan = method.dataset.plan;
+                const container = method.closest('.plan-card');
+                container.querySelectorAll('.payment-method').forEach(m => m.classList.remove('selected'));
+                method.classList.add('selected');
+                selectedMethods[plan] = method.dataset.method;
+            });
+        });
+
+        async function applyPromo(plan) {
+            const input = document.getElementById(`promo${plan.charAt(0).toUpperCase() + plan.slice(1)}`);
+            const code = input.value.trim().toUpperCase();
+            if (!code) return;
+
+            const { data, error } = await sb
+                .from('promo_codes')
+                .select('*')
+                .eq('code', code)
+                .eq('is_active', true)
+                .single();
+
+            if (error || !data) {
+                alert('유효하지 않은 프로모션 코드입니다.');
+                return;
+            }
+
+            if (data.expires_at && new Date(data.expires_at) < new Date()) {
+                alert('만료된 프로모션 코드입니다.');
+                return;
+            }
+
+            if (data.max_uses && data.used_count >= data.max_uses) {
+                alert('사용 횟수가 초과된 프로모션 코드입니다.');
+                return;
+            }
+
+            appliedPromos[plan] = data;
+            const appliedDiv = document.getElementById(`promoApplied${plan.charAt(0).toUpperCase() + plan.slice(1)}`);
+            const textSpan = document.getElementById(`promoText${plan.charAt(0).toUpperCase() + plan.slice(1)}`);
+
+            appliedDiv.style.display = 'flex';
+            textSpan.textContent = data.type === 'discount' ? `${data.value}% 할인 적용` : `${data.value} 루나 보너스`;
+
+            updatePlanButton(plan);
+            lucide.createIcons();
+        }
+
+        function calculateProration(plan) {
+            if (!currentPlan || currentPlan === 'free' || !planExpiresAt) return null;
+            const planLevel = { free: 0, crescent: 1, halfmoon: 2, fullmoon: 3 };
+            if ((planLevel[plan] || 0) <= (planLevel[currentPlan] || 0)) return null;
+
+            const now = new Date();
+            const expires = new Date(planExpiresAt);
+            if (isNaN(expires.getTime())) return null;
+
+            const remainingMs = expires - now;
+            if (remainingMs <= 0) return null;
+
+            if (planPrices[currentPlan] == null || planPrices[plan] == null) return null;
+
+            const totalDays = 30;
+            const remainingDays = Math.min(Math.ceil(remainingMs / (1000 * 60 * 60 * 24)), 365);
+            const ratio = Math.min(remainingDays / totalDays, 1);
+
+            const currentCredit = Math.floor(planPrices[currentPlan] * ratio);
+            const newCost = Math.floor(planPrices[plan] * ratio);
+            const diff = Math.max(0, newCost - currentCredit);
+
+            if (isNaN(diff)) return null;
+
+            return { diff, remainingDays, currentCredit, newCost };
+        }
+
+        function updatePlanButton(plan) {
+            let amount = planPrices[plan];
+            const promo = appliedPromos[plan];
+            const proration = calculateProration(plan);
+
+            if (proration) {
+                amount = proration.diff;
+            }
+
+            if (promo && promo.type === 'discount') {
+                amount -= Math.floor(amount * promo.value / 100);
+            }
+
+            const btnText = document.getElementById(`btnText${plan.charAt(0).toUpperCase() + plan.slice(1)}`);
+            const btn = btnText?.parentElement;
+
+            if (isNaN(amount) || amount < 0) {
+                if (btnText) btnText.textContent = '금액 계산 오류';
+                if (btn) btn.disabled = true;
+                return;
+            }
+
+            if (btn) btn.disabled = false;
+            if (proration) {
+                btnText.textContent = `${amount.toLocaleString()}원 차액 결제 (${proration.remainingDays}일)`;
+            } else {
+                btnText.textContent = `${amount.toLocaleString()}원 결제하기`;
+            }
+        }
+
+        async function paySubscription(plan) {
+            window._showAgreementModal(async function(agreedAt) {
+                window._agreedAt = agreedAt;
+                await _doPaySubscription(plan);
+            });
+        }
+
+        async function _doPaySubscription(plan) {
+            const { data: { user: u } } = await sb.auth.getUser();
+            if (!u) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            const btnText = document.getElementById(`btnText${plan.charAt(0).toUpperCase() + plan.slice(1)}`);
+            const spinner = document.getElementById(`spinner${plan.charAt(0).toUpperCase() + plan.slice(1)}`);
+            const btn = btnText.parentElement;
+
+            btn.disabled = true;
+            btnText.style.display = 'none';
+            spinner.style.display = 'block';
+
+            try {
+                let amount = planPrices[plan];
+                const promo = appliedPromos[plan];
+                const proration = calculateProration(plan);
+
+                if (proration) {
+                    amount = proration.diff;
+                }
+
+                if (promo && promo.type === 'discount') {
+                    amount -= Math.floor(amount * promo.value / 100);
+                }
+
+                const customerUid = `customer_${u.id}`;
+                const merchantUid = `sub_${plan}_${Date.now()}_${u.id.slice(0, 8)}`;
+
+                // amount === 0 (업그레이드 차액 0원): 결제 없이 서버에 직접 플랜 변경 요청
+                if (amount === 0) {
+                    const session = await sb.auth.getSession();
+                    const accessToken = session.data?.session?.access_token;
+
+                    console.log('subscribe 호출 시작', {imp_uid: null, customer_uid: customerUid, plan});
+                    const res = await fetch('/.netlify/functions/subscribe', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${accessToken}`
+                        },
+                        body: JSON.stringify({
+                            customer_uid: customerUid,
+                            merchant_uid: merchantUid,
+                            plan: plan,
+                            promo_code: promo?.code,
+                            is_upgrade: !!proration,
+                            prorated_amount: 0,
+                            agreed_at: window._agreedAt
+                        })
+                    });
+
+                    const result = await res.json();
+                    console.log('subscribe 응답', result);
+                    if (result.success) {
+                        alert(`${planNames[plan]} 구독이 시작되었습니다!`);
+                        window.location.href = '/dashboard.html';
+                    } else {
+                        alert('구독 처리 실패: ' + (result.error || '알 수 없는 오류'));
+                    }
+
+                    btn.disabled = false;
+                    btnText.style.display = 'block';
+                    spinner.style.display = 'none';
+                    return;
+                }
+
+                // V1: IMP.request_pay로 카드 등록 + 첫 결제 동시 진행
+                const IMP = window.IMP;
+                if (!IMP) {
+                    alert('결제 모듈을 불러오지 못했습니다. 페이지를 새로고침해주세요.');
+                    btn.disabled = false;
+                    btnText.style.display = 'block';
+                    spinner.style.display = 'none';
+                    return;
+                }
+
+                if (isNaN(amount) || amount < 0) {
+                    alert('결제 금액 계산 오류가 발생했습니다. 페이지를 새로고침해주세요.');
+                    btn.disabled = false;
+                    btnText.style.display = 'block';
+                    spinner.style.display = 'none';
+                    return;
+                }
+
+                IMP.init(IMP_CODE);
+
+                IMP.request_pay({
+                    channelKey: 'channel-key-3c1d6c20-7085-4d02-8093-bbf89514d4e4',
+                    pay_method: 'card',
+                    merchant_uid: merchantUid,
+                    customer_uid: customerUid,
+                    name: `LunaWave ${planNames[plan]} 구독`,
+                    amount: amount,
+                    buyer_email: u.email,
+                    buyer_name: u.user_metadata?.full_name || ''
+                }, async (rsp) => {
+                    if (rsp.success) {
+                        // 결제 성공 → 서버로 imp_uid + customer_uid 전송
+                        try {
+                            const session = await sb.auth.getSession();
+                            const accessToken = session.data?.session?.access_token;
+
+                            console.log('subscribe 호출 시작', {imp_uid: rsp.imp_uid, customer_uid: customerUid, plan});
+                            const res = await fetch('/.netlify/functions/subscribe', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': `Bearer ${accessToken}`
+                                },
+                                body: JSON.stringify({
+                                    imp_uid: rsp.imp_uid,
+                                    merchant_uid: merchantUid,
+                                    customer_uid: customerUid,
+                                    plan: plan,
+                                    promo_code: promo?.code,
+                                    is_upgrade: !!proration,
+                                    prorated_amount: proration ? proration.diff : null,
+                                    agreed_at: window._agreedAt
+                                })
+                            });
+
+                            const result = await res.json();
+                            console.log('subscribe 응답', result);
+
+                            if (result.success) {
+                                alert(`${planNames[plan]} 구독이 시작되었습니다!`);
+                                window.location.href = '/dashboard.html';
+                            } else {
+                                alert('구독 처리 실패: ' + (result.error || '알 수 없는 오류'));
+                            }
+                        } catch (fetchErr) {
+                            alert('서버 통신 오류: ' + fetchErr.message);
+                        }
+                    } else {
+                        // 사용자 취소 또는 결제 실패
+                        alert('결제 실패: ' + (rsp.error_msg || '알 수 없는 오류'));
+                    }
+
+                    btn.disabled = false;
+                    btnText.style.display = 'block';
+                    spinner.style.display = 'none';
+                });
+            } catch (err) {
+                alert('결제 오류: ' + err.message);
+                btn.disabled = false;
+                btnText.style.display = 'block';
+                spinner.style.display = 'none';
+            }
+        }
+
+        let currentPlan = null;
+        let planExpiresAt = null;
+
+        async function init() {
+            const { data: { user: u } } = await sb.auth.getUser();
+            if (!u) {
+                window.location.href = '/login.html';
+                return;
+            }
+            user = u;
+
+            // 현재 플랜 정보 로드
+            const { data: profile } = await sb.from('profiles').select('plan, plan_expires_at').eq('id', u.id).single();
+            if (profile && profile.plan && profile.plan !== 'free') {
+                currentPlan = profile.plan;
+                planExpiresAt = profile.plan_expires_at;
+                updateAllPlanButtons();
+            }
+        }
+
+        function updateAllPlanButtons() {
+            ['crescent', 'halfmoon', 'fullmoon'].forEach(plan => updatePlanButton(plan));
+        }
+
+        init();
+    </script>
+
+<!-- 결제 동의 팝업 -->
+<div id="agreementModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:9999; justify-content:center; align-items:center;">
+  <div style="background:#1a1a1a; border-radius:12px; padding:32px; max-width:480px; width:90%; max-height:80vh; overflow-y:auto;">
+    <h3 style="color:#fff; margin-bottom:20px; font-size:18px;">결제 전 동의 사항</h3>
+
+    <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:24px;">
+      <label style="color:#ccc; font-size:14px; display:flex; align-items:flex-start; gap:8px; cursor:pointer;">
+        <input type="checkbox" id="agree1" style="margin-top:2px; flex-shrink:0;">
+        <span><strong style="color:#fff">[필수]</strong> 이용약관 동의 <a href="/terms.html" target="_blank" style="color:#f59e0b;">보기</a></span>
+      </label>
+      <label style="color:#ccc; font-size:14px; display:flex; align-items:flex-start; gap:8px; cursor:pointer;">
+        <input type="checkbox" id="agree2" style="margin-top:2px; flex-shrink:0;">
+        <span><strong style="color:#fff">[필수]</strong> 개인정보 수집 및 이용 동의 <a href="/privacy.html" target="_blank" style="color:#f59e0b;">보기</a></span>
+      </label>
+      <label style="color:#ccc; font-size:14px; display:flex; align-items:flex-start; gap:8px; cursor:pointer;">
+        <input type="checkbox" id="agree3" style="margin-top:2px; flex-shrink:0;">
+        <span><strong style="color:#fff">[필수]</strong> 개인정보 제3자 제공 동의 (NHN KCP)</span>
+      </label>
+      <label style="color:#ccc; font-size:14px; display:flex; align-items:flex-start; gap:8px; cursor:pointer;">
+        <input type="checkbox" id="agree4" style="margin-top:2px; flex-shrink:0;">
+        <span><strong style="color:#fff">[필수]</strong> 디지털 콘텐츠 이용 개시 후 청약철회 제한 동의</span>
+      </label>
+      <label style="color:#ccc; font-size:14px; display:flex; align-items:flex-start; gap:8px; cursor:pointer;">
+        <input type="checkbox" id="agree5" style="margin-top:2px; flex-shrink:0;">
+        <span><strong style="color:#fff">[필수]</strong> 정기결제(자동 갱신) 동의 — 매월 자동 결제되며 언제든 해지 가능합니다</span>
+      </label>
+      <label style="color:#ccc; font-size:14px; display:flex; align-items:flex-start; gap:8px; cursor:pointer; border-top:1px solid #333; padding-top:12px; margin-top:4px;">
+        <input type="checkbox" id="agreeAll" style="margin-top:2px; flex-shrink:0;">
+        <span><strong style="color:#fff">전체 동의</strong></span>
+      </label>
+    </div>
+
+    <div style="display:flex; gap:12px;">
+      <button id="agreeCancelBtn" style="flex:1; padding:12px; border-radius:8px; border:1px solid #444; background:transparent; color:#ccc; cursor:pointer; font-size:14px;">취소</button>
+      <button id="agreeConfirmBtn" style="flex:2; padding:12px; border-radius:8px; border:none; background:#f59e0b; color:#000; cursor:pointer; font-size:14px; font-weight:bold;" disabled>동의하고 결제하기</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// 동의 팝업 로직
+(function() {
+  const agreeIds = ['agree1','agree2','agree3','agree4','agree5'];
+
+  function updateAgreeBtn() {
+    const allChecked = agreeIds.every(id => document.getElementById(id).checked);
+    document.getElementById('agreeConfirmBtn').disabled = !allChecked;
+    document.getElementById('agreeAll').checked = allChecked;
+  }
+
+  // 개별 체크박스 변경 시
+  agreeIds.forEach(id => {
+    document.getElementById(id).addEventListener('change', updateAgreeBtn);
+  });
+
+  // 전체 동의
+  document.getElementById('agreeAll').addEventListener('change', function() {
+    agreeIds.forEach(id => {
+      document.getElementById(id).checked = this.checked;
+    });
+    updateAgreeBtn();
+  });
+
+  // 취소 버튼
+  document.getElementById('agreeCancelBtn').addEventListener('click', function() {
+    document.getElementById('agreementModal').style.display = 'none';
+    // 체크박스 초기화
+    agreeIds.forEach(id => document.getElementById(id).checked = false);
+    document.getElementById('agreeAll').checked = false;
+    updateAgreeBtn();
+  });
+
+  // 전역으로 노출
+  window._showAgreementModal = function(onConfirm) {
+    document.getElementById('agreementModal').style.display = 'flex';
+    document.getElementById('agreeConfirmBtn').onclick = function() {
+      document.getElementById('agreementModal').style.display = 'none';
+      const agreedAt = new Date().toISOString();
+      onConfirm(agreedAt);
+    };
+  };
+})();
+</script>
+</body>
+</html>

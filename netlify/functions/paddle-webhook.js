@@ -9,11 +9,17 @@ const supabase = createClient(
 
 const PADDLE_WEBHOOK_SECRET = process.env.PADDLE_WEBHOOK_SECRET;
 
-// purchase-tokens.js와 동일한 패키지 정의
+// Global USD pricing (Paddle Merchant of Record)
 const LUNA_PACKAGES = {
-    'small': { lunas: 500, price: 7900 },
-    'medium': { lunas: 1000, price: 12900 },
-    'large': { lunas: 3000, price: 29900 }
+    'small': { lunas: 500, price_usd_cents: 499 },
+    'medium': { lunas: 1000, price_usd_cents: 999 },
+    'large': { lunas: 3000, price_usd_cents: 2499 }
+};
+
+const SUBSCRIPTION_PLANS = {
+    'crescent': { price_usd_cents: 999 },
+    'halfmoon': { price_usd_cents: 2499 },
+    'fullmoon': { price_usd_cents: 4999 }
 };
 
 // Paddle webhook 서명 검증
@@ -65,110 +71,116 @@ exports.handler = async (event) => {
 
         const data = JSON.parse(event.body);
 
-        // One-time purchase completed
-        if (data.event_type === 'transaction.completed') {
-            const customData = data.data?.custom_data || {};
-            const userId = customData.userId;
-            const pkg = customData.package;
-            const transactionId = data.data?.id || `paddle_${Date.now()}`;
+        // Extract custom_data (supports both camelCase and snake_case)
+        const customData = data.data?.custom_data || {};
+        const userId = customData.user_id || customData.userId;
+        const pkg = customData.package;
+        const plan = customData.plan;
+        const txType = customData.type; // 'subscription' | 'tokens'
+        const transactionId = data.data?.id || `paddle_${Date.now()}`;
+        const now = new Date().toISOString();
 
+        // ============ One-time purchase (token pack) ============
+        if (data.event_type === 'transaction.completed' && (txType === 'tokens' || pkg)) {
             if (!userId || !pkg) {
-                return { statusCode: 400, body: JSON.stringify({ error: 'Missing userId or package' }) };
+                console.warn('[Paddle] transaction.completed missing user_id/package', { userId, pkg });
+                return { statusCode: 200, body: JSON.stringify({ received: true, skipped: 'no_user_or_package' }) };
             }
-
             const packageInfo = LUNA_PACKAGES[pkg];
             if (!packageInfo) {
-                return { statusCode: 400, body: JSON.stringify({ error: 'Unknown package' }) };
+                console.warn('[Paddle] Unknown token package:', pkg);
+                return { statusCode: 200, body: JSON.stringify({ received: true, skipped: 'unknown_package' }) };
             }
 
             const lunas = packageInfo.lunas;
-            const now = new Date().toISOString();
-
-            // 현재 프로필 조회
             const { data: currentProfile, error: profileError } = await supabase
-                .from('profiles')
-                .select('tokens_purchased')
-                .eq('id', userId)
-                .single();
-
+                .from('profiles').select('tokens_purchased').eq('id', userId).single();
             if (profileError) {
                 console.error('[Paddle] Profile lookup error:', profileError.message);
                 return { statusCode: 400, body: JSON.stringify({ error: 'User not found' }) };
             }
-
             const newPurchased = (currentProfile?.tokens_purchased || 0) + lunas;
 
-            // profiles 업데이트 - tokens_purchased에 추가
             const { error: updateError } = await supabase
                 .from('profiles')
-                .update({
-                    tokens_purchased: newPurchased,
-                    updated_at: now
-                })
+                .update({ tokens_purchased: newPurchased, updated_at: now })
                 .eq('id', userId);
+            if (updateError) throw updateError;
 
-            if (updateError) {
-                console.error('[Paddle] Profile update error:', updateError.message);
-                throw updateError;
-            }
-
-            // 결제 기록 저장 (payments 테이블)
             await supabase.from('payments').insert({
                 user_id: userId,
                 payment_id: transactionId,
                 type: 'luna_purchase',
                 token_package: pkg,
                 tokens_granted: lunas,
-                amount: packageInfo.price,
+                amount: packageInfo.price_usd_cents,
+                currency: 'USD',
                 status: 'paid',
-                paid_at: now
+                paid_at: now,
+                provider: 'paddle'
             });
 
-            // 루나 로그 기록 (tokens_log 테이블)
             await supabase.from('tokens_log').insert({
                 user_id: userId,
                 action: 'purchase',
                 amount: lunas,
                 balance_after: newPurchased,
-                description: `루나 구매 (${pkg}, Paddle)`
+                description: `Luna pack (${pkg}, Paddle)`
             });
 
-            console.log(`[Paddle] Granted ${lunas} luna to ${userId} (${pkg})`);
+            console.log(`[Paddle] Granted ${lunas} Luna to ${userId} (${pkg}) tx=${transactionId}`);
         }
 
-        // Subscription activated
-        if (data.event_type === 'subscription.activated') {
-            const customData = data.data?.custom_data || {};
-            const userId = customData.userId;
-            const plan = customData.plan; // 'crescent', 'halfmoon', 'fullmoon'
+        // ============ Subscription activated ============
+        if (data.event_type === 'subscription.activated' ||
+            data.event_type === 'subscription.created' ||
+            data.event_type === 'subscription.updated') {
+            if (userId && plan && SUBSCRIPTION_PLANS[plan]) {
+                // Compute next billing date from subscription
+                const sub = data.data || {};
+                const nextBillingAt = sub.next_billed_at || sub.current_billing_period?.ends_at || null;
+                const startedAt = sub.first_billed_at || sub.started_at || now;
 
-            if (userId && plan) {
-                await supabase
-                    .from('profiles')
-                    .update({
-                        plan: plan,
-                        updated_at: new Date().toISOString()
-                    })
-                    .eq('id', userId);
+                const updatePayload = {
+                    plan: plan,
+                    plan_started_at: startedAt,
+                    plan_expires_at: nextBillingAt,
+                    auto_renew: true,
+                    updated_at: now
+                };
+                // Store subscription ID for later cancel
+                if (sub.id) updatePayload.paddle_subscription_id = sub.id;
 
-                console.log(`[Paddle] Subscription activated: ${userId} -> ${plan}`);
+                const { error: updErr } = await supabase
+                    .from('profiles').update(updatePayload).eq('id', userId);
+                if (updErr) console.warn('[Paddle] Profile update (sub) error:', updErr.message);
+
+                await supabase.from('payments').insert({
+                    user_id: userId,
+                    payment_id: transactionId,
+                    merchant_uid: sub.id || null,
+                    type: 'subscription',
+                    plan: plan,
+                    amount: SUBSCRIPTION_PLANS[plan].price_usd_cents,
+                    currency: 'USD',
+                    status: 'paid',
+                    paid_at: now,
+                    provider: 'paddle'
+                });
+
+                console.log(`[Paddle] Subscription ${data.event_type}: ${userId} -> ${plan}`);
             }
         }
 
-        // Subscription cancelled
-        if (data.event_type === 'subscription.canceled') {
-            const customData = data.data?.custom_data || {};
-            const userId = customData.userId;
-
+        // ============ Subscription cancelled ============
+        if (data.event_type === 'subscription.canceled' ||
+            data.event_type === 'subscription.cancelled') {
             if (userId) {
-                await supabase
-                    .from('profiles')
-                    .update({
-                        plan: 'free',
-                        updated_at: new Date().toISOString()
-                    })
-                    .eq('id', userId);
-
+                await supabase.from('profiles').update({
+                    plan: 'free',
+                    auto_renew: false,
+                    updated_at: now
+                }).eq('id', userId);
                 console.log(`[Paddle] Subscription cancelled: ${userId}`);
             }
         }

@@ -1,3 +1,12 @@
+// [LEGACY] PortOne V1 Korean payment gateway - being phased out in favor of Paddle.
+// This function auto-disables when DISABLE_PORTONE=true or when IMP_REST_API_KEY is absent.
+const PORTONE_DISABLED = process.env.DISABLE_PORTONE === 'true' || !process.env.IMP_REST_API_KEY;
+const _disabledResponse = () => ({
+    statusCode: 410,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ success: false, error: 'endpoint_deprecated', message: 'This endpoint is deprecated. Please use Paddle via /payment.html' })
+});
+
 // monthly-grant.js - 월간 Pro 보너스 루나 지급 (Netlify Scheduled Function)
 // 매월 1일 00:00 UTC에 실행
 // 참고: 일간 루나는 use-token.js와 check-plan.js에서 자동 지급됨
@@ -61,6 +70,8 @@ async function attemptAutoRenewal(user) {
 exports.schedule = '@daily';
 
 exports.handler = async (event) => {
+    if (PORTONE_DISABLED) return _disabledResponse();
+
     const headers = {
         'Content-Type': 'application/json'
     };

@@ -1,3 +1,12 @@
+// [LEGACY] PortOne V1 Korean payment gateway - being phased out in favor of Paddle.
+// This function auto-disables when DISABLE_PORTONE=true or when IMP_REST_API_KEY is absent.
+const PORTONE_DISABLED = process.env.DISABLE_PORTONE === 'true' || !process.env.IMP_REST_API_KEY;
+const _disabledResponse = () => ({
+    statusCode: 410,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ success: false, error: 'endpoint_deprecated', message: 'This endpoint is deprecated. Please use Paddle via /payment.html' })
+});
+
 // request-refund.js - 구독 환불 요청 처리
 const { createClient } = require('@supabase/supabase-js');
 const { cancelPayment } = require('./portone-v1-helper');
@@ -10,6 +19,8 @@ const supabase = createClient(
 const REFUND_WINDOW_DAYS = 14;
 
 exports.handler = async (event) => {
+    if (PORTONE_DISABLED) return _disabledResponse();
+
     // CORS headers
     const headers = {
         'Access-Control-Allow-Origin': '*',
